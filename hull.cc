@@ -31,7 +31,18 @@ class Hull {
             return false;
         }
         bool is_visible(Segment_2 Edge,Point_2 n_point,Polygon_2 Polygon) {
-
+            Segment_2 n_edge1=Segment_2(Edge[0],n_point);
+            Segment_2 n_edge2=Segment_2(Edge[1],n_point);
+            for(const Segment_2& edge: Polygon.edges()){
+                if (Edge==edge) {
+                    continue;
+                }
+                if (intersection(n_edge1,edge)||intersection(n_edge2,edge)) {
+                    return false;
+                }
+                
+            }
+            return true;
         }
         double Edge_Selection(Polygon_2 Polygon,Point_2 n_point,std::list<Point_2> remaining_points,std::string criteria) {
             
