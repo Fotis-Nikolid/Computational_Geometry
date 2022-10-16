@@ -21,7 +21,14 @@ class Hull {
     public:
         //internal helper functions
         bool overlaps_point(Triangle_2 triangle,std::vector<Point_2> Points) {
-
+            typename std::vector<Point_2>::iterator point;
+            
+            for (point=Points.begin();point<Points.end();point++) {
+                if (triangle.bounded_side(*point)!=CGAL::ON_UNBOUNDED_SIDE) {
+                    return true;
+                }
+            }
+            return false;
         }
         bool is_visible(Segment_2 Edge,Point_2 n_point,Polygon_2 Polygon) {
 
