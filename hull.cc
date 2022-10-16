@@ -45,7 +45,75 @@ class Hull {
             return true;
         }
         double Edge_Selection(Polygon_2 Polygon,Point_2 n_point,std::list<Point_2> remaining_points,std::string criteria) {
-            
+            Segment_2 selection;
+            typename Polygon_2::Vertices::iterator it=Polygon.begin();
+            int index,selection_index;
+            switch(criteria) {
+                case "1"://random choice of edge
+                    index=0;
+                    for(const Segment_2 edge : Polygon.edges()){
+                        if (this.is_visible(edge,n_point,Polygon)) {
+                            Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
+                            if (this.overlaps_point(triangle,remaining_points)) {
+                                index++;
+                                continue;
+                            }
+                            
+                            Polygon.insert(it+index,n_point);
+                            return triangle.area();
+                        }
+                        else {
+                            index++;
+                        }
+
+                    }
+                    break;
+                case "2"://pick edge that minimizes Area
+                    double min_area=Polygon.area();
+                    selection_index=0;
+                    index=0;
+                    for(const Segment_2 edge : Polygon.edges()){
+                        if (this.is_visible(edge,n_point,Polygon)) {
+                            Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
+                            if (this.overlaps_point(triangle,remaining_points)) {
+                                index++;
+                                continue;
+                            }
+                            
+                            Polygon.insert(it+index,n_point);
+                            return triangle.area();
+
+                        }
+                        else {
+                            index++;
+                        }
+
+                    }
+                    break;
+                case "3"://pick edge that maximizes Area
+                    double max_area=0;
+                    selection_index=0;
+                    index=0;
+                    for(const Segment_2 edge : Polygon.edges()){
+                        if (this.is_visible(edge,n_point,Polygon)) {
+                            Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
+                            if (this.overlaps_point(triangle,remaining_points)) {
+                                index++;
+                                continue;
+                            }
+                            
+                            Polygon.insert(it+index,n_point);
+                            return triangle.area();
+                        }
+                        else {
+                            index++;
+                        }
+
+                    }
+                    break;
+                default:
+                    break;
+            }
         } 
     public:
         double solve(Polygon_2& Polygon,std::list<Point_2>& Points,std::string Criteria) {
