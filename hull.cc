@@ -117,7 +117,17 @@ class Hull {
         } 
     public:
         double solve(Polygon_2& Polygon,std::list<Point_2>& Points,std::string Criteria) {
-            
+            typename std::list<Point_2>::iterator it;
+            Point_2 n_point;
+            double Area;
+
+            CGAL::convex_hull_2(Points.begin(),Points.end(),std::back_inserter(Polygon));
+            Area=Polygon.area();
+            while (Points.size()>0) {
+                n_point=Points.pop_back();
+                Area-=Edge_Selection(Polygon,n_point,Points,Criteria);
+            }
+            return Area;
         }
         
 
