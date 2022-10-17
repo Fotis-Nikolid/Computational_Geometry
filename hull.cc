@@ -20,11 +20,11 @@ class Hull {
         float Area;
     public:
         //internal helper functions
-        bool overlaps_point(Triangle_2 triangle,std::vector<Point_2> Points) {
-            typename std::vector<Point_2>::iterator point;
+        bool overlaps_point(Triangle_2 triangle,std::list<Point_2> Points) {
+            typename std::list<Point_2>::iterator it;
             
-            for (point=Points.begin();point<Points.end();point++) {
-                if (triangle.bounded_side(*point)!=CGAL::ON_UNBOUNDED_SIDE) {
+            for (const Point_2 point: Points) {
+                if (triangle.bounded_side(point)!=CGAL::ON_UNBOUNDED_SIDE) {
                     return true;
                 }
             }
@@ -37,28 +37,42 @@ class Hull {
                 if (Edge==edge) {
                     continue;
                 }
-                if (intersection(n_edge1,edge)||intersection(n_edge2,edge)) {
-                    return false;
+                const auto cross_point1=intersection(n_edge1,edge);
+                if (cross_point1) {
+                    const Point_2* p=boost::get<Point_2 >(&*cross_point1);
+                    if (*p!=(Point_2)Edge[0]) {
+                        std::cout<<"Cross:"<<*p<<" edge"<<(Point_2)Edge[0]<<std::endl;
+                        return false;
+                    }
+                }
+                const auto cross_point2=intersection(n_edge2,edge);
+                if (cross_point2) {
+                    const Point_2* p=boost::get<Point_2 >(&*cross_point2);
+                    if (*p!=(Point_2)Edge[1]) {
+                        std::cout<<"Cross:"<<*p<<" edge"<<(Point_2)Edge[1]<<std::endl;
+                        return false;
+                    }
                 }
                 
             }
             return true;
         }
-        double Edge_Selection(Polygon_2 Polygon,Point_2 n_point,std::list<Point_2> remaining_points,std::string criteria) {
-            Segment_2 selection;
+        double Edge_Selection(Polygon_2& Polygon,Point_2 n_point,std::list<Point_2> remaining_points,char criteria) {
             typename Polygon_2::Vertices::iterator it=Polygon.begin();
-            int index,selection_index;
+            int index,selection;
+            double t_area,min_area,max_area;
             switch(criteria) {
-                case "1"://random choice of edge
-                    index=0;
+                case '1'://random choice of edge
+                    index=1;
                     for(const Segment_2 edge : Polygon.edges()){
-                        if (this.is_visible(edge,n_point,Polygon)) {
+                        
+                        if (is_visible(edge,n_point,Polygon)) {
                             Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
-                            if (this.overlaps_point(triangle,remaining_points)) {
+                            if (overlaps_point(triangle,remaining_points)) {
                                 index++;
                                 continue;
                             }
-                            
+                            std::cout<<"Break: "<<edge<<" and make: ( "<<edge[0]<<" "<<n_point<<" "<<edge[1]<<")"<<std::endl;
                             Polygon.insert(it+index,n_point);
                             return triangle.area();
                         }
@@ -68,20 +82,25 @@ class Hull {
 
                     }
                     break;
-                case "2"://pick edge that minimizes Area
-                    double min_area=Polygon.area();
-                    selection_index=0;
+                case '2'://pick edge that minimizes Area
+                    min_area=Polygon.area();
+                    selection=0;
                     index=0;
                     for(const Segment_2 edge : Polygon.edges()){
-                        if (this.is_visible(edge,n_point,Polygon)) {
+                        if (is_visible(edge,n_point,Polygon)) {
                             Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
-                            if (this.overlaps_point(triangle,remaining_points)) {
+                            t_area=triangle.area();
+                            if (t_area>=min_area) {
                                 index++;
                                 continue;
                             }
+                            if (overlaps_point(triangle,remaining_points)) {
+                                index++;
+                                continue;
+                            }
+                            min_area=t_area;
+                            selection=index;
                             
-                            Polygon.insert(it+index,n_point);
-                            return triangle.area();
 
                         }
                         else {
@@ -89,43 +108,57 @@ class Hull {
                         }
 
                     }
+                    Polygon.insert(it+selection,n_point);
+                    return min_area;
                     break;
-                case "3"://pick edge that maximizes Area
-                    double max_area=0;
-                    selection_index=0;
+                case '3'://pick edge that maximizes Area
+                    max_area=0;
+                    selection=0;
                     index=0;
                     for(const Segment_2 edge : Polygon.edges()){
-                        if (this.is_visible(edge,n_point,Polygon)) {
+                        if (is_visible(edge,n_point,Polygon)) {
                             Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
-                            if (this.overlaps_point(triangle,remaining_points)) {
+                            t_area=triangle.area();
+                            if (t_area<=max_area) {
                                 index++;
                                 continue;
                             }
+                            if (overlaps_point(triangle,remaining_points)) {
+                                index++;
+                                continue;
+                            }
+                            max_area=t_area;
+                            selection=index;
                             
-                            Polygon.insert(it+index,n_point);
-                            return triangle.area();
                         }
                         else {
                             index++;
                         }
 
                     }
+                    Polygon.insert(it+selection,n_point);
+                    return max_area;
                     break;
                 default:
                     break;
             }
         } 
     public:
-        double solve(Polygon_2& Polygon,std::list<Point_2>& Points,std::string Criteria) {
-            typename std::list<Point_2>::iterator it;
+        double solve(Polygon_2& Polygon,std::list<Point_2>& Points,char Criteria) {
             Point_2 n_point;
             double Area;
 
             CGAL::convex_hull_2(Points.begin(),Points.end(),std::back_inserter(Polygon));
+            for (const Point_2 vertex: Polygon.vertices()) {
+                Points.remove(vertex);
+            }
             Area=Polygon.area();
             while (Points.size()>0) {
-                n_point=Points.pop_back();
+                n_point=Points.back();
+                std::cout<<n_point<<std::endl;
+                Points.pop_back();
                 Area-=Edge_Selection(Polygon,n_point,Points,Criteria);
+                
             }
             return Area;
         }
@@ -140,18 +173,22 @@ typedef CGAL::Segment_2<K> Segment;
 
 int main() {
     Hull<K> alg;
-    //std::cout<<alg.solve(polygon,points,"1")<<std::endl;
 
     std::list<Point> points;
     Polygon result;
     points.push_back(Point(0,0));
     points.push_back(Point(4,0));
-    points.push_back(Point(1,1));
-    points.push_back(Point(3,1));
+    
     points.push_back(Point(4,4));
-    points.push_back(Point(4,0));
+    points.push_back(Point(0,4));
+    points.push_back(Point(2,1));
+    points.push_back(Point(2,3));
 
+    std::cout<<alg.solve(result,points,'1')<<std::endl;
 
+    for(const Segment edge : result.edges()){
+        std::cout<<edge<<std::endl;
+    }
 
     return 0;
 
