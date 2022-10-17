@@ -41,7 +41,7 @@ class Hull {
                 if (cross_point1) {
                     const Point_2* p=boost::get<Point_2 >(&*cross_point1);
                     if (*p!=(Point_2)Edge[0]) {
-                        std::cout<<"Cross:"<<*p<<" edge"<<(Point_2)Edge[0]<<std::endl;
+                        //std::cout<<"Cross:"<<*p<<" edge"<<(Point_2)Edge[0]<<std::endl;
                         return false;
                     }
                 }
@@ -49,7 +49,7 @@ class Hull {
                 if (cross_point2) {
                     const Point_2* p=boost::get<Point_2 >(&*cross_point2);
                     if (*p!=(Point_2)Edge[1]) {
-                        std::cout<<"Cross:"<<*p<<" edge"<<(Point_2)Edge[1]<<std::endl;
+                        //std::cout<<"Cross:"<<*p<<" edge"<<(Point_2)Edge[1]<<std::endl;
                         return false;
                     }
                 }
@@ -60,7 +60,7 @@ class Hull {
         double Edge_Selection(Polygon_2& Polygon,Point_2 n_point,std::list<Point_2> remaining_points,char criteria) {
             typename Polygon_2::Vertices::iterator it=Polygon.begin();
             int index,selection;
-            double t_area,min_area,max_area;
+            double t_area_loss,min_area_loss,max_area_loss;
             switch(criteria) {
                 case '1'://random choice of edge
                     index=1;
@@ -72,9 +72,8 @@ class Hull {
                                 index++;
                                 continue;
                             }
-                            std::cout<<"Break: "<<edge<<" and make: ( "<<edge[0]<<" "<<n_point<<" "<<edge[1]<<")"<<std::endl;
                             Polygon.insert(it+index,n_point);
-                            return triangle.area();
+                            return abs(triangle.area());
                         }
                         else {
                             index++;
@@ -82,15 +81,15 @@ class Hull {
 
                     }
                     break;
-                case '2'://pick edge that minimizes Area
-                    min_area=Polygon.area();
-                    selection=0;
-                    index=0;
+                case '2'://pick edge that maximizes Area loss, thus minimizing total polygon Area
+                    max_area_loss=0;
+                    selection=1;
+                    index=1;
                     for(const Segment_2 edge : Polygon.edges()){
                         if (is_visible(edge,n_point,Polygon)) {
                             Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
-                            t_area=triangle.area();
-                            if (t_area>=min_area) {
+                            t_area_loss=abs(triangle.area());
+                            if (t_area_loss<=max_area_loss) {
                                 index++;
                                 continue;
                             }
@@ -98,37 +97,9 @@ class Hull {
                                 index++;
                                 continue;
                             }
-                            min_area=t_area;
+                            max_area_loss=t_area_loss;
                             selection=index;
-                            
-
-                        }
-                        else {
                             index++;
-                        }
-
-                    }
-                    Polygon.insert(it+selection,n_point);
-                    return min_area;
-                    break;
-                case '3'://pick edge that maximizes Area
-                    max_area=0;
-                    selection=0;
-                    index=0;
-                    for(const Segment_2 edge : Polygon.edges()){
-                        if (is_visible(edge,n_point,Polygon)) {
-                            Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
-                            t_area=triangle.area();
-                            if (t_area<=max_area) {
-                                index++;
-                                continue;
-                            }
-                            if (overlaps_point(triangle,remaining_points)) {
-                                index++;
-                                continue;
-                            }
-                            max_area=t_area;
-                            selection=index;
                             
                         }
                         else {
@@ -137,7 +108,39 @@ class Hull {
 
                     }
                     Polygon.insert(it+selection,n_point);
-                    return max_area;
+                    return max_area_loss;
+                    
+                    break;
+                case '3'://pick edge that minimizes Area loss, maximizing total polygon Area
+                    min_area_loss=Polygon.area();
+                    selection=1;
+                    index=1;
+                    for(const Segment_2 edge : Polygon.edges()){
+                        if (is_visible(edge,n_point,Polygon)) {
+                            Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
+                            t_area_loss=abs(triangle.area());
+                            if (t_area_loss>=min_area_loss) {
+                                index++;
+                                continue;
+                            }
+                            if (overlaps_point(triangle,remaining_points)) {
+                                index++;
+                                continue;
+                            }
+                            min_area_loss=t_area_loss;
+                            selection=index;
+                            index++;
+                            
+
+                        }
+                        else {
+                            index++;
+                        }
+
+                    }
+
+                    Polygon.insert(it+selection,n_point);
+                    return min_area_loss;
                     break;
                 default:
                     break;
@@ -155,7 +158,6 @@ class Hull {
             Area=Polygon.area();
             while (Points.size()>0) {
                 n_point=Points.back();
-                std::cout<<n_point<<std::endl;
                 Points.pop_back();
                 Area-=Edge_Selection(Polygon,n_point,Points,Criteria);
                 
@@ -181,10 +183,10 @@ int main() {
     
     points.push_back(Point(4,4));
     points.push_back(Point(0,4));
-    points.push_back(Point(2,1));
-    points.push_back(Point(2,3));
+    points.push_back(Point(1,1));
+    points.push_back(Point(1,3));
 
-    std::cout<<alg.solve(result,points,'1')<<std::endl;
+    std::cout<<alg.solve(result,points,'3')<<std::endl;
 
     for(const Segment edge : result.edges()){
         std::cout<<edge<<std::endl;
