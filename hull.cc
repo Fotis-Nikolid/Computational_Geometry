@@ -98,14 +98,13 @@ class Hull {
                     selection=1;
                     index=1;
                     for(const Segment_2 edge : Polygon.edges()){
-                        
+                        Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
+                        t_area_loss=abs(triangle.area());
+                        if (t_area_loss<=max_area_loss) {//if triangle area is lower than the maximum area loss we have already calculated, don't even bother checking for visibility and such 
+                            index++;
+                            continue;
+                        }
                         if (is_visible(edge,n_point,Polygon)) {
-                            Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
-                            t_area_loss=abs(triangle.area());
-                            if (t_area_loss<=max_area_loss) {
-                                index++;
-                                continue;
-                            }
                             if (overlaps_point(triangle,remaining_points)) {
                                 index++;
                                 continue;
@@ -129,14 +128,13 @@ class Hull {
                     selection=1;
                     index=1;
                     for(const Segment_2 edge : Polygon.edges()){
-                        
+                        Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
+                        t_area_loss=abs(triangle.area());
+                        if (t_area_loss>=min_area_loss) {
+                            index++;
+                            continue;
+                        }
                         if (is_visible(edge,n_point,Polygon)) {
-                            Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
-                            t_area_loss=abs(triangle.area());
-                            if (t_area_loss>=min_area_loss) {
-                                index++;
-                                continue;
-                            }
                             if (overlaps_point(triangle,remaining_points)) {
                                 index++;
                                 continue;
