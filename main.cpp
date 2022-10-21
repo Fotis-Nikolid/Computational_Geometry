@@ -2,17 +2,21 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <list>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
+#include "polygon.h"
+
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-typedef K::Point_2 Point_2;
-typedef std::vector<Point_2> Points;
+typedef CGAL::Point_2<K> Point_2;
 
 int main(int argc, char *argv[])
 {
   std::ifstream infile;
   std::ofstream outfile;
-  int algorithm {0};
+  std::string algorithm;
+  std::string edge_selection;
+  std::string sorting;
 
   for(int i = 1 ; i < argc ; i++)
   {
@@ -31,23 +35,11 @@ int main(int argc, char *argv[])
       }
       else if(arg == "-algorithm")
       {
-        if(opt == "incremental")
-        {
-          algorithm = 1;
-        }
-        else if(opt == "convex_hull")
-        {
-          algorithm = 2;
-        }
-        else
-        {
-          std::cout << "Algorithm " + opt + " is not implemented" << std::endl;
-          return -1;
-        }
+        algorithm=opt;
       }
       else if(arg == "-edge_selection")
       {
-        //do something here
+        edge_selection=opt;
       }
       else
       {
@@ -69,41 +61,30 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  Points pv;
+  std::list<Point_2> l_points;
+  std::vector<Point_2> v_points;
   std::string line;
+  while (getline(infile,line)) {
+      double x,y;
+      int row;
+      std::stringstream sline(line);
+      sline >> row;
+      sline >> x;
+      sline >> y;
 
-  if(!std::getline(infile,line))
-  {
-    std::cerr << "Something worng with the input second line" << std::endl;
-    return -1;
+      v_points.push_back(Point_2(x,y));
+      l_points.push_back(Point_2(x,y));
   }
 
-  // get polygon area
-  if(std::getline(infile,line))
-  {
-    
+  Polygon<K> poly;
+  if (algorithm=="hull") {
+    //poly.Hull_Based(v_points,edge_selection);
+    poly.Size();
   }
-  else
-  {
-    std::cerr << "Something worng with the input second line" << std::endl;
-    return -1;
+  else {
+
   }
 
-  //get the points
-  while(std::getline(infile,line))
-  {
-    double x,y;
-    std::stringstream sline(line);
-    sline >> x;
-    sline >> y;
-
-    pv.push_back(Point_2(x,y));
-  }
-
-  for (std::vector<Point_2>::iterator it = pv.begin() ; it != pv.end(); ++it)
-  {
-    outfile << *it  << std::endl;
-  }
-
+  
   return 0;
 }
