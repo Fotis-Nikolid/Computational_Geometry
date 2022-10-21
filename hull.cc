@@ -156,7 +156,7 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,Point_2 n_point,std::list
 //only function call that is exposed to user
 //given a list of Points and a criteria for edge selection, creates the Polygon and returns it's area 
 template<class Kernel>
-double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2>& Points,char Criteria) {
+double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria) {
     Point_2 n_point;
     double Area;
 

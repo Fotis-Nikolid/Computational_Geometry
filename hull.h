@@ -22,7 +22,7 @@ class Hull {
         bool is_visible(Segment_2 Edge,Point_2 n_point,Polygon_2 Polygon);
         double Edge_Selection(Polygon_2& Polygon,Point_2 n_point,std::list<Point_2> remaining_points,char criteria);
     public:
-        double solve(Polygon_2& Polygon,std::list<Point_2>& Points,char Criteria);
+        double solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria);
         
 
 };
