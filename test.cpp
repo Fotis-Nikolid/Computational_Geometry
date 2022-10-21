@@ -1,5 +1,17 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <dirent.h>
+#include <list>
+#include <regex>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Polygon_2.h>
+#include "hull.h"
 
-
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef CGAL::Point_2<K> Point_2;
+typedef CGAL::Polygon_2<K> Polygon_2;
 int main(int argc,char* argv[]) {
     DIR *dir;
     struct dirent *ent;
@@ -14,28 +26,31 @@ int main(int argc,char* argv[]) {
     int points;
 
     std::string file_name;
-    if ((dir = opendir(path.c_str())) != NULL) {    /* print all the files and directories within directory */
+    if ((dir = opendir(full_path.c_str())) != NULL) {    /* print all the files and directories within directory */
         while ((ent = readdir (dir)) != NULL) {
-            file_nam=ent->d_name;
-            std::cmatch match_obj;
+            file_name=ent->d_name;
+            if (file_name=="." || file_name=="..") {
+                continue;
+            }
+            std::smatch match_obj;
             if (path=="uniform") {
-                if (std::regex_search(file.c_str(),match_obj,std::regex("uniform-[0]*([1-9][0-9]*-.*)"))) {
-                    points=atoi(match_obj[1]);
+                if (std::regex_search(file_name,match_obj,std::regex("uniform-[0]*([1-9][0-9]*)-[1-9].instance"))) {
+                    points=atoi(match_obj[1].str().c_str());
 
                     if (points<start ) {
-                        continue
+                        continue;
                     }
                     if (points>end) {
-                        break;
+                        continue;
                     }
                 }
             }  
             else {
-                if (std::regex_search(file.c_str(),match_obj,std::regex(".*-[0]*([1-9][0-9]*).instance"))) {
-                    points=atoi(match_obj[1]);
+                if (std::regex_search(file_name,match_obj,std::regex(".*-[0]*([1-9][0-9]*).instance"))) {
+                    points=atoi(match_obj[1].str().c_str());
 
                     if (points<start ) {
-                        continue
+                        continue;
                     }
                     if (points>end) {
                         break;
@@ -49,8 +64,11 @@ int main(int argc,char* argv[]) {
             getline(file,line);
             getline(file,line);
             double area;
-            if (std::regex_search(line.c_str(),match_obj,std::regex("# parameters \"convex_hull\": {\"area\": \"([0-9]*)\"}"))) {
-                area=atoi(match_obj[1]);
+            if (std::regex_search(line,match_obj,std::regex("\"([0-9]*)\""))) {
+                area=atoi(match_obj[1].str().c_str());
+            }
+            if (std::regex_search(line,match_obj,std::regex("\"([0-9]*)\""))) {
+                area=atoi(match_obj[1].str().c_str());
             }
         
             std::list<Point_2> l_points;
@@ -59,7 +77,7 @@ int main(int argc,char* argv[]) {
                 double x,y;
                 int row;
                 std::stringstream sline(line);
-                sline >> row
+                sline >> row;
                 sline >> x;
                 sline >> y;
 
@@ -67,55 +85,65 @@ int main(int argc,char* argv[]) {
                 l_points.push_back(Point_2(x,y));
             }
 
-            //Incremental<CGAL::Exact_predicates_inexact_constructions_kernel> agl1;
-            Hull<CGAL::Exact_predicates_inexact_constructions_kernel> alg2;
+            //Incremental<K> agl1;
+            Hull<K> alg2;
 
             Polygon_2 poly;
             double random,min,max;
             bool success=true;
             
-            random=alg2.solve(poly,l_points,"1");
-            if (!poly.simple()) {
+            random=alg2.solve(poly,l_points,'1');
+            if (!poly.is_simple()) {
                 success=false;
-                std::cout<<"File error: "<<file_name<<std::endl;
+                std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 1"<<std::endl;
                 perror("Polygon not simple, 1");
                 exit(EXIT_FAILURE);
             }
-
-            min=alg2.solve(poly,l_points,"2");
-            if (!poly.simple()) {
+            if (poly.vertices().size()!=points) {
                 success=false;
-                std::cout<<"File error: "<<file_name<<std::endl;
-                perror("Polygon not simple, 2");
+                std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<poly.vertices().size()<<"<"<<points<<", 1"<<std::endl;
                 exit(EXIT_FAILURE);
             }
-            max=alg2.solve(poly,l_points,"3");
-            if (!poly.simple()) {
+
+            min=alg2.solve(poly,l_points,'2');
+            if (!poly.is_simple()) {
                 success=false;
-                std::cout<<"File error: "<<file_name<<std::endl;
-                perror("Polygon not simple, 3");
+                std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 2"<<std::endl;
+                exit(EXIT_FAILURE);
+            }
+            if (poly.vertices().size()!=points) {
+                success=false;
+                std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<poly.vertices().size()<<"<"<<points<<", 2"<<std::endl;
+                exit(EXIT_FAILURE);
+            }
+            max=alg2.solve(poly,l_points,'3');
+            if (!poly.is_simple()) {
+                success=false;
+                std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 3"<<std::endl;
+                exit(EXIT_FAILURE);
+            }
+            if (poly.vertices().size()!=points) {
+                success=false;
+                std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<poly.vertices().size()<<"<"<<points<<", 3"<<std::endl;
                 exit(EXIT_FAILURE);
             }
             if (min>max) {
                 success=false;
-                std::cout<<"File error: "<<file_name<<" "<< min <<" greater than "<< max<<std::endl;
-                perror("Min greater than Max");
+                std::cout<<"Hull error: "<<file_name<<" Min:"<< min <<" greater than Max:"<< max<<std::endl;
                 exit(EXIT_FAILURE);
             }
             if (max>area) {
                 success=false;
-                std::cout<<"File error: "<<file_name<<" "<< max <<" greater than "<< area<<std::endl;
-                perror("Max greater than Upper Limit");
+                std::cout<<"Hull error: "<<file_name<<" Max:"<< max <<" greater than Area:"<< area<<std::endl;
                 exit(EXIT_FAILURE);
             }
             if (random>max || random<min) {
                 success=false;
-                std::cout<<"File error: "<<file_name<<" "<<random <<" radom out of range "<<std::endl;
-                perror("Min greater than Max");
+                std::cout<<"Hull error: "<<file_name<<" "<<random <<" random out of range "<<std::endl;
                 exit(EXIT_FAILURE);
             }
             if (success) {
-                std::cout<<file_name<<"       OK"<<std::endl;
+                std::cout<<file_name<<" (Hull) ----- OK"<<std::endl;
             }
 
             
