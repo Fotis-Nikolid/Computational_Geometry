@@ -26,7 +26,7 @@ int main(int argc,char* argv[]) {
     int points;
 
     std::string file_name;
-    if ((dir = opendir(full_path.c_str())) != NULL) {    /* print all the files and directories within directory */
+    if ((dir = opendir(full_path.c_str())) != NULL) {    // print all the files and directories within directory 
         while ((ent = readdir (dir)) != NULL) {
             file_name=ent->d_name;
             if (file_name=="." || file_name=="..") {
@@ -88,43 +88,43 @@ int main(int argc,char* argv[]) {
             //Incremental<K> agl1;
             Hull<K> alg2;
 
-            Polygon_2 poly;
+            Polygon_2 p1,p2,p3;
             double random,min,max;
             bool success=true;
             
-            random=alg2.solve(poly,l_points,'1');
-            if (!poly.is_simple()) {
+            random=alg2.solve(p1,l_points,'1');
+            if (!p1.is_simple()) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 1"<<std::endl;
                 perror("Polygon not simple, 1");
                 exit(EXIT_FAILURE);
             }
-            if (poly.vertices().size()!=points) {
+            if (p1.vertices().size()!=points) {
                 success=false;
-                std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<poly.vertices().size()<<"<"<<points<<", 1"<<std::endl;
+                std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p1.vertices().size()<<"<"<<points<<", 1"<<std::endl;
                 exit(EXIT_FAILURE);
             }
 
-            min=alg2.solve(poly,l_points,'2');
-            if (!poly.is_simple()) {
+            min=alg2.solve(p2,l_points,'2');
+            if (!p2.is_simple()) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 2"<<std::endl;
                 exit(EXIT_FAILURE);
             }
-            if (poly.vertices().size()!=points) {
+            if (p2.vertices().size()!=points) {
                 success=false;
-                std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<poly.vertices().size()<<"<"<<points<<", 2"<<std::endl;
+                std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p2.vertices().size()<<"<"<<points<<", 2"<<std::endl;
                 exit(EXIT_FAILURE);
             }
-            max=alg2.solve(poly,l_points,'3');
-            if (!poly.is_simple()) {
+            max=alg2.solve(p3,l_points,'3');
+            if (!p3.is_simple()) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 3"<<std::endl;
                 exit(EXIT_FAILURE);
             }
-            if (poly.vertices().size()!=points) {
+            if (p3.vertices().size()!=points) {
                 success=false;
-                std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<poly.vertices().size()<<"<"<<points<<", 3"<<std::endl;
+                std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p3.vertices().size()<<"<"<<points<<", 3"<<std::endl;
                 exit(EXIT_FAILURE);
             }
             if (min>max) {
@@ -151,8 +151,9 @@ int main(int argc,char* argv[]) {
         }
         closedir (dir);
     } 
-    else {        /* could not open directory */
+    else {        // could not open directory 
         perror ("");
         return EXIT_FAILURE;
     }
 }
+
