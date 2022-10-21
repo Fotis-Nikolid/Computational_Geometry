@@ -1,7 +1,13 @@
-/*#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
 #include <iostream>
 #include <vector>
+
+//flags
+#define F1A 0
+#define F1B 1
+#define F2A 2
+#define F2B 3
 
 template<class Kernel>
 class Incremental {
@@ -11,16 +17,19 @@ class Incremental {
     typedef Kernel::Segment_2 Segment;
 
     private: 
-        //members
-        Polygon_2 Convex_Hull;
+        Polygon_2 Convex_Hull_Polygon;
+        Polygon_2 Real_Polygon;
         float Area;
 
-        //internal helper functions 
-        void Initialize(Polygon_2&);
-        void Sort_Axis(std::vector<Point_2>,std::string);
-        void Red_Edges(Polygon_2,Point_2);
-        bool is_visible(Point_2,Point_2,Point_2);
+        void Initialize(std::vector<Point_2>);
+        bool comp_x_less(Point_2 p1, Point_2 p2);
+        bool comp_x_more(Point_2 p1, Point_2 p2);
+        bool comp_y_less(Point_2 p1, Point_2 p2);
+        bool comp_y_more(Point_2 p1, Point_2 p2);
+        void Sort(std::vector<Point_2>,int);
+
     public:
-        float solve(Polygon_2&,std::vector<Point_2>&,std::string);
+        Incremental(vector<Polygon_2>, int);
+        float getPolygonArea();
+        Polygon_2 getPolygon();
 };
-*/
