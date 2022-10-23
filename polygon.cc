@@ -38,11 +38,4 @@ float Polygon<Kernel>::Ratio() {
 }
 
 
-int gg() {
-    Polygon<CGAL::Exact_predicates_inexact_constructions_kernel> poly;
-    std::vector<CGAL::Point_2<CGAL::Exact_predicates_inexact_constructions_kernel>> v;
-    v.push_back(CGAL::Point_2<CGAL::Exact_predicates_inexact_constructions_kernel>(1,1));
-    ///poly.Hull_Based(v,std::string("1"));
-    poly.Size();
-}
 

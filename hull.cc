@@ -159,6 +159,8 @@ template<class Kernel>
 double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria) {
     Point_2 n_point;
     double Area;
+    std::ofstream file;
+    file.open("steps.txt");
 
     CGAL::convex_hull_2(Points.begin(),Points.end(),std::back_inserter(Polygon));//initialize polygon from the convex hull, so that we can break it's edges and assimilate points into the polygon
     for (const Point_2 vertex: Polygon.vertices()) {
@@ -169,7 +171,10 @@ double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Cri
         n_point=Points.back();
         Points.pop_back();
         Area-=Edge_Selection(Polygon,n_point,Points,Criteria);//add point to polygon by breaking of the appropriate edge and then update the polygon's area based on the area lost from assimilated a point
-        
+        for (const Segment_2 edge: Polygon.edges()) {
+            file<<edge<<std::endl;
+        }
+        file<<"-"<<std::endl;
     }
     return Area;
 }

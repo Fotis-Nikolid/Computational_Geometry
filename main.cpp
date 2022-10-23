@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
   Polygon<K> poly;
   if (algorithm=="hull") {
-    //poly.Hull_Based(v_points,edge_selection);
+    poly.Hull_Based(v_points,edge_selection);
     poly.Size();
   }
   else {
