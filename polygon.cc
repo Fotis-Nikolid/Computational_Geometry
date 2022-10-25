@@ -2,8 +2,9 @@
 #include <CGAL/Polygon_2.h>
 #include <iostream>
 #include <vector>
-#include "hull.h"
-#include "polygon.h"
+//#include "hull.h"
+//#include "polygon.h"
+
 
 template<class Kernel>
 void Polygon<Kernel>::Hull_Based(std::vector<Point_2> Points,std::string Edge_Selection) {
@@ -25,8 +26,8 @@ std::vector<CGAL::Point_2<Kernel>> Polygon<Kernel>::Points() {
     return Polygon.vertices();
 }
 template<class Kernel>
-std::vector<CGAL::Segment_2<Kernel>> Polygon<Kernel>::Edges() {
-    return Polygon.edges();
+Polygon_2 Polygon<Kernel>::get_Polygon() {
+    return this->Polygon;
 }
 template<class Kernel>
 float Polygon<Kernel>::Area() {
@@ -35,6 +36,10 @@ float Polygon<Kernel>::Area() {
 template<class Kernel>
 float Polygon<Kernel>::Ratio() {
     
+}
+template<class Kernel>
+bool Polygon<Kernel>::Simple() {
+    return Polygon.is_simple();    
 }
 
 

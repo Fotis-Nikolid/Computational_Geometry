@@ -10,22 +10,10 @@
 
 
 
+
+
 //internal helper functions
 
-//given a Triangle, which essentialy is the combination of a polygon's edge and the point we want to add
-//check whether this would leave any of the remaining points outside of the new polygon
-template<class Kernel>
-bool Hull<Kernel>::overlaps_point(Triangle_2 triangle,std::list<Point_2> Points) {
-    typename std::list<Point_2>::iterator it;
-    
-    for (const Point_2 point: Points) {
-        //if a point is inside the triangle, then return true and pick another edge to break
-        if (triangle.bounded_side(point)==CGAL::ON_BOUNDED_SIDE) {
-            return true;
-        }
-    }
-    return false;
-}
 //checks for visibility between the new point and the vertices of the edge we want to break
 template<class Kernel>
 bool Hull<Kernel>::is_visible(Segment_2 Edge,Point_2 n_point,Polygon_2 Polygon) {
@@ -64,93 +52,115 @@ bool Hull<Kernel>::is_visible(Segment_2 Edge,Point_2 n_point,Polygon_2 Polygon) 
 }
 //based on the criteria provided, picks an edge from the polygon to break and add the new point 
 template<class Kernel>
-double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,Point_2 n_point,std::list<Point_2> remaining_points,char criteria) {
+double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remaining_points,char criteria) {
     typename Polygon_2::Vertices::iterator it=Polygon.begin();
     int index,selection;
     double t_area_loss,min_area_loss,max_area_loss;
-    switch(criteria) {
-        case '1'://random choice of edge
-            index=1;
-            for(const Segment_2 edge : Polygon.edges()){//iterate edges
-                if (is_visible(edge,n_point,Polygon)) {//check if new point has visibility to edge's vertices
-                    Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
-                    if (overlaps_point(triangle,remaining_points)) {//if adding point to polygon leaves other points outside, abort operation
-                        index++;
-                        continue;
-                    }
-                    Polygon.insert(it+index,n_point);//insert point between the two vertices of the edge(similar to breaking the edge and adding two new ones)
-                    return abs(triangle.area());//return absolute area of the "triangle" we destroyed
-                }
-                else {
-                    index++;
-                }
 
+    
+    std::vector<Point_2> point_candidates;
+    
+    bool visible_exists;
+    std::vector<int> point_to_edge;//keep the index of the edge(from which we can acquire the indexes of it's two vertices) as to know the points-edges association 
+    int position=0;
+    for(const Segment_2 edge: Polygon.edges()){//iterate edges and for each one find the closest point, if there is one
+        visible_exists=false;
+        double min_dist=std::numeric_limits<double>::max();
+        Point_2 n_point;
+        for (const Point_2 point: remaining_points) {
+            double dist=CGAL::squared_distance(edge,point);
+            if (min_dist<=dist) {
+                continue;
             }
-            break;
+            if (is_visible(edge,point,Polygon)) {
+                visible_exists=true;
+                min_dist=dist;
+                n_point=point;     
+            }
+        }
+        if (visible_exists) {
+            point_candidates.push_back(n_point);
+            point_to_edge.push_back(position); 
+        }
+        position++;
+    }
+    if (point_candidates.size()==0) {
+        std::cout<<"No visible points found"<<std::endl;
+        std::cout<<"Out of :"<<Polygon.edges().size()<<" candidates"<<std::endl;
+        std::cout<<"Num points"<<remaining_points.size()<<std::endl;
+        std::cout<<"Criteria: "<<criteria<<std::endl;
+        exit(EXIT_FAILURE);
+        return 0;
+    }
+    Point_2 new_point;
+    Triangle_2 triangle;
+    Segment_2 broken_edge;
+    int random;
+    switch(criteria) {
+        case '1'://random choice of edges
+            srand(time(0));
+            random=rand()%(point_candidates.size());
+
+            new_point=point_candidates.at(random);
+
+            index=point_to_edge.at(random);
+            broken_edge=Polygon.edge(index);
+            triangle=Triangle_2(broken_edge[0],broken_edge[1],new_point);
+            
+            t_area_loss=abs(triangle.area());
+            Polygon.insert(it+index+1,new_point);
+            remaining_points.remove(new_point);
+            return t_area_loss;
         case '2'://pick edge that maximizes Area loss, thus minimizing total polygon Area
             max_area_loss=0;
-            selection=1;
-            index=1;
-            for(const Segment_2 edge : Polygon.edges()){
-                Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
-                t_area_loss=abs(triangle.area());
-                if (t_area_loss<=max_area_loss) {//if triangle area is lower than the maximum area loss we have already calculated, don't even bother checking for visibility and such 
-                    index++;
-                    continue;
-                }
-                if (is_visible(edge,n_point,Polygon)) {
-                    if (overlaps_point(triangle,remaining_points)) {
-                        index++;
-                        continue;
-                    }
-                    max_area_loss=t_area_loss;//update maximum area loss we can achieve by breaking an edge
-                    selection=index;//keep which edges causes the above maximum area loss
-                    index++;
-                    
-                }
-                else {
-                    index++;
-                }
+            selection=-1;
+            for(int i=0;i<point_candidates.size();i++){
+                Point_2 point=point_candidates.at(i);
+                index=point_to_edge.at(i);
+                Segment_2 edge=Polygon.edge(index);
+                triangle=Triangle_2(edge[0],edge[1],point);
+                double temp=abs(triangle.area());
 
+                if (temp>max_area_loss) {
+                    max_area_loss=temp;
+                    new_point=point;
+                    selection=index+1;//inserted point is placed before iterator, so to place it after we do the +1 operation
+                    t_area_loss=temp;
+                }
+                index++;
             }
-            Polygon.insert(it+selection,n_point);
-            return max_area_loss;
-            
-            break;
+            if (selection==-1) {
+                std::cout<<"WTF, 2"<<std::endl;
+            }
+            Polygon.insert(it+selection,new_point);
+            remaining_points.remove(new_point);
+            return t_area_loss;
         case '3'://pick edge that minimizes Area loss, maximizing total polygon Area
-            min_area_loss=Polygon.area();
-            selection=1;
-            index=1;
-            for(const Segment_2 edge : Polygon.edges()){
-                Triangle_2 triangle=Triangle_2(edge[0],edge[1],n_point);
-                t_area_loss=abs(triangle.area());
-                if (t_area_loss>=min_area_loss) {
-                    index++;
-                    continue;
-                }
-                if (is_visible(edge,n_point,Polygon)) {
-                    if (overlaps_point(triangle,remaining_points)) {
-                        index++;
-                        continue;
-                    }
-                    min_area_loss=t_area_loss;
-                    selection=index;
-                    index++;
-                    
+            min_area_loss=std::numeric_limits<double>::max();
+            selection=-1;
+            for(int i=0;i<point_candidates.size();i++){
+                Point_2 point=point_candidates.at(i);
+                index=point_to_edge.at(i);
+                Segment_2 edge=Polygon.edge(index);
+                triangle=Triangle_2(edge[0],edge[1],point);
+                double temp=abs(triangle.area());
 
+                if (temp<min_area_loss) {
+                    min_area_loss=temp;
+                    new_point=point;
+                    selection=index+1;//inserted point is placed before iterator, so to place it after we do the +1 operation
+                    t_area_loss=temp;
                 }
-                else {
-                    index++;
-                }
-
+                index++;
             }
-
-            Polygon.insert(it+selection,n_point);
-            return min_area_loss;
-            break;
-        default:
-            break;
+            if (selection==-1) {
+                std::cout<<"WTF, 3"<<std::endl;
+            }
+            Polygon.insert(it+selection,new_point);
+            remaining_points.remove(new_point);
+            return t_area_loss;
     }
+    return 0;
 } 
 
 //only function call that is exposed to user
@@ -161,20 +171,23 @@ double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Cri
     double Area;
     std::ofstream file;
     file.open("steps.txt");
-
+    for (const Point_2 p:Points) {
+        file<<p<<std::endl;
+    }
+    file<<"-"<<std::endl;
+    
     CGAL::convex_hull_2(Points.begin(),Points.end(),std::back_inserter(Polygon));//initialize polygon from the convex hull, so that we can break it's edges and assimilate points into the polygon
     for (const Point_2 vertex: Polygon.vertices()) {
         Points.remove(vertex);//remove any point part of the convex hull from the list of points(as it is already part of the polygon)
     }
     Area=Polygon.area();
     while (Points.size()>0) {//iterate over list of points
-        n_point=Points.back();
-        Points.pop_back();
-        Area-=Edge_Selection(Polygon,n_point,Points,Criteria);//add point to polygon by breaking of the appropriate edge and then update the polygon's area based on the area lost from assimilated a point
+        Area-=Edge_Selection(Polygon,Points,Criteria);//add point to polygon by breaking of the appropriate edge and then update the polygon's area based on the area lost from assimilated a point
         for (const Segment_2 edge: Polygon.edges()) {
             file<<edge<<std::endl;
         }
         file<<"-"<<std::endl;
+
     }
     return Area;
 }

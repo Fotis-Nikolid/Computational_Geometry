@@ -1,4 +1,4 @@
-#include <iostream>
+/*#include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -9,6 +9,7 @@
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Point_2<K> Point_2;
+typedef CGAL::Segment_2<K> Segment_2;
 
 int main(int argc, char *argv[])
 {
@@ -64,6 +65,8 @@ int main(int argc, char *argv[])
   std::list<Point_2> l_points;
   std::vector<Point_2> v_points;
   std::string line;
+  getline(infile,line);
+  getline(infile,line);
   while (getline(infile,line)) {
       double x,y;
       int row;
@@ -78,13 +81,20 @@ int main(int argc, char *argv[])
 
   Polygon<K> poly;
   if (algorithm=="hull") {
-    poly.Hull_Based(v_points,edge_selection);
-    poly.Size();
+    poly.Hull_Based(v_points,edge_selection);    
   }
   else {
 
-  }
+
+    std::cout<<poly.Size()<<std::endl;
+    if (poly.Simple()) {
+      std::cout<<"Correct"<<std::endl;
+    }
+    else {
+      std::cout<<"Error"<<std::endl;
+    }
 
   
   return 0;
 }
+*/

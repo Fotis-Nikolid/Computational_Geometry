@@ -16,7 +16,7 @@ int main(int argc,char* argv[]) {
     DIR *dir;
     struct dirent *ent;
     
-    std::ifstream file;
+    
 
     int start=atoi(argv[1]);
     int end=atoi(argv[2]);
@@ -58,7 +58,13 @@ int main(int argc,char* argv[]) {
                 }
             }
             std::string file_path=full_path+"/"+file_name;
+            std::ifstream file;
             file.open(file_path);
+            if (!file.is_open())
+            {
+                std::cerr << "There was a problem opening the input file!\n";
+                return -1;
+            }
             std::string line;
             
             getline(file,line);
@@ -67,11 +73,8 @@ int main(int argc,char* argv[]) {
             if (std::regex_search(line,match_obj,std::regex("\"([0-9]*)\""))) {
                 area=atoi(match_obj[1].str().c_str());
             }
-            if (std::regex_search(line,match_obj,std::regex("\"([0-9]*)\""))) {
-                area=atoi(match_obj[1].str().c_str());
-            }
         
-            std::list<Point_2> l_points;
+            std::list<Point_2> l1_points,l2_points,l3_points;
             std::vector<Point_2> v_points;
             while (getline(file,line)) {
                 double x,y;
@@ -81,66 +84,70 @@ int main(int argc,char* argv[]) {
                 sline >> x;
                 sline >> y;
 
+
+                
                 v_points.push_back(Point_2(x,y));
-                l_points.push_back(Point_2(x,y));
+                l1_points.push_back(Point_2(x,y));
+                l2_points.push_back(Point_2(x,y));
+                l3_points.push_back(Point_2(x,y));
             }
 
             //Incremental<K> agl1;
             Hull<K> alg2;
 
             Polygon_2 p1,p2,p3;
+            
             double random,min,max;
             bool success=true;
-            
-            random=alg2.solve(p1,l_points,'1');
+            std::cout<<file_name<<std::endl;
+            random=alg2.solve(p1,l1_points,'1');
             if (!p1.is_simple()) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 1"<<std::endl;
-                perror("Polygon not simple, 1");
-                exit(EXIT_FAILURE);
+                //exit(EXIT_FAILURE);
             }
             if (p1.vertices().size()!=points) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p1.vertices().size()<<"<"<<points<<", 1"<<std::endl;
-                exit(EXIT_FAILURE);
+                //exit(EXIT_FAILURE);
             }
-
-            min=alg2.solve(p2,l_points,'2');
+            min=alg2.solve(p2,l2_points,'2');
             if (!p2.is_simple()) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 2"<<std::endl;
-                exit(EXIT_FAILURE);
+                //exit(EXIT_FAILURE);
             }
             if (p2.vertices().size()!=points) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p2.vertices().size()<<"<"<<points<<", 2"<<std::endl;
-                exit(EXIT_FAILURE);
+                //exit(EXIT_FAILURE);
             }
-            max=alg2.solve(p3,l_points,'3');
+            //std::cout<<"H2"<<std::endl;
+            max=alg2.solve(p3,l3_points,'3');
             if (!p3.is_simple()) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 3"<<std::endl;
-                exit(EXIT_FAILURE);
+                //exit(EXIT_FAILURE);
             }
             if (p3.vertices().size()!=points) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p3.vertices().size()<<"<"<<points<<", 3"<<std::endl;
-                exit(EXIT_FAILURE);
+                //exit(EXIT_FAILURE);
             }
             if (min>max) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Min:"<< min <<" greater than Max:"<< max<<std::endl;
-                exit(EXIT_FAILURE);
+                //exit(EXIT_FAILURE);
             }
             if (max>area) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Max:"<< max <<" greater than Area:"<< area<<std::endl;
-                exit(EXIT_FAILURE);
+                //exit(EXIT_FAILURE);
             }
             if (random>max || random<min) {
                 success=false;
-                std::cout<<"Hull error: "<<file_name<<" "<<random <<" random out of range "<<std::endl;
-                exit(EXIT_FAILURE);
+                std::cout<<"Hull error: "<<file_name<<" Random: "<<random <<" random out of range Max:"<<max<<" Min:"<<min<<std::endl;
+                //exit(EXIT_FAILURE);
             }
             if (success) {
                 std::cout<<file_name<<" (Hull) ----- OK"<<std::endl;
@@ -156,4 +163,3 @@ int main(int argc,char* argv[]) {
         return EXIT_FAILURE;
     }
 }
-

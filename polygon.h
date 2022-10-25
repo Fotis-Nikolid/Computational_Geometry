@@ -2,7 +2,7 @@
 #include <CGAL/Polygon_2.h>
 #include <iostream>
 #include <vector>
-
+#include "hull.h"
 
 template <class Kernel>
 class Polygon {
@@ -20,8 +20,9 @@ class Polygon {
         void Increment_Based(std::vector<Point_2> Points,std::string Edge_Selection,std::string Sorting);
         int Size();
         std::vector<Point_2> Points();
-        std::vector<Segment_2> Edges();
+        Polygon_2 get_Polygon();
         float Area();
         float Ratio();
+        bool Simple();
 };
 

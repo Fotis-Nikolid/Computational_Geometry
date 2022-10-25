@@ -5,6 +5,9 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <time.h>
+#include <cstdlib>
+
 
     
 
@@ -18,9 +21,8 @@ class Hull {
 
     private:         
         //internal helper functions
-        bool overlaps_point(Triangle_2 triangle,std::list<Point_2> Points);
         bool is_visible(Segment_2 Edge,Point_2 n_point,Polygon_2 Polygon);
-        double Edge_Selection(Polygon_2& Polygon,Point_2 n_point,std::list<Point_2> remaining_points,char criteria);
+        double Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remaining_points,char criteria);
     public:
         double solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria);
         
