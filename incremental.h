@@ -16,12 +16,12 @@ class Incremental
         Polygon_2 Convex_Hull_Polygon;
         Polygon_2 Real_Polygon;
 
-        void Initialize(std::vector<Point_2>, char);
-        /*bool comp_x_less(Point_2 p1, Point_2 p2);
-        bool comp_x_more(Point_2 p1, Point_2 p2);
-        bool comp_y_less(Point_2 p1, Point_2 p2);
-        bool comp_y_more(Point_2 p1, Point_2 p2);*/
-        void Sort(std::vector<Point_2>, std::string);
+        void Initialize(std::vector<Point_2>&, char);
+        static bool comp_x_less(Point_2 p1, Point_2 p2);
+        static bool comp_x_more(Point_2 p1, Point_2 p2);
+        static bool comp_y_less(Point_2 p1, Point_2 p2);
+        static bool comp_y_more(Point_2 p1, Point_2 p2);
+        void Sort(std::vector<Point_2>&, std::string);
         bool visible(Segment_2, Point_2);
 
         class RedEdgesBoundaries
@@ -36,7 +36,7 @@ class Incremental
         void construct_new_polygon(RedEdgesBoundaries, Point_2, char);
 
     public:
-        Incremental(const std::vector<Point_2>, std::string, std::string);
+        Incremental(const std::vector<Point_2>, std::string, char);
         float getPolygonArea();
         Polygon_2 getPolygon();
 };

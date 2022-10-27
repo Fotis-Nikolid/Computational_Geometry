@@ -3,12 +3,11 @@
 #include "incremental.h"
 
 template<class Kernel>
-Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, std::string how_to_sort, std::string how_to_remove_edge)
+Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, std::string how_to_sort, char how_to_remove_edge)
 {
     std::vector<Point_2> ps(Points);
-    Real_Polygon();
 
-    this->sort(ps, how_to_sort);
+    this->Sort(ps, how_to_sort);
     this->Initialize(ps, how_to_sort[0]);
 
     while(!ps.empty())
@@ -18,7 +17,7 @@ Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, std::string 
 
         Incremental<Kernel>::RedEdgesBoundaries limits = this->find_red_edges_boundaries_and_recreate_convex_hull(point);
 
-        this->construct_new_polygon(limits, point);
+        this->construct_new_polygon(limits, point, how_to_remove_edge);
     }
 }
 
@@ -35,44 +34,44 @@ CGAL::Polygon_2<Kernel> Incremental<Kernel>::getPolygon()
 }
 
 template<class Kernel>
-bool comp_x_less(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
+bool Incremental<Kernel>::comp_x_less(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
 {
-    if(p1.x == p2.x)
+    if(p1.x() == p2.x())
     {
-        return (p1.y < p2.y);
+        return (p1.y() < p2.y());
     }
-    return (p1.x < p2.x);
+    return (p1.x() < p2.x());
 }
 template<class Kernel>
-bool comp_x_more(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
+bool Incremental<Kernel>::comp_x_more(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
 {
-    if(p1.x == p2.x)
+    if(p1.x() == p2.x())
     {
-        return (p1.y < p2.y);
+        return (p1.y() < p2.y());
     }
-    return (p1.x > p2.x);
+    return (p1.x() > p2.x());
 }
 template<class Kernel>
-bool comp_y_less(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
+bool Incremental<Kernel>::comp_y_less(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
 {
-    if(p1.y == p2.y)
+    if(p1.y() == p2.y())
     {
-        return (p1.x < p2.x);
+        return (p1.x() < p2.x());
     }
-    return (p1.y < p2.y);
+    return (p1.y() < p2.y());
 }
 template<class Kernel>
-bool comp_y_more(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
+bool Incremental<Kernel>::comp_y_more(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
 {
-    if(p1.y == p2.y)
+    if(p1.y() == p2.y())
     {
-        return (p1.x < p2.x);
+        return (p1.x() < p2.x());
     }
-    return (p1.y > p2.y);
+    return (p1.y() > p2.y());
 }
 
 template<class Kernel>
-void Incremental<Kernel>::Sort(std::vector<Point_2> Points, std::string how_to_sort)
+void Incremental<Kernel>::Sort(std::vector<Point_2>& Points, std::string how_to_sort)
 {
     if(how_to_sort == "1a")
     {
@@ -97,11 +96,11 @@ bool equal_three_points(CGAL::Point_2<Kernel> A, CGAL::Point_2<Kernel> B, CGAL::
 {
     if(x_or_y == '1')
     {
-        return (A.x == B.x) && (B.x == C.x);
+        return (A.x() == B.x()) && (B.x() == C.x());
     }
     else
     {
-        return (A.y == B.y) && (B.y == C.y);
+        return (A.y() == B.y()) && (B.y() == C.y());
     }
 }
 
@@ -110,16 +109,16 @@ bool equal_two_points(CGAL::Point_2<Kernel> A, CGAL::Point_2<Kernel> B, char x_o
 {
     if(x_or_y == '1')
     {
-        return (A.x == B.x);
+        return (A.x() == B.x());
     }
     else
     {
-        return (A.y == B.y);
+        return (A.y() == B.y());
     }
 }
 
 template<class Kernel>
-void Incremental<Kernel>::Initialize(std::vector<Point_2> ps, char x_or_y)
+void Incremental<Kernel>::Initialize(std::vector<Point_2>& ps, char x_or_y)
 {
     Point_2 A(ps.back());
     ps.pop_back();
@@ -132,7 +131,7 @@ void Incremental<Kernel>::Initialize(std::vector<Point_2> ps, char x_or_y)
     Real_Polygon.push_back(B);
     Real_Polygon.push_back(C);
 
-    if(equal_three_points(A, B, C))
+    if(equal_three_points(A, B, C, x_or_y))
     {
         Point_2 p;
         do
@@ -140,10 +139,10 @@ void Incremental<Kernel>::Initialize(std::vector<Point_2> ps, char x_or_y)
             p = Point_2(ps.back());
             Real_Polygon.push_back(p);
             ps.pop_back();            
-        }while(equal_two_points(A, p));
+        }while(equal_two_points(A, p, x_or_y));
     }
 
-    Convex_Hull_Polygon(Real_Polygon);
+    Convex_Hull_Polygon = Real_Polygon;
 }
 
 template<class Kernel>
@@ -152,6 +151,7 @@ typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_e
     Incremental<Kernel>::RedEdgesBoundaries vertices;
     int iter_to_insert = 0;
     int edge_counter = 0;
+    std::vector<int> Vertices_to_remove;
     for(Segment_2 Convex_Hull_Edge : Convex_Hull_Polygon.edges())
     {
         //check if the edge is red
@@ -166,17 +166,24 @@ typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_e
             else
             {
                 vertices.second_vertex = Convex_Hull_Edge[1];
-                Convex_Hull_Polygon.erase(Convex_Hull_Edge.vertices_begin() + edge_counter);
+                Vertices_to_remove.push_back(edge_counter);
             }
         }
         else if(iter_to_insert != 0)
         {
             break;
         }
+     
         edge_counter++;
     }
 
-    Convex_Hull_Polygon.insert(Convex_Hull_Polygon.vertices_begin() + iter_to_insert);
+    Convex_Hull_Polygon.insert(Convex_Hull_Polygon.vertices_begin() + iter_to_insert, point);
+
+    for(std::vector<int>::iterator iter = Vertices_to_remove.begin() , int erased_elm = 0 ; iter < Vertices_to_remove.end() ; iter++)
+    {
+        Convex_Hull_Polygon.erase(Convex_Hull_Polygon.vertices_begin() + (*iter) - erased_elm + 1);
+        erased_elm++;
+    }
 
     return vertices;
 }
@@ -199,7 +206,7 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
 
     for(Point_2 p : Real_Polygon.vertices())
     {
-        if(lower_limit_iter != -1 && uper_limit_iter != -1) break;
+        if(lower_limit_iter != Real_Polygon.vertices_begin() && uper_limit_iter != Real_Polygon.vertices_begin()) break;
 
         if(p == red_limits.first_vertex)
         {
@@ -211,7 +218,7 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
         {
             if(vertices_counter == 0)
             {
-                uper_limit_iter = Real_Polygon.vertices_end();
+                uper_limit_iter = Real_Polygon.vertices_end() - 1;
             }
             else
             {
@@ -223,7 +230,7 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
     }
 
     double area;
-    int (*compF)(double, double);
+    bool (*compF)(double, double);
 
     switch(how_to_remove_edge)
     {
@@ -247,9 +254,9 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
         Polygon_2 temp_polygon(Real_Polygon);
         Segment_2 seg;
 
-        if(iter == Real_Polygon.vertices_end())
+        if(iter == Real_Polygon.vertices_end() - 1)
         {
-            seg = Segment_2(*iter, Real_Polygon.vertices_end());
+            seg = Segment_2(*iter, *(Real_Polygon.vertices_end() - 1));
         }
         else
         {
@@ -258,7 +265,7 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
 
         if(this->visible(seg, new_point))
         {
-            temp_polygon.inser(iter + 1, new_point);
+            temp_polygon.insert(iter + 1, new_point);
 
             if(compF(area, temp_polygon.area()))
             {
