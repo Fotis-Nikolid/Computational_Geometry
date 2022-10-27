@@ -8,8 +8,9 @@ class Incremental
 {
     
     typedef CGAL::Polygon_2<Kernel> Polygon_2;
-    typedef Kernel::Point_2  Point_2;
-    typedef Kernel::Segment_2 Segment;
+    typedef CGAL::Point_2<Kernel>  Point_2;
+    typedef CGAL::Segment_2<Kernel> Segment_2;
+    typedef CGAL::Triangle_2<Kernel> Triangle_2;
 
     private: 
         Polygon_2 Convex_Hull_Polygon;
@@ -35,7 +36,7 @@ class Incremental
         void construct_new_polygon(RedEdgesBoundaries, Point_2, char);
 
     public:
-        Incremental(const vector<Polygon_2>, std::string, std::string);
+        Incremental(const std::vector<Point_2>, std::string, std::string);
         float getPolygonArea();
         Polygon_2 getPolygon();
 };

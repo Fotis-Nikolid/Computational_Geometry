@@ -29,12 +29,13 @@ float Incremental<Kernel>::getPolygonArea()
 }
 
 template<class Kernel>
-Polygon_2 Incremental<Kernel>::getPolygon()
+CGAL::Polygon_2<Kernel> Incremental<Kernel>::getPolygon()
 {
     return Real_Polygon;
 }
 
-bool comp_x_less(Point_2 p1, Point_2 p2)
+template<class Kernel>
+bool comp_x_less(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
 {
     if(p1.x == p2.x)
     {
@@ -42,7 +43,8 @@ bool comp_x_less(Point_2 p1, Point_2 p2)
     }
     return (p1.x < p2.x);
 }
-bool comp_x_more(Point_2 p1, Point_2 p2)
+template<class Kernel>
+bool comp_x_more(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
 {
     if(p1.x == p2.x)
     {
@@ -50,7 +52,8 @@ bool comp_x_more(Point_2 p1, Point_2 p2)
     }
     return (p1.x > p2.x);
 }
-bool comp_y_less(Point_2 p1, Point_2 p2)
+template<class Kernel>
+bool comp_y_less(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
 {
     if(p1.y == p2.y)
     {
@@ -58,7 +61,8 @@ bool comp_y_less(Point_2 p1, Point_2 p2)
     }
     return (p1.y < p2.y);
 }
-bool comp_y_more(Point_2 p1, Point_2 p2)
+template<class Kernel>
+bool comp_y_more(CGAL::Point_2<Kernel> p1, CGAL::Point_2<Kernel> p2)
 {
     if(p1.y == p2.y)
     {
@@ -88,27 +92,29 @@ void Incremental<Kernel>::Sort(std::vector<Point_2> Points, std::string how_to_s
     }
 }
 
-bool equal_three_points(Point_2 A, Point_2 B, Point_2 C, char x_or_y)
+template<class Kernel>
+bool equal_three_points(CGAL::Point_2<Kernel> A, CGAL::Point_2<Kernel> B, CGAL::Point_2<Kernel> C, char x_or_y)
 {
     if(x_or_y == '1')
     {
-        return (A.x == B.x) && (B.x == C.x)
+        return (A.x == B.x) && (B.x == C.x);
     }
     else
     {
-        return (A.y == B.y) && (B.y == C.y)
+        return (A.y == B.y) && (B.y == C.y);
     }
 }
 
-bool equal_two_points(Point_2 A, Point_2 B, char x_or_y)
+template<class Kernel>
+bool equal_two_points(CGAL::Point_2<Kernel> A, CGAL::Point_2<Kernel> B, char x_or_y)
 {
     if(x_or_y == '1')
     {
-        return (A.x == B.x)
+        return (A.x == B.x);
     }
     else
     {
-        return (A.y == B.y)
+        return (A.y == B.y);
     }
 }
 
@@ -128,9 +134,10 @@ void Incremental<Kernel>::Initialize(std::vector<Point_2> ps, char x_or_y)
 
     if(equal_three_points(A, B, C))
     {
+        Point_2 p;
         do
         {
-            Point_2 p(ps.back());
+            p = Point_2(ps.back());
             Real_Polygon.push_back(p);
             ps.pop_back();            
         }while(equal_two_points(A, p));
@@ -140,7 +147,7 @@ void Incremental<Kernel>::Initialize(std::vector<Point_2> ps, char x_or_y)
 }
 
 template<class Kernel>
-Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_edges_boundaries_and_recreate_convex_hull(Point_2 point)
+typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_edges_boundaries_and_recreate_convex_hull(Point_2 point)
 {
     Incremental<Kernel>::RedEdgesBoundaries vertices;
     int iter_to_insert = 0;
@@ -169,7 +176,7 @@ Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_edges_boun
         edge_counter++;
     }
 
-    Convex_Hull_Polygon.insert(Convex_Hull_Edge.vertices_begin() + iter_to_insert);
+    Convex_Hull_Polygon.insert(Convex_Hull_Polygon.vertices_begin() + iter_to_insert);
 
     return vertices;
 }
@@ -238,13 +245,15 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
     for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
     {
         Polygon_2 temp_polygon(Real_Polygon);
+        Segment_2 seg;
+
         if(iter == Real_Polygon.vertices_end())
         {
-            Segment_2 seg(*iter, Real_Polygon.vertices_end());
+            seg = Segment_2(*iter, Real_Polygon.vertices_end());
         }
         else
         {
-            Segment_2 seg(*iter, *(iter + 1));
+            seg = Segment_2(*iter, *(iter + 1));
         }
 
         if(this->visible(seg, new_point))
@@ -274,15 +283,13 @@ bool Incremental<Kernel>::visible(Segment_2 seg, Point_2 new_point)
 
         for(int i = 0 ; i < 2 ; i++)
         {
-            auto intersect_p;
-
-            intersect_p = intersection(Segment_2(seg.Edge[i], new_point), PolygonEdge);
+            auto intersect_p = intersection(Segment_2(seg[i], new_point), PolygonEdge);
 
             if(intersect_p)
             {
-                if(Point_2* p=boost::get<Point_2 >(&*cross_point1))
+                if(Point_2* p=boost::get<Point_2 >(&*intersect_p))
                 {
-                    if(*p!=(Point_2)Edge[0]) return false;
+                    if(*p!=(Point_2)seg[i]) return false;
                 }
                 else
                 {
