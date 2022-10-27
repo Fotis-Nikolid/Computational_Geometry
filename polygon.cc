@@ -2,8 +2,8 @@
 #include <CGAL/Polygon_2.h>
 #include <iostream>
 #include <vector>
-//#include "hull.h"
-//#include "polygon.h"
+#include "hull.h"
+#include "polygon.h"
 
 
 template<class Kernel>
@@ -26,7 +26,7 @@ std::vector<CGAL::Point_2<Kernel>> Polygon<Kernel>::Points() {
     return Polygon.vertices();
 }
 template<class Kernel>
-Polygon_2 Polygon<Kernel>::get_Polygon() {
+CGAL::Polygon_2<Kernel> Polygon<Kernel>::get_Polygon() {
     return this->Polygon;
 }
 template<class Kernel>

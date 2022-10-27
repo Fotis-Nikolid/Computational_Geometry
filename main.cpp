@@ -1,4 +1,5 @@
-/*#include <iostream>
+///*
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -10,6 +11,7 @@
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Point_2<K> Point_2;
 typedef CGAL::Segment_2<K> Segment_2;
+typedef CGAL::Polygon_2<K> Polygon_2;
 
 int main(int argc, char *argv[])
 {
@@ -84,7 +86,8 @@ int main(int argc, char *argv[])
     poly.Hull_Based(v_points,edge_selection);    
   }
   else {
-
+  
+  }
 
     std::cout<<poly.Size()<<std::endl;
     if (poly.Simple()) {
@@ -97,4 +100,4 @@ int main(int argc, char *argv[])
   
   return 0;
 }
-*/
+//*/

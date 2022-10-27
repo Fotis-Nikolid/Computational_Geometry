@@ -12,6 +12,7 @@
 
 
 
+
 //internal helper functions
 
 //checks for visibility between the new point and the vertices of the edge we want to break
@@ -87,9 +88,8 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
     if (point_candidates.size()==0) {
         std::cout<<"No visible points found"<<std::endl;
         std::cout<<"Out of :"<<Polygon.edges().size()<<" candidates"<<std::endl;
-        std::cout<<"Num points"<<remaining_points.size()<<std::endl;
+        std::cout<<"Num points left: "<<remaining_points.size()<<std::endl;
         std::cout<<"Criteria: "<<criteria<<std::endl;
-        exit(EXIT_FAILURE);
         return 0;
     }
     Point_2 new_point;
@@ -170,24 +170,31 @@ double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Cri
     Point_2 n_point;
     double Area;
     std::ofstream file;
+    /*
     file.open("steps.txt");
     for (const Point_2 p:Points) {
         file<<p<<std::endl;
     }
     file<<"-"<<std::endl;
-    
+    */
     CGAL::convex_hull_2(Points.begin(),Points.end(),std::back_inserter(Polygon));//initialize polygon from the convex hull, so that we can break it's edges and assimilate points into the polygon
     for (const Point_2 vertex: Polygon.vertices()) {
         Points.remove(vertex);//remove any point part of the convex hull from the list of points(as it is already part of the polygon)
     }
     Area=Polygon.area();
     while (Points.size()>0) {//iterate over list of points
-        Area-=Edge_Selection(Polygon,Points,Criteria);//add point to polygon by breaking of the appropriate edge and then update the polygon's area based on the area lost from assimilated a point
+    std::cout<<Polygon.vertices().size()<<std::endl;
+        double loss=Edge_Selection(Polygon,Points,Criteria);//add point to polygon by breaking of the appropriate edge and then update the polygon's area based on the area lost from assimilated a point
+        if (loss==0) {
+            return 0;
+        }
+        Area-=loss;
+        /*
         for (const Segment_2 edge: Polygon.edges()) {
             file<<edge<<std::endl;
         }
         file<<"-"<<std::endl;
-
+        */
     }
     return Area;
 }
