@@ -179,7 +179,9 @@ typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_e
 
     Convex_Hull_Polygon.insert(Convex_Hull_Polygon.vertices_begin() + iter_to_insert, point);
 
-    for(std::vector<int>::iterator iter = Vertices_to_remove.begin() , int erased_elm = 0 ; iter < Vertices_to_remove.end() ; iter++)
+    int erased_elm = 0;
+
+    for(std::vector<int>::iterator iter = Vertices_to_remove.begin() ; iter < Vertices_to_remove.end() ; iter++)
     {
         Convex_Hull_Polygon.erase(Convex_Hull_Polygon.vertices_begin() + (*iter) - erased_elm + 1);
         erased_elm++;
