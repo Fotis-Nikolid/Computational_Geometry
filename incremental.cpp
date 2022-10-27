@@ -261,3 +261,36 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
 
     Real_Polygon = NewPolygon;
 }
+
+template<class Kernel>
+bool Incremental<Kernel>::visible(Segment_2 seg, Point_2 new_point)
+{
+    for(Segment_2 PolygonEdge : Real_Polygon.edges())
+    {
+        if(PolygonEdge == seg)
+        {
+            continue;
+        }
+
+        for(int i = 0 ; i < 2 ; i++)
+        {
+            auto intersect_p;
+
+            intersect_p = intersection(Segment_2(seg.Edge[i], new_point), PolygonEdge);
+
+            if(intersect_p)
+            {
+                if(Point_2* p=boost::get<Point_2 >(&*cross_point1))
+                {
+                    if(*p!=(Point_2)Edge[0]) return false;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
