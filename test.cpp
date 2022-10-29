@@ -1,4 +1,4 @@
-/*#include <iostream>
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -7,7 +7,7 @@
 #include <regex>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
-#include "hull.h"
+#include "polygon.h"
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Point_2<K> Point_2;
@@ -93,23 +93,28 @@ int main(int argc,char* argv[]) {
             }
 
             //Incremental<K> agl1;
-            Hull<K> alg2;
+            Polygon<K> p1,p2,p3;
 
-            Polygon_2 p1,p2,p3;
+            p1.Algorithm(v_points, "1", "1a");
+            p2.Algorithm(v_points, "2", "1a");
+            p3.Algorithm(v_points, "3", "1a");
             
-            double random,min,max;
+            double random = p1.Area();
+            double min = p2.Area();
+            double max = p3.Area();
             bool success=true;
+
             std::cout<<file_name<<std::endl;
-            random=alg2.solve(p1,l1_points,'1');
+
             if (random!=0) {
-                if (!p1.is_simple()) {
+                if (!p1.Simple()) {
                     success=false;
                     std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 1"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
-                if (p1.vertices().size()!=points) {
+                if (p1.Size()!=points) {
                     success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p1.vertices().size()<<"<"<<points<<", 1"<<std::endl;
+                    std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p1.Size()<<"<"<<points<<", 1"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
             }
@@ -117,16 +122,15 @@ int main(int argc,char* argv[]) {
                 success=false;
                 std::cout<<"Hull error: "<<file_name<<" Deadlock, 1"<<std::endl;
             }
-            min=alg2.solve(p2,l2_points,'2');
             if (min!=0) {
-                if (!p2.is_simple()) {
+                if (!p2.Simple()) {
                     success=false;
                     std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 2"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
-                if (p2.vertices().size()!=points) {
+                if (p2.Size()!=points) {
                     success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p2.vertices().size()<<"<"<<points<<", 2"<<std::endl;
+                    std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p2.Size()<<"<"<<points<<", 2"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
             }
@@ -135,16 +139,15 @@ int main(int argc,char* argv[]) {
                 std::cout<<"Hull error: "<<file_name<<" Deadlock, 2"<<std::endl;
             }
             //std::cout<<"H2"<<std::endl;
-            max=alg2.solve(p3,l3_points,'3');
             if (max!=0) {
-                if (!p3.is_simple()) {
+                if (!p3.Simple()) {
                     success=false;
                     std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 3"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
-                if (p3.vertices().size()!=points) {
+                if (p3.Size()!=points) {
                     success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p3.vertices().size()<<"<"<<points<<", 3"<<std::endl;
+                    std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p3.Size()<<"<"<<points<<", 3"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
             }
@@ -183,4 +186,3 @@ int main(int argc,char* argv[]) {
         return EXIT_FAILURE;
     }
 }
-*/

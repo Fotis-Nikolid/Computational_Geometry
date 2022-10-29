@@ -1,4 +1,3 @@
-///*
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -44,6 +43,10 @@ int main(int argc, char *argv[])
       {
         edge_selection=opt;
       }
+      else if(arg == "-initialization")
+      {
+        sorting = opt;
+      }
       else
       {
         std::cout << "Option " + arg + " is not avaible" << std::endl;
@@ -80,13 +83,12 @@ int main(int argc, char *argv[])
       v_points.push_back(Point_2(x,y));
       l_points.push_back(Point_2(x,y));
   }
-
   Polygon<K> poly;
   if (algorithm=="hull") {
-    poly.Hull_Based(v_points,edge_selection);    
+    poly.Algorithm(v_points,edge_selection);    
   }
   else {
-  
+    poly.Algorithm(v_points,edge_selection,sorting);
   }
 
     std::cout<<poly.Size()<<std::endl;
@@ -97,7 +99,5 @@ int main(int argc, char *argv[])
       std::cout<<"Error"<<std::endl;
     }
 
-  
   return 0;
 }
-//*/
