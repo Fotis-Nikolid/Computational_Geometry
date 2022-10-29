@@ -155,7 +155,7 @@ typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_e
     for(Segment_2 Convex_Hull_Edge : Convex_Hull_Polygon.edges())
     {
         //check if the edge is red
-        if(this->visible(Convex_Hull_Edge, point))
+        if(this->red_visible(Convex_Hull_Edge, point))
         {
             if(iter_to_insert == 0)
             {
@@ -253,7 +253,7 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
 
     for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
     {
-        Polygon_2 temp_polygon(Real_Polygon);
+        Polygon_2 temp_polygon = Polygon_2(Real_Polygon);
         Segment_2 seg;
 
         if(iter == Real_Polygon.vertices_end() - 1)
@@ -267,15 +267,13 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
 
         if(this->visible(seg, new_point))
         {
-            temp_polygon.insert(iter + 1, new_point);
+            temp_polygon.insert((iter - Real_Polygon.begin() + 1) + temp_polygon.begin(), new_point);
 
             if(compF(area, temp_polygon.area()))
             {
                 area = temp_polygon.area();
                 NewPolygon = temp_polygon;
             }
-
-            temp_polygon.erase(iter + 1);
         }
     }
 
@@ -311,4 +309,30 @@ bool Incremental<Kernel>::visible(Segment_2 seg, Point_2 new_point)
     }
 
     return true;
+}
+
+template<class Kernel>
+bool Incremental<Kernel>::red_visible(Segment_2 seg, Point_2 new_point) 
+{
+    CGAL::Orientation point_orientation = CGAL::orientation(new_point, seg[0], seg[1]);//find the relative position between the new point and the line created by the edge
+    CGAL::Orientation polygon_orientation;
+
+    if (point_orientation == CGAL::COLLINEAR) 
+    {
+        return false;//if point on top of the line presented by segment, then the semgment is not visible by the point
+    }
+
+    for (Point_2 vertex : Convex_Hull_Polygon.vertices()) 
+    {
+        if (seg[0] == vertex || seg[1] == vertex)
+        {
+            continue;
+        }
+
+        polygon_orientation = CGAL::orientation(vertex, seg[0], seg[1]);//find orientation between the line and the rest of the polygon
+        break;
+    }
+
+    return (point_orientation != polygon_orientation);//if point and polygon have different orientations to the semgent, then edge is visible by the point
+
 }
