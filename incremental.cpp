@@ -2,6 +2,13 @@
 #include <limits>
 #include "incremental.h"
 
+
+        Incremental(const std::vector<Point_2>, std::string, char);
+        float getPolygonArea();
+        Polygon_2 getPolygon();
+};
+
+
 template<class Kernel>
 Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, std::string how_to_sort, char how_to_remove_edge)
 {
@@ -234,22 +241,51 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
     double area;
     bool (*compF)(double, double);
 
-    switch(how_to_remove_edge)
+
+    if(how_to_remove_edge == '1')
     {
-        case '1':
-            return;
-            break;
-        case '2':
-            area = std::numeric_limits<double>::max();
-            compF = &cmp_area_more;
-            break;
-        case '3':
-            area = 0.0;
-            compF = &cmp_area_less;
-            break;
+        std::srand(std::time(nullptr));
+
+        std::vector<int> Visible_Edges;
+
+        for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
+        {
+            Segment_2 seg;
+
+            if(iter == Real_Polygon.vertices_end() - 1)
+            {
+                seg = Segment_2(*iter, *(Real_Polygon.vertices_end() - 1));
+            }
+            else
+            {
+                seg = Segment_2(*iter, *(iter + 1));
+            }
+
+            if(this->visible(seg, new_point))
+            {
+                Visible_Edges.push_back(iter - Real_Polygon.begin());
+            }
+        }
+        
+        int random_pick = std::rand()%(Visible_Edges.size());
+
+        Real_Polygon.insert(Visible_Edges[random_pick] + 1 + Real_Polygon.begin(), new_point);
+
+        return;
+    }
+    else if(how_to_remove_edge == '2')
+    {
+        area = std::numeric_limits<double>::max();
+    }
+    else if(how_to_remove_edge == '3')
+    {
+        area = 0.0;
     }
 
     Polygon_2 NewPolygon(Real_Polygon);
+
+    std::cout << lower_limit_iter - Real_Polygon.begin();
+    std::cout << uper_limit_iter - Real_Polygon.begin() << std::endl;
 
     for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
     {
@@ -269,10 +305,21 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
         {
             temp_polygon.insert((iter - Real_Polygon.begin() + 1) + temp_polygon.begin(), new_point);
 
-            if(compF(area, temp_polygon.area()))
+            if(how_to_remove_edge == '2')
             {
-                area = temp_polygon.area();
-                NewPolygon = temp_polygon;
+                if(area > temp_polygon.area())
+                {
+                    area = temp_polygon.area();
+                    NewPolygon = temp_polygon;
+                }
+            }
+            else if(how_to_remove_edge == '3')
+            {
+                if(area < temp_polygon.area())
+                {
+                    area = temp_polygon.area();
+                    NewPolygon = temp_polygon;
+                }
             }
         }
     }
