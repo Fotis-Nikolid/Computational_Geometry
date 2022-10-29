@@ -2,6 +2,8 @@
 #include <CGAL/Polygon_2.h>
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <limits>
 
 template<class Kernel>
 class Incremental 

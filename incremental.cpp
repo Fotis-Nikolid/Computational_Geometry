@@ -274,6 +274,8 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
                 area = temp_polygon.area();
                 NewPolygon = temp_polygon;
             }
+
+            temp_polygon.erase(iter + 1);
         }
     }
 
