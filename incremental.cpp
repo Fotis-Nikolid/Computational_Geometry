@@ -1,6 +1,25 @@
 #include <algorithm>
 #include <limits>
 #include "incremental.h"
+#include <CGAL/enum.h>
+
+template<class Kernel>
+bool Incremental<Kernel>::red_visible(CGAL::Point_2<Kernel> n_point,CGAL::Segment_2<Kernel> edge,CGAL::Polygon_2<Kernel> Polygon) {
+    CGAL::Orientation point_orientation=CGAL::orientation(n_point,edge[0],edge[1]);//find the relative position between the new point and the line created by the edge
+    CGAL::Orientation polygon_orientation;
+    if (point_orientation==CGAL::COLLINEAR) {
+        return false;//if point on top of the line presented by segment, then the semgment is not visible by the point
+    }
+    for (const Point_2 vertex:Polygon.vertices()) {
+        if (edge[0]==vertex||edge[1]==vertex) {
+            continue;
+        }
+        polygon_orientation=CGAL::orientation(vertex,edge[0],edge[1]);//find orientation between the line and the rest of the polygon
+        break;
+    }
+    return (point_orientation!=polygon_orientation)?true:false;//if point and polygon have different orientations to the semgent, then edge is visible by the point
+
+}
 
 template<class Kernel>
 Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, std::string how_to_sort, char how_to_remove_edge)
@@ -155,7 +174,7 @@ typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_e
     for(Segment_2 Convex_Hull_Edge : Convex_Hull_Polygon.edges())
     {
         //check if the edge is red
-        if(this->visible(Convex_Hull_Edge, point))
+        if(this->red_visible(point,Convex_Hull_Edge,Convex_Hull_Polygon))
         {
             if(iter_to_insert == 0)
             {
