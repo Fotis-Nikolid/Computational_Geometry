@@ -46,6 +46,10 @@ class Incremental
         Incremental(const std::vector<Point_2>, std::string, char);
         float getPolygonArea();
         Polygon_2 getPolygon();
+<<<<<<< HEAD
 };
 
 #endif
+=======
+};
+>>>>>>> 14f431ec3714c3d081ea7267788701525d9a8617
