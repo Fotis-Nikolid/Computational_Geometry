@@ -42,5 +42,4 @@ class Incremental
         float getPolygonArea();
         Polygon_2 getPolygon();
 };
-
 #endif
