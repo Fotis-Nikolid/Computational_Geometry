@@ -1,13 +1,7 @@
 #include <algorithm>
 #include <limits>
+#include <cmath>
 #include "incremental.h"
-
-
-        Incremental(const std::vector<Point_2>, std::string, char);
-        float getPolygonArea();
-        Polygon_2 getPolygon();
-};
-
 
 template<class Kernel>
 Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, std::string how_to_sort, char how_to_remove_edge)
@@ -31,7 +25,7 @@ Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, std::string 
 template<class Kernel>
 float Incremental<Kernel>::getPolygonArea()
 {
-    return Real_Polygon.area();
+    return std::abs(Real_Polygon.area());
 }
 
 template<class Kernel>
@@ -197,15 +191,6 @@ typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_e
     return vertices;
 }
 
-bool cmp_area_less(double area1, double area2)
-{
-    return area1 < area2 ;
-}
-bool cmp_area_more(double area1, double area2)
-{
-    return area1 > area2 ;
-}
-
 template<class Kernel>
 void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBoundaries red_limits, Point_2 new_point, char how_to_remove_edge)
 {
@@ -213,41 +198,49 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
     typename Polygon_2::Vertices::iterator uper_limit_iter = Real_Polygon.vertices_begin();
     int vertices_counter = 0;
 
+    //find the range of the candidate edges that can be broken and connected with the new vertex
+    //we are searching for first_vertex and second_vertex of the red_limits
+    //expect in one case , the first_vertex will be always found before the second_vertex
+    //in the case that the last edge of the polygon is in that range then the second_vertex will be found in vertices_begin()
     for(Point_2 p : Real_Polygon.vertices())
     {
+        //if we have found the range then there no point in looking up more vertices
         if(lower_limit_iter != Real_Polygon.vertices_begin() && uper_limit_iter != Real_Polygon.vertices_begin()) break;
 
+        //if we found the first_vertex
         if(p == red_limits.first_vertex)
         {
+            //save the iterator
             lower_limit_iter += vertices_counter;
-
+            //if we are at the case that the second_vertex was found in potition 0 then there no reason to continue the loop
             if(uper_limit_iter != Real_Polygon.vertices_begin()) break;
         }
+        //if we found the second_vertex
         else if(p == red_limits.second_vertex)
         {
+            //if we found it in potition 0 then set the uper_limit_iter to the last vertex of the polygon
             if(vertices_counter == 0)
             {
                 uper_limit_iter = Real_Polygon.vertices_end() - 1;
             }
             else
             {
+                //else just set the uper_limit_iter to the vertex before of that we found
                 uper_limit_iter += (vertices_counter - 1);
+                //if we did not found the vertex at potiton 0 it means we have arleady found the first_vertex too so we stop the loop
                 break;
             }   
         }
         vertices_counter++;
     }
 
-    double area;
-    bool (*compF)(double, double);
-
-
+    //in the case we are picking random edge to brake
     if(how_to_remove_edge == '1')
     {
         std::srand(std::time(nullptr));
-
-        std::vector<int> Visible_Edges;
-
+        
+        std::vector<int> Visible_Edges;//vector that saves the potition of the visible edges
+        //from the candidate edges find the visible ones
         for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
         {
             Segment_2 seg;
@@ -266,65 +259,79 @@ void Incremental<Kernel>::construct_new_polygon(Incremental<Kernel>::RedEdgesBou
                 Visible_Edges.push_back(iter - Real_Polygon.begin());
             }
         }
-        
+        //pick a random visible edge to break
         int random_pick = std::rand()%(Visible_Edges.size());
-
+        //insert the two new edges in the random potition
         Real_Polygon.insert(Visible_Edges[random_pick] + 1 + Real_Polygon.begin(), new_point);
-
-        return;
     }
+    //if we try to find the min area polygon
     else if(how_to_remove_edge == '2')
     {
-        area = std::numeric_limits<double>::max();
+        double area = std::numeric_limits<double>::max();
+        Polygon_2 NewPolygon(Real_Polygon);
+
+        for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
+        {
+            Polygon_2 temp_polygon = Polygon_2(Real_Polygon);
+            Segment_2 seg;
+
+            if(iter == Real_Polygon.vertices_end() - 1)
+            {
+                seg = Segment_2(*iter, *(Real_Polygon.vertices_end() - 1));
+            }
+            else
+            {
+                seg = Segment_2(*iter, *(iter + 1));
+            }
+
+            if(this->visible(seg, new_point))
+            {
+                temp_polygon.insert((iter - Real_Polygon.begin() + 1) + temp_polygon.begin(), new_point);
+
+                if(area > std::abs(temp_polygon.area()))
+                {
+                    area = std::abs(temp_polygon.area());
+                    NewPolygon = temp_polygon;
+                }
+            }
+        }
+
+        Real_Polygon = NewPolygon;
     }
+    //if we try to find the max area polygon
     else if(how_to_remove_edge == '3')
     {
-        area = 0.0;
-    }
+        double area = 0.0;
+        Polygon_2 NewPolygon(Real_Polygon);
 
-    Polygon_2 NewPolygon(Real_Polygon);
-
-    std::cout << lower_limit_iter - Real_Polygon.begin();
-    std::cout << uper_limit_iter - Real_Polygon.begin() << std::endl;
-
-    for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
-    {
-        Polygon_2 temp_polygon = Polygon_2(Real_Polygon);
-        Segment_2 seg;
-
-        if(iter == Real_Polygon.vertices_end() - 1)
+        for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
         {
-            seg = Segment_2(*iter, *(Real_Polygon.vertices_end() - 1));
-        }
-        else
-        {
-            seg = Segment_2(*iter, *(iter + 1));
-        }
+            Polygon_2 temp_polygon = Polygon_2(Real_Polygon);
+            Segment_2 seg;
 
-        if(this->visible(seg, new_point))
-        {
-            temp_polygon.insert((iter - Real_Polygon.begin() + 1) + temp_polygon.begin(), new_point);
-
-            if(how_to_remove_edge == '2')
+            if(iter == Real_Polygon.vertices_end() - 1)
             {
-                if(area > temp_polygon.area())
-                {
-                    area = temp_polygon.area();
-                    NewPolygon = temp_polygon;
-                }
+                seg = Segment_2(*iter, *(Real_Polygon.vertices_end() - 1));
             }
-            else if(how_to_remove_edge == '3')
+            else
             {
-                if(area < temp_polygon.area())
+                seg = Segment_2(*iter, *(iter + 1));
+            }
+
+            if(this->visible(seg, new_point))
+            {
+                temp_polygon.insert((iter - Real_Polygon.begin() + 1) + temp_polygon.begin(), new_point);
+
+                if(area < std::abs(temp_polygon.area()))
                 {
-                    area = temp_polygon.area();
+                    area = std::abs(temp_polygon.area());
                     NewPolygon = temp_polygon;
                 }
             }
         }
-    }
 
-    Real_Polygon = NewPolygon;
+        Real_Polygon = NewPolygon;
+    }
 }
 
 template<class Kernel>
@@ -364,9 +371,10 @@ bool Incremental<Kernel>::red_visible(Segment_2 seg, Point_2 new_point)
     CGAL::Orientation point_orientation = CGAL::orientation(new_point, seg[0], seg[1]);//find the relative position between the new point and the line created by the edge
     CGAL::Orientation polygon_orientation;
 
+    //if point on top of the line presented by segment, then the semgment is not visible by the point
     if (point_orientation == CGAL::COLLINEAR) 
     {
-        return false;//if point on top of the line presented by segment, then the semgment is not visible by the point
+        return false;
     }
 
     for (Point_2 vertex : Convex_Hull_Polygon.vertices()) 
@@ -375,11 +383,11 @@ bool Incremental<Kernel>::red_visible(Segment_2 seg, Point_2 new_point)
         {
             continue;
         }
-
-        polygon_orientation = CGAL::orientation(vertex, seg[0], seg[1]);//find orientation between the line and the rest of the polygon
+        //find orientation between the line and the rest of the polygon
+        polygon_orientation = CGAL::orientation(vertex, seg[0], seg[1]);
         break;
     }
-
-    return (point_orientation != polygon_orientation);//if point and polygon have different orientations to the semgent, then edge is visible by the point
+    //if point and polygon have different orientations to the semgent, then edge is visible by the point
+    return (point_orientation != polygon_orientation);
 
 }
