@@ -2,12 +2,7 @@
 #define INCREMENTAL_H
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
-#include <iostream>
 #include <vector>
-#include <algorithm>
-#include <limits>
-#include <cstdlib>
-#include <ctime>
 
 template<class Kernel>
 class Incremental 

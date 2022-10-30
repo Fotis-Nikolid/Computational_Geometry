@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <limits>
 #include <cmath>
+#include <cstdlib>
+#include <ctime>
 #include "incremental.h"
 
 template<class Kernel>
