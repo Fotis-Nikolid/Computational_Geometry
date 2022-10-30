@@ -1,4 +1,4 @@
-#ifdef INCREMENTAL_H
+#ifndef INCREMENTAL_H
 #define INCREMENTAL_H
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
@@ -17,12 +17,12 @@ class Incremental
         Polygon_2 Convex_Hull_Polygon;
         Polygon_2 Real_Polygon;
 
-        void Initialize(std::vector<Point_2>&, char);
-        static bool comp_x_less(Point_2 p1, Point_2 p2);
-        static bool comp_x_more(Point_2 p1, Point_2 p2);
-        static bool comp_y_less(Point_2 p1, Point_2 p2);
-        static bool comp_y_more(Point_2 p1, Point_2 p2);
-        void Sort(std::vector<Point_2>&, std::string);
+        void Initialize(std::vector<Point_2>&, const char);
+        static bool comp_x_less(const Point_2, const Point_2);
+        static bool comp_x_more(const Point_2, const Point_2);
+        static bool comp_y_less(const Point_2, const Point_2);
+        static bool comp_y_more(const Point_2, const Point_2);
+        void Sort(std::vector<Point_2>&, const std::string);
         bool red_visible(Segment_2, Point_2);
         bool visible(Segment_2, Point_2);
 
@@ -33,13 +33,14 @@ class Incremental
                 Point_2 second_vertex;
         };
 
-        RedEdgesBoundaries find_red_edges_boundaries_and_recreate_convex_hull(Point_2);
+        RedEdgesBoundaries find_red_edges_boundaries_and_recreate_convex_hull(const Point_2);
 
-        void construct_new_polygon(RedEdgesBoundaries, Point_2, char);
+        void construct_new_polygon(const RedEdgesBoundaries, const Point_2, const char);
 
     public:
-        Incremental(const std::vector<Point_2>, std::string, char);
+        Incremental(const std::vector<Point_2>, const std::string, const char);
         float getPolygonArea();
         Polygon_2 getPolygon();
 };
+
 #endif

@@ -1,3 +1,5 @@
+#ifndef HULL_H
+#define HULL_H
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Triangle_2.h>
@@ -28,3 +30,5 @@ class Hull {
         
 
 };
+
+#endif

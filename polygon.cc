@@ -2,8 +2,6 @@
 #include <CGAL/Polygon_2.h>
 #include <iostream>
 #include <vector>
-#include "hull.h"
-#include "incremental.h"
 #include "polygon.h"
 
 
