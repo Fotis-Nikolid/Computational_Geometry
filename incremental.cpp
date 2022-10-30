@@ -5,6 +5,7 @@
 #include <ctime>
 #include "incremental.h"
 
+
 template<class Kernel>
 Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, std::string how_to_sort, char how_to_remove_edge)
 {
