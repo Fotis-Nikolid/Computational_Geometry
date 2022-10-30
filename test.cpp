@@ -71,7 +71,7 @@ int main(int argc,char* argv[]) {
             getline(file,line);
             double area;
             if (std::regex_search(line,match_obj,std::regex("\"([0-9]*)\""))) {
-                area=atoi(match_obj[1].str().c_str());
+                area=atof(match_obj[1].str().c_str());
             }
         
             std::list<Point_2> l1_points,l2_points,l3_points;
