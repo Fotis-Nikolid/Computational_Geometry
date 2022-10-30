@@ -7,17 +7,19 @@ template<class Kernel>
 Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, std::string how_to_sort, char how_to_remove_edge)
 {
     std::vector<Point_2> ps(Points);
-
+    //sort the ps vector
     this->Sort(ps, how_to_sort);
+    //create the triangle (if the have the same x or y then its not a triangle its a polygon)
     this->Initialize(ps, how_to_sort[0]);
 
+    //keep removing point from the end of the vector
     while(!ps.empty())
     {
         Point_2 point = ps.back();
         ps.pop_back();
-
+        //find the red edges and create the new convex hull polygon with the new point
         Incremental<Kernel>::RedEdgesBoundaries limits = this->find_red_edges_boundaries_and_recreate_convex_hull(point);
-
+        //find a edge of the real polygon and add the new point
         this->construct_new_polygon(limits, point, how_to_remove_edge);
     }
 }
@@ -121,17 +123,20 @@ bool equal_two_points(CGAL::Point_2<Kernel> A, CGAL::Point_2<Kernel> B, char x_o
 template<class Kernel>
 void Incremental<Kernel>::Initialize(std::vector<Point_2>& ps, char x_or_y)
 {
+    //and the last 3 points of the vecotr in the trinagle and remove them from the vector
     Point_2 A(ps.back());
     ps.pop_back();
     Point_2 B(ps.back());
     ps.pop_back();
     Point_2 C(ps.back());
     ps.pop_back();
-
+    
     Real_Polygon.push_back(A);
     Real_Polygon.push_back(B);
     Real_Polygon.push_back(C);
 
+    //if the 3 points have the same x or y (depending if are sorting with x or y)
+    //then keep adding points to the polygon until there are different
     if(equal_three_points(A, B, C, x_or_y))
     {
         Point_2 p;
@@ -152,24 +157,33 @@ typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_e
     Incremental<Kernel>::RedEdgesBoundaries vertices;
     int iter_to_insert = 0;
     int edge_counter = 0;
-    std::vector<int> Vertices_to_remove;
+
+    std::vector<int> Vertices_to_remove;//inside vertices that we be removed to create the new convex_hull_polygon
+
+    //the red edges are continous in the convex hull polygon
+    //we find the the vertex the red edges start (we save it as vertices.first_vertex)
+    //and the vertex that red edges end (we save it as vertices.second_vertex)
     for(Segment_2 Convex_Hull_Edge : Convex_Hull_Polygon.edges())
     {
         //check if the edge is red
         if(this->red_visible(Convex_Hull_Edge, point))
         {
+            //if this is the first red edge we find
             if(iter_to_insert == 0)
             {
                 iter_to_insert = edge_counter + 1;
                 vertices.first_vertex = Convex_Hull_Edge[0];
                 vertices.second_vertex = Convex_Hull_Edge[1];
             }
+            //if its not the first red edge we find
             else
             {
                 vertices.second_vertex = Convex_Hull_Edge[1];
+                //we need to remove Convex_Hull_Edge[0] to create the new convex hull
                 Vertices_to_remove.push_back(edge_counter);
             }
         }
+        //if we have already found red edges and this edge is not red then there are no more red edges in the polygon
         else if(iter_to_insert != 0)
         {
             break;
@@ -178,6 +192,7 @@ typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_e
         edge_counter++;
     }
 
+    //create the new convex hull
     Convex_Hull_Polygon.insert(Convex_Hull_Polygon.vertices_begin() + iter_to_insert, point);
 
     int erased_elm = 0;
