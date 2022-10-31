@@ -265,7 +265,7 @@ void Incremental<Kernel>::construct_new_polygon(const Incremental<Kernel>::RedEd
 
             if(iter == Real_Polygon.vertices_end() - 1)
             {
-                seg = Segment_2(*iter, *(Real_Polygon.vertices_end() - 1));
+                seg = Segment_2(*iter, *(Real_Polygon.vertices_begin()));
             }
             else
             {
@@ -290,26 +290,28 @@ void Incremental<Kernel>::construct_new_polygon(const Incremental<Kernel>::RedEd
 
         for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
         {
-            Polygon_2 temp_polygon = Polygon_2(Real_Polygon);
+            Triangle_2 temp_triangle;
             Segment_2 seg;
 
             if(iter == Real_Polygon.vertices_end() - 1)
             {
-                seg = Segment_2(*iter, *(Real_Polygon.vertices_end() - 1));
+                temp_triangle = Triangle_2(*iter, new_point, *(Real_Polygon.vertices_begin()));
+                seg = Segment_2(*iter, *(Real_Polygon.vertices_begin()));
             }
             else
             {
+                temp_triangle = Triangle_2(*iter, new_point, *(iter + 1));
                 seg = Segment_2(*iter, *(iter + 1));
             }
 
             if(this->visible(seg, new_point))
             {
-                temp_polygon.insert((iter - Real_Polygon.begin() + 1) + temp_polygon.begin(), new_point);
-
-                if(area > std::abs(temp_polygon.area()))
+                double temp_area = std::abs(temp_triangle.area());
+                if(area > temp_area)
                 {
-                    area = std::abs(temp_polygon.area());
-                    NewPolygon = temp_polygon;
+                    NewPolygon = Polygon_2(Real_Polygon);
+                    area = temp_area;
+                    NewPolygon.insert((iter - Real_Polygon.begin() + 1) + NewPolygon.begin(), new_point);
                 }
             }
         }
@@ -324,26 +326,28 @@ void Incremental<Kernel>::construct_new_polygon(const Incremental<Kernel>::RedEd
 
         for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
         {
-            Polygon_2 temp_polygon = Polygon_2(Real_Polygon);
+            Triangle_2 temp_triangle;
             Segment_2 seg;
 
             if(iter == Real_Polygon.vertices_end() - 1)
             {
-                seg = Segment_2(*iter, *(Real_Polygon.vertices_end() - 1));
+                temp_triangle = Triangle_2(*iter, new_point, *(Real_Polygon.vertices_begin()));
+                seg = Segment_2(*iter, *(Real_Polygon.vertices_begin()));
             }
             else
             {
+                temp_triangle = Triangle_2(*iter, new_point, *(iter + 1));
                 seg = Segment_2(*iter, *(iter + 1));
             }
 
             if(this->visible(seg, new_point))
             {
-                temp_polygon.insert((iter - Real_Polygon.begin() + 1) + temp_polygon.begin(), new_point);
-
-                if(area < std::abs(temp_polygon.area()))
+                double temp_area = std::abs(temp_triangle.area());
+                if(area < temp_area)
                 {
-                    area = std::abs(temp_polygon.area());
-                    NewPolygon = temp_polygon;
+                    NewPolygon = Polygon_2(Real_Polygon);
+                    area = temp_area;
+                    NewPolygon.insert((iter - Real_Polygon.begin() + 1) + NewPolygon.begin(), new_point);
                 }
             }
         }
