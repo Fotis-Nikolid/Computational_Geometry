@@ -150,7 +150,7 @@ void Incremental<Kernel>::Initialize(std::vector<Point_2>& ps, const char x_or_y
             ps.pop_back();            
         }while(equal_two_points(A, p, x_or_y));
     }
-
+    
     Convex_Hull_Polygon = Real_Polygon;
 }
 
