@@ -93,7 +93,10 @@ int main(int argc, char *argv[])
 
     std::cout<<poly.Size()<<std::endl;
     if (poly.Simple()) {
-      std::cout<<"Correct"<<std::endl;
+      if(poly.Size() == v_points.size())
+      {
+        std::cout<<"Correct"<<std::endl;
+      }
     }
     else {
       std::cout<<"Error"<<std::endl;
