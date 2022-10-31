@@ -98,7 +98,7 @@ void Incremental<Kernel>::Sort(std::vector<Point_2>& Points, const std::string h
 }
 
 template<class Kernel>
-bool equal_three_points(CGAL::Point_2<Kernel> A, CGAL::Point_2<Kernel> B, CGAL::Point_2<Kernel> C, char x_or_y)
+bool equal_three_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel> B, const CGAL::Point_2<Kernel> C, const char x_or_y)
 {
     if(x_or_y == '1')
     {
@@ -111,7 +111,7 @@ bool equal_three_points(CGAL::Point_2<Kernel> A, CGAL::Point_2<Kernel> B, CGAL::
 }
 
 template<class Kernel>
-bool equal_two_points(CGAL::Point_2<Kernel> A, CGAL::Point_2<Kernel> B, char x_or_y)
+bool equal_two_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel> B, const char x_or_y)
 {
     if(x_or_y == '1')
     {
@@ -353,7 +353,7 @@ void Incremental<Kernel>::construct_new_polygon(const Incremental<Kernel>::RedEd
 }
 
 template<class Kernel>
-bool Incremental<Kernel>::visible(Segment_2 seg, Point_2 new_point)
+bool Incremental<Kernel>::visible(const Segment_2 seg, const Point_2 new_point)
 {
     for(Segment_2 PolygonEdge : Real_Polygon.edges())
     {
@@ -384,7 +384,7 @@ bool Incremental<Kernel>::visible(Segment_2 seg, Point_2 new_point)
 }
 
 template<class Kernel>
-bool Incremental<Kernel>::red_visible(Segment_2 seg, Point_2 new_point) 
+bool Incremental<Kernel>::red_visible(const Segment_2 seg, const Point_2 new_point) 
 {
     CGAL::Orientation point_orientation = CGAL::orientation(new_point, seg[0], seg[1]);//find the relative position between the new point and the line created by the edge
     CGAL::Orientation polygon_orientation;

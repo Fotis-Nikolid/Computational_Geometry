@@ -23,8 +23,8 @@ class Incremental
         static bool comp_y_less(const Point_2, const Point_2);
         static bool comp_y_more(const Point_2, const Point_2);
         void Sort(std::vector<Point_2>&, const std::string);
-        bool red_visible(Segment_2, Point_2);
-        bool visible(Segment_2, Point_2);
+        bool red_visible(const Segment_2, const Point_2);
+        bool visible(const Segment_2, const Point_2);
 
         class RedEdgesBoundaries
         {
