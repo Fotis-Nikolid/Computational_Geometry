@@ -16,7 +16,7 @@ template<class Kernel> class Incremental
         Polygon_2 Convex_Hull_Polygon;
         Polygon_2 Real_Polygon;
 
-        void Initialize(std::vector<Point_2>&, const char);
+        void Initialize(std::vector<Point_2>&);
         void Sort(std::vector<Point_2>&, const std::string);
         bool red_visible(const Segment_2, const Point_2);
         bool visible(const Segment_2, const Point_2);

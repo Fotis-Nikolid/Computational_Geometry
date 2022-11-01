@@ -21,7 +21,7 @@ template<class Kernel> Incremental<Kernel>::Incremental(const std::vector<Point_
     //sort the ps vector
     this->Sort(ps, how_to_sort);
     //create the triangle (if the have the same x or y then its not a triangle its a polygon)
-    this->Initialize(ps, how_to_sort[0]);
+    this->Initialize(ps);
 
     //keep removing point from the end of the vector
     while(!ps.empty())
@@ -98,31 +98,17 @@ template<class Kernel> void Incremental<Kernel>::Sort(std::vector<Point_2>& Poin
     }
 }
 
-template<class Kernel> bool equal_three_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel> B, const CGAL::Point_2<Kernel> C, const char x_or_y)
+template<class Kernel> inline bool equal_three_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel> B, const CGAL::Point_2<Kernel> C)
 {
-    if(x_or_y == '1')
-    {
-        return (A.x() == B.x()) && (B.x() == C.x());
-    }
-    else
-    {
-        return (A.y() == B.y()) && (B.y() == C.y());
-    }
+    return ((A.x() == B.x()) && (B.x() == C.x())) || ((A.y() == B.y()) && (B.y() == C.y()));
 }
 
-template<class Kernel> bool equal_two_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel> B, const char x_or_y)
+template<class Kernel> inline bool equal_two_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel> B)
 {
-    if(x_or_y == '1')
-    {
-        return (A.x() == B.x());
-    }
-    else
-    {
-        return (A.y() == B.y());
-    }
+    return (A.x() == B.x()) || (A.y() == B.y());
 }
 
-template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>& ps, const char x_or_y)
+template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>& ps)
 {
     //and the last 3 points of the vecotr in the trinagle and remove them from the vector
     Point_2 A(ps.back());
@@ -136,9 +122,9 @@ template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>
     Real_Polygon.push_back(B);
     Real_Polygon.push_back(C);
 
-    //if the 3 points have the same x or y (depending if we are sorting with x or y)
+    //if the 3 points have the same x or y
     //then keep adding points to the polygon until there are different
-    if(equal_three_points(A, B, C, x_or_y))
+    if(equal_three_points(A, B, C))
     {
         Point_2 p;
         do
@@ -146,7 +132,7 @@ template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>
             p = Point_2(ps.back());
             Real_Polygon.push_back(p);
             ps.pop_back();            
-        }while(equal_two_points(A, p, x_or_y));
+        }while(equal_two_points(A, p));
     }
     
     Convex_Hull_Polygon = Real_Polygon;
