@@ -1,3 +1,5 @@
+#ifndef HULL_CC
+#define HULL_CC
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Triangle_2.h>
@@ -198,3 +200,5 @@ double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Cri
     }
     return Area;
 }
+
+#endif
