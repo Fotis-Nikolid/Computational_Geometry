@@ -136,7 +136,7 @@ template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>
     Real_Polygon.push_back(B);
     Real_Polygon.push_back(C);
 
-    //if the 3 points have the same x or y (depending if are sorting with x or y)
+    //if the 3 points have the same x or y (depending if we are sorting with x or y)
     //then keep adding points to the polygon until there are different
     if(equal_three_points(A, B, C, x_or_y))
     {
