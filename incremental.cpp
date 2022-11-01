@@ -299,12 +299,15 @@ template<class Kernel> void Incremental<Kernel>::construct_new_polygon(const Inc
                 temp_triangle = Triangle_2(*iter, new_point, *(iter + 1));
                 seg = Segment_2(*iter, *(iter + 1));
             }
-
+            //if the edge with the current vertex and the next one is visible from the new vertex
             if(this->visible(seg, new_point))
             {
+                //create a traingle with the 2 old vertices and the new one
                 double temp_area = std::abs(temp_triangle.area());
+                //if the area of the triangle is less than the old one pick this triangle as min
                 if(area > temp_area)
                 {
+                    //create the new polygon with the 2 new edges
                     NewPolygon = Polygon_2(Real_Polygon);
                     area = temp_area;
                     NewPolygon.insert((iter - Real_Polygon.begin() + 1) + NewPolygon.begin(), new_point);
@@ -335,12 +338,15 @@ template<class Kernel> void Incremental<Kernel>::construct_new_polygon(const Inc
                 temp_triangle = Triangle_2(*iter, new_point, *(iter + 1));
                 seg = Segment_2(*iter, *(iter + 1));
             }
-
+            //if the edge with the current vertex and the next one is visible from the new vertex
             if(this->visible(seg, new_point))
             {
+                //create a traingle with the 2 old vertices and the new one
                 double temp_area = std::abs(temp_triangle.area());
+                //if the area of the triangle is less than the old one pick this triangle as min
                 if(area < temp_area)
                 {
+                    //create the new polygon with the 2 new edges
                     NewPolygon = Polygon_2(Real_Polygon);
                     area = temp_area;
                     NewPolygon.insert((iter - Real_Polygon.begin() + 1) + NewPolygon.begin(), new_point);
