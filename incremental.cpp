@@ -45,7 +45,7 @@ template<class Kernel> CGAL::Polygon_2<Kernel> Incremental<Kernel>::getPolygon()
     return Real_Polygon;
 }
 
-template<class Kernel> bool Incremental<Kernel>::comp_x_less(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
+template<class Kernel> bool comp_x_less(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
 {
     if(p1.x() == p2.x())
     {
@@ -53,7 +53,7 @@ template<class Kernel> bool Incremental<Kernel>::comp_x_less(const CGAL::Point_2
     }
     return (p1.x() < p2.x());
 }
-template<class Kernel> bool Incremental<Kernel>::comp_x_more(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
+template<class Kernel> bool comp_x_more(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
 {
     if(p1.x() == p2.x())
     {
@@ -61,7 +61,7 @@ template<class Kernel> bool Incremental<Kernel>::comp_x_more(const CGAL::Point_2
     }
     return (p1.x() > p2.x());
 }
-template<class Kernel> bool Incremental<Kernel>::comp_y_less(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
+template<class Kernel> bool comp_y_less(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
 {
     if(p1.y() == p2.y())
     {
@@ -69,7 +69,7 @@ template<class Kernel> bool Incremental<Kernel>::comp_y_less(const CGAL::Point_2
     }
     return (p1.y() < p2.y());
 }
-template<class Kernel> bool Incremental<Kernel>::comp_y_more(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
+template<class Kernel> bool comp_y_more(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
 {
     if(p1.y() == p2.y())
     {
@@ -82,19 +82,19 @@ template<class Kernel> void Incremental<Kernel>::Sort(std::vector<Point_2>& Poin
 {
     if(how_to_sort == "1a")
     {
-        std::sort(Points.begin(), Points.end(), comp_x_less);
+        std::sort(Points.begin(), Points.end(), comp_x_less<Kernel>);
     }
     else if(how_to_sort == "1b")
     {
-        std::sort(Points.begin(), Points.end(), comp_x_more);
+        std::sort(Points.begin(), Points.end(), comp_x_less<Kernel>);
     }
     else if(how_to_sort == "2a")
     {
-        std::sort(Points.begin(), Points.end(), comp_y_less);
+        std::sort(Points.begin(), Points.end(), comp_x_less<Kernel>);
     }
     else if(how_to_sort == "2b")
     {
-        std::sort(Points.begin(), Points.end(), comp_y_more);
+        std::sort(Points.begin(), Points.end(), comp_x_less<Kernel>);
     }
 }
 
