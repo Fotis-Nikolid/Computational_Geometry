@@ -4,8 +4,7 @@
 #include <CGAL/Polygon_2.h>
 #include <vector>
 
-template<class Kernel>
-class Incremental 
+template<class Kernel> class Incremental 
 {
     
     typedef CGAL::Polygon_2<Kernel> Polygon_2;
@@ -42,5 +41,7 @@ class Incremental
         float getPolygonArea();
         Polygon_2 getPolygon();
 };
+
+#include "incremental.cpp"
 
 #endif

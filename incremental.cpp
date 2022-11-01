@@ -1,3 +1,5 @@
+#ifndef INCREMENTAL_CPP
+#define INCREMENTAL_CPP
 #include <algorithm>
 #include <limits>
 #include <cmath>
@@ -6,8 +8,7 @@
 #include "incremental.h"
 
 
-template<class Kernel>
-Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, const std::string how_to_sort, const char how_to_remove_edge)
+template<class Kernel> Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, const std::string how_to_sort, const char how_to_remove_edge)
 {
     std::vector<Point_2> ps(Points);
     //sort the ps vector
@@ -27,20 +28,17 @@ Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, const std::s
     }
 }
 
-template<class Kernel>
-float Incremental<Kernel>::getPolygonArea()
+template<class Kernel> float Incremental<Kernel>::getPolygonArea()
 {
     return std::abs(Real_Polygon.area());
 }
 
-template<class Kernel>
-CGAL::Polygon_2<Kernel> Incremental<Kernel>::getPolygon()
+template<class Kernel> CGAL::Polygon_2<Kernel> Incremental<Kernel>::getPolygon()
 {
     return Real_Polygon;
 }
 
-template<class Kernel>
-bool Incremental<Kernel>::comp_x_less(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
+template<class Kernel> bool Incremental<Kernel>::comp_x_less(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
 {
     if(p1.x() == p2.x())
     {
@@ -48,8 +46,7 @@ bool Incremental<Kernel>::comp_x_less(const CGAL::Point_2<Kernel> p1, const CGAL
     }
     return (p1.x() < p2.x());
 }
-template<class Kernel>
-bool Incremental<Kernel>::comp_x_more(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
+template<class Kernel> bool Incremental<Kernel>::comp_x_more(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
 {
     if(p1.x() == p2.x())
     {
@@ -57,8 +54,7 @@ bool Incremental<Kernel>::comp_x_more(const CGAL::Point_2<Kernel> p1, const CGAL
     }
     return (p1.x() > p2.x());
 }
-template<class Kernel>
-bool Incremental<Kernel>::comp_y_less(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
+template<class Kernel> bool Incremental<Kernel>::comp_y_less(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
 {
     if(p1.y() == p2.y())
     {
@@ -66,8 +62,7 @@ bool Incremental<Kernel>::comp_y_less(const CGAL::Point_2<Kernel> p1, const CGAL
     }
     return (p1.y() < p2.y());
 }
-template<class Kernel>
-bool Incremental<Kernel>::comp_y_more(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
+template<class Kernel> bool Incremental<Kernel>::comp_y_more(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
 {
     if(p1.y() == p2.y())
     {
@@ -76,8 +71,7 @@ bool Incremental<Kernel>::comp_y_more(const CGAL::Point_2<Kernel> p1, const CGAL
     return (p1.y() > p2.y());
 }
 
-template<class Kernel>
-void Incremental<Kernel>::Sort(std::vector<Point_2>& Points, const std::string how_to_sort)
+template<class Kernel> void Incremental<Kernel>::Sort(std::vector<Point_2>& Points, const std::string how_to_sort)
 {
     if(how_to_sort == "1a")
     {
@@ -97,8 +91,7 @@ void Incremental<Kernel>::Sort(std::vector<Point_2>& Points, const std::string h
     }
 }
 
-template<class Kernel>
-bool equal_three_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel> B, const CGAL::Point_2<Kernel> C, const char x_or_y)
+template<class Kernel> bool equal_three_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel> B, const CGAL::Point_2<Kernel> C, const char x_or_y)
 {
     if(x_or_y == '1')
     {
@@ -110,8 +103,7 @@ bool equal_three_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kerne
     }
 }
 
-template<class Kernel>
-bool equal_two_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel> B, const char x_or_y)
+template<class Kernel> bool equal_two_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel> B, const char x_or_y)
 {
     if(x_or_y == '1')
     {
@@ -123,8 +115,7 @@ bool equal_two_points(const CGAL::Point_2<Kernel> A, const CGAL::Point_2<Kernel>
     }
 }
 
-template<class Kernel>
-void Incremental<Kernel>::Initialize(std::vector<Point_2>& ps, const char x_or_y)
+template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>& ps, const char x_or_y)
 {
     //and the last 3 points of the vecotr in the trinagle and remove them from the vector
     Point_2 A(ps.back());
@@ -154,8 +145,7 @@ void Incremental<Kernel>::Initialize(std::vector<Point_2>& ps, const char x_or_y
     Convex_Hull_Polygon = Real_Polygon;
 }
 
-template<class Kernel>
-typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_edges_boundaries_and_recreate_convex_hull(const Point_2 point)
+template<class Kernel> typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_edges_boundaries_and_recreate_convex_hull(const Point_2 point)
 {
     Incremental<Kernel>::RedEdgesBoundaries vertices;
     int iter_to_insert = 0;
@@ -209,8 +199,7 @@ typename Incremental<Kernel>::RedEdgesBoundaries Incremental<Kernel>::find_red_e
     return vertices;
 }
 
-template<class Kernel>
-void Incremental<Kernel>::construct_new_polygon(const Incremental<Kernel>::RedEdgesBoundaries red_limits, const Point_2 new_point, const char how_to_remove_edge)
+template<class Kernel> void Incremental<Kernel>::construct_new_polygon(const Incremental<Kernel>::RedEdgesBoundaries red_limits, const Point_2 new_point, const char how_to_remove_edge)
 {
     typename Polygon_2::Vertices::iterator lower_limit_iter = Real_Polygon.vertices_begin();
     typename Polygon_2::Vertices::iterator uper_limit_iter = Real_Polygon.vertices_begin();
@@ -356,8 +345,7 @@ void Incremental<Kernel>::construct_new_polygon(const Incremental<Kernel>::RedEd
     }
 }
 
-template<class Kernel>
-bool Incremental<Kernel>::visible(const Segment_2 seg, const Point_2 new_point)
+template<class Kernel> bool Incremental<Kernel>::visible(const Segment_2 seg, const Point_2 new_point)
 {
     for(Segment_2 PolygonEdge : Real_Polygon.edges())
     {
@@ -387,8 +375,7 @@ bool Incremental<Kernel>::visible(const Segment_2 seg, const Point_2 new_point)
     return true;
 }
 
-template<class Kernel>
-bool Incremental<Kernel>::red_visible(const Segment_2 seg, const Point_2 new_point) 
+template<class Kernel> bool Incremental<Kernel>::red_visible(const Segment_2 seg, const Point_2 new_point) 
 {
     CGAL::Orientation point_orientation = CGAL::orientation(new_point, seg[0], seg[1]);//find the relative position between the new point and the line created by the edge
     CGAL::Orientation polygon_orientation;
@@ -413,3 +400,5 @@ bool Incremental<Kernel>::red_visible(const Segment_2 seg, const Point_2 new_poi
     return (point_orientation != polygon_orientation);
 
 }
+
+#endif

@@ -7,8 +7,7 @@
 #include "hull.h"
 #include "incremental.h"
 
-template <class Kernel>
-class Polygon {
+template <class Kernel> class Polygon {
     typedef CGAL::Polygon_2<Kernel> Polygon_2;
     typedef CGAL::Point_2<Kernel>  Point_2;
     typedef CGAL::Segment_2<Kernel> Segment_2;
@@ -27,5 +26,7 @@ class Polygon {
         float Ratio();
         bool Simple();
 };
+
+#include "polygon.cc"
 
 #endif

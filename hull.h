@@ -31,4 +31,6 @@ class Hull {
 
 };
 
+#include "hull.cc"
+
 #endif
