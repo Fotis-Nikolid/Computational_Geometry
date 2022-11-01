@@ -91,17 +91,10 @@ int main(int argc, char *argv[])
   }
   
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  Polygon<K> poly;
-  Polygon_2 real_poly;
-  if (algorithm=="hull") {
-    poly.Algorithm(v_points,edge_selection);    
-  }
-  else {
-    poly.Algorithm(v_points,edge_selection,sorting);
-  }
+  Polygon<K> poly(v_points, algorithm, edge_selection, sorting);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  real_poly=poly.get_Polygon();
+  Polygon_2 real_poly(poly.get_Polygon());
   if (poly.Simple() && poly.Size() == v_points.size()) {
     std::cout<<"Correct"<<std::endl;
   }
