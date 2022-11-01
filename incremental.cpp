@@ -11,7 +11,7 @@
 template<class Kernel> Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, const std::string how_to_sort, const char how_to_remove_edge)
 {
     //error handling
-    if(how_to_sort != "1a" || how_to_sort != "1b" || how_to_sort != "2a" || how_to_sort != "2b")
+    if(how_to_sort != "1a" && how_to_sort != "1b" && how_to_sort != "2a" && how_to_sort != "2b")
     {
         std::cerr << "In incremental algorithm -initialization argument must be given (with value 1a or 1b or 2a or 2b)" << std::endl;
         exit(1);
