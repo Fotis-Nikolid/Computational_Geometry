@@ -21,7 +21,10 @@ class Hull {
     typedef CGAL::Segment_2<Kernel> Segment_2;
     typedef CGAL::Triangle_2<Kernel> Triangle_2;
 
-    private:         
+    private:   
+        //data structs       
+        std::unordered_map<Segment_2,Point_2> pairings;
+        Point_2 last_inserted;
         //internal helper functions
         bool is_visible(Segment_2 Edge,Point_2 n_point,Polygon_2 Polygon);
         double Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remaining_points,char criteria);
