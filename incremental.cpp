@@ -145,8 +145,6 @@ template<class Kernel> typename Incremental<Kernel>::RedEdgesBoundaries Incremen
     int edge_counter = 0;
     int last_place_to_remove = -1;
 
-    std::vector<int> Vertices_to_remove;//inside vertices that we be removed to create the new convex_hull_polygon
-
     //the red edges are continous in the convex hull polygon
     //we find the the vertex the red edges start (we save it as vertices.first_vertex)
     //and the vertex that red edges end (we save it as vertices.second_vertex)
@@ -165,10 +163,9 @@ template<class Kernel> typename Incremental<Kernel>::RedEdgesBoundaries Incremen
             //if its not the first red edge we find
             else
             {
+                //we need to remove Convex_Hull_Edge[0] to create the new convex hull
                 last_place_to_remove = edge_counter + 1;
                 vertices.second_vertex = Convex_Hull_Edge[1];
-                //we need to remove Convex_Hull_Edge[0] to create the new convex hull
-                Vertices_to_remove.push_back(edge_counter);
             }
         }
         //if we have already found red edges and this edge is not red then there are no more red edges in the polygon
@@ -187,14 +184,6 @@ template<class Kernel> typename Incremental<Kernel>::RedEdgesBoundaries Incremen
     {
         Convex_Hull_Polygon.erase(Convex_Hull_Polygon.vertices_begin() + iter_to_insert + 1, Convex_Hull_Polygon.vertices_begin() + last_place_to_remove + 1);
     }
-
-    /*int erased_elm = 0;
-
-    for(std::vector<int>::iterator iter = Vertices_to_remove.begin() ; iter < Vertices_to_remove.end() ; iter++)
-    {
-        Convex_Hull_Polygon.erase(Convex_Hull_Polygon.vertices_begin() + (*iter) - erased_elm + 1);
-        erased_elm++;
-    }*/
 
     return vertices;
 }
