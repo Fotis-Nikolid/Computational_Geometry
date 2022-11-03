@@ -49,6 +49,7 @@ template<class Kernel> bool comp_x_less(const CGAL::Point_2<Kernel> p1, const CG
 {
     if(p1.x() == p2.x())
     {
+        //ensure that we dont have points that intersect with the red edges
         return (p1.y() < p2.y());
     }
     return (p1.x() < p2.x());
@@ -57,6 +58,7 @@ template<class Kernel> bool comp_x_more(const CGAL::Point_2<Kernel> p1, const CG
 {
     if(p1.x() == p2.x())
     {
+        //ensure that we dont have points that intersect with the red edges
         return (p1.y() < p2.y());
     }
     return (p1.x() > p2.x());
@@ -65,6 +67,7 @@ template<class Kernel> bool comp_y_less(const CGAL::Point_2<Kernel> p1, const CG
 {
     if(p1.y() == p2.y())
     {
+        //ensure that we dont have points that intersect with the red edges
         return (p1.x() < p2.x());
     }
     return (p1.y() < p2.y());
@@ -73,6 +76,7 @@ template<class Kernel> bool comp_y_more(const CGAL::Point_2<Kernel> p1, const CG
 {
     if(p1.y() == p2.y())
     {
+        //ensure that we dont have points that intersect with the red edges
         return (p1.x() < p2.x());
     }
     return (p1.y() > p2.y());
