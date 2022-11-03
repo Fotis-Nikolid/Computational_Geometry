@@ -6,11 +6,12 @@
 #include <vector>
 #include "polygon.h"
 
+//receives a vector of points, and an algorithm with associated criteria, and then creates the polygon based on the algorithm chosen
 template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std::string alg, std::string Edge_Selection, std::string Sorting)
 {
     if(Edge_Selection != "1" && Edge_Selection != "2" && Edge_Selection != "3")
     {
-        std::cerr << "An -edge_selection argument must be given (with value 1 (random area) 2 (minimum area) 3 (max area))" << std::endl;
+        std::cerr << "An -edge_selection argument must be given ( 1:random area, 2:minimum area, 3:max area )" << std::endl;
         exit(1);
     }
     if(alg == "convex_hull")
@@ -46,12 +47,6 @@ template<class Kernel>
 float Polygon<Kernel>::Area() {
     return dt_Area;
 }
-
-template<class Kernel>
-float Polygon<Kernel>::Ratio() {
-    
-}
-
 template<class Kernel>
 bool Polygon<Kernel>::Simple() 
 {

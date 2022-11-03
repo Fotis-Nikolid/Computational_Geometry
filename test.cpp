@@ -1,3 +1,4 @@
+#if 0
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -12,7 +13,7 @@
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Point_2<K> Point_2;
 typedef CGAL::Polygon_2<K> Polygon_2;
-int main(int argc,char* argv[]) {
+int main(int argc,char* argv[]) {//receives starting file number, ending file number and a directory, and performs selected algorithm with all criteria for all files
     DIR *dir;
     struct dirent *ent;
     
@@ -53,7 +54,7 @@ int main(int argc,char* argv[]) {
                         continue;
                     }
                     if (points>end) {
-                        break;
+                        continue;
                     }
                 }
             }
@@ -93,11 +94,9 @@ int main(int argc,char* argv[]) {
             }
 
             //Incremental<K> agl1;
-            Polygon<K> p1,p2,p3;
-
-            p1.Algorithm(v_points, "1", "1a");
-            p2.Algorithm(v_points, "2", "1a");
-            p3.Algorithm(v_points, "3", "1a");
+            Polygon<K> p1(v_points,"convex_hull","1","");
+            Polygon<K> p2(v_points,"convex_hull","2","");
+            Polygon<K> p3(v_points,"convex_hull","3","");
             
             double random = p1.Area();
             double min = p2.Area();
@@ -156,23 +155,6 @@ int main(int argc,char* argv[]) {
                 std::cout<<"Hull error: "<<file_name<<" Deadlock, 3"<<std::endl;
             }
             if (success) {
-                if (min>max) {
-                    success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Min:"<< min <<" greater than Max:"<< max<<std::endl;
-                    //exit(EXIT_FAILURE);
-                }
-                if (max>area) {
-                    success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Max:"<< max <<" greater than Area:"<< area<<std::endl;
-                    //exit(EXIT_FAILURE);
-                }
-                if (random>max || random<min) {
-                    success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Random: "<<random <<" random out of range Max:"<<max<<" Min:"<<min<<std::endl;
-                    //exit(EXIT_FAILURE);
-                }
-            }
-            if (success) {
                 std::cout<<file_name<<" (Hull) ----- OK"<<std::endl;
             }
 
@@ -186,3 +168,4 @@ int main(int argc,char* argv[]) {
         return EXIT_FAILURE;
     }
 }
+#endif

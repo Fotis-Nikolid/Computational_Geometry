@@ -22,7 +22,6 @@ template <class Kernel> class Polygon {
         int Size();
         Polygon_2 get_Polygon();
         float Area();
-        float Ratio();
         bool Simple();
 };
 
