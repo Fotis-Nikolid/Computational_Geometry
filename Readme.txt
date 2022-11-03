@@ -1,3 +1,8 @@
+Members: 
+  ΟΜΑΔΑ 3
+    ΦΩΤΙΟΣ ΝΙΚΟΛΙΝΤΑΙΣ  1115201900132
+    ΙΟΑΝΝΗΣ ΚΑΛΕΣΗΣ     1115201900069
+
 Incremental :
 
     - Firstly we sort the points by using c++ std::sort function
@@ -74,6 +79,8 @@ Design Practices:
     - Finally, for organizing the project, we have the two files hull.cc and incremental.cpp where each algorithm is implemented as a class, the polygon.cc which calls 
       each algorithm and hides any information about the algorithms from the user, and the main.cpp which uses the interface(class) provided by polygon.cc
 
+Results and Comparison:
+
 Compilation: 
     - For compiling the main.cpp program or the test.cpp(which wouldn't do anything now as stated), two bash scripts were created.
     - The run.sh takes 5 arguments and passes them to the /to_polygon executable as was requested, with an example execution being:
@@ -84,3 +91,19 @@ Compilation:
                  bash run.sh 0 100 uniform
       where the 1st is the starting file number, the 2nd is the ending file number and the 3rd is the folder in the data/ to open and look for files in the range of 
       the two numbers provided. 
+
+Folder Structure:
+    - data(not uploaded in git)
+        - images
+        - uniform
+    - draw_polygon.py
+    - incremental.cpp
+    - incremental.h
+    - hull.cc
+    - hull.h
+    - polygon.cc
+    - polygon.h
+    - main.cpp
+    - test.cpp
+    - run.sh
+    - test.sh
