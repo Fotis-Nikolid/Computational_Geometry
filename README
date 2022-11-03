@@ -3,6 +3,9 @@ Members:
     ΦΩΤΙΟΣ ΝΙΚΟΛΙΝΤΑΙΣ  1115201900132
     ΙΟΑΝΝΗΣ ΚΑΛΕΣΗΣ     1115201900069
 
+Github Link: 
+    https://github.com/JohnKalesis1/Computational_Geometry
+
 Incremental :
 
     - Firstly we sort the points by using c++ std::sort function
@@ -80,6 +83,33 @@ Design Practices:
       each algorithm and hides any information about the algorithms from the user, and the main.cpp which uses the interface(class) provided by polygon.cc
 
 Results and Comparison:
+    - Some results out of numerous testing on the same uniform files are as follows:
+
+  Ratio      MIN              |         MAX                      Time Comparison
+    15   0.39(Hull)/0.44(Inc) | 0.82(Hull)/0.83(Inc)      |    Hull took 2-3 times more than Incremental    
+   100   0.31(Hull)/0.32(Inc) | 0.80(Hull)/0.71(Inc)      |    Hull took 4-8 times more than Incremental
+   200   0.32(Hull)/0.27(Inc) | 0.82(Hull)/0.71(Inc)      |    Hull took 10  times more than Incremental
+   500   0.26(Hull)/0.30(Inc) | 0.81(Hull)/0.69(Inc)      |    Hull took 30  times more than Incremental
+  1000   0.29(Hull)/0.28(Inc) | 0.81(Hull)/0.67(Inc)      |    Hull took 40  times more than Incremental
+
+    - From the results, we can see that generally the convex_hull gives a better solution(smaller min, bigger max) than the incremental
+    - That is somewhat to be expected as compared to the incremental, it allows for an unbiased and flexible approach to creating the final polygon(from any direction),
+      while incremental focuses on doing the best for the approach it has devoted itself to.
+    - However, their difference in approximation is small and even inverse to the rule, which can be attributed to the fact that in a uniform dataset
+      the incremental is given an easy way out of it's biased approach, with the data being the same no matter what direction is followed
+    - As we can see from the time tables, the more we increase the number of points, the bigger the time difference of the two algorithms, 
+      to the point that incremental proves to be a favorable algorithm when the number of points is allowed to reach even the hundreds of thousands
+    
+    - By comparing the incremental's results on the images the following is seen:
+  Ratio      MIN              |        MAX               |      Time Comparison
+  1000    0.24(x)/0.25(y)     |     0.75(x)/0.70(y)      |    Both initialization took around the same amount of time
+    
+    - For correctly comparing the above, we need to first observe the difference of value ranges that exist in the image of london
+    - The points in london are more spread out on the x-axis than the y-axis, which means that when going from left to right the polygon makes less drastic changes to accept the new points,
+      in contrast to when  going from up to down, where the distant x-values force the polygon to accept points that are very far from the polygon.
+    - The above observation is used to attribute the difference in quality that the algorithm showed, with the sorting by x-axis showing superior results.
+      
+
 
 Compilation: 
     - For compiling the main.cpp program or the test.cpp(which wouldn't do anything now as stated), two bash scripts were created.
