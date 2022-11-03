@@ -56,6 +56,7 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
     typename Polygon_2::Vertices::iterator it=Polygon.begin();
     int index,selection;
     double t_area_loss,min_area_loss,max_area_loss;
+    Segment_2 max_loss_edge,min_loss_edge;
 
     
     std::vector<Point_2> point_candidates;
@@ -64,11 +65,24 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
     std::vector<int> point_to_edge;//keep the index of the edge(from which we can acquire the indexes of it's two vertices) as to know the points-edges association 
     int position=0;
     std::unordered_map<Segment_2,int> placements;
+    min_area_loss=std::numeric_limits<double>::max();
+    max_area_loss=0;
+    
     for(auto it=Polygon.edges().begin();it<Polygon.edges().end();++it){//iterate edges and for each one find the closest point, if there is one
         Segment_2 edge=*it;
         bool to_update=false;
         auto pair=pairings.find(edge);
         if (pair!=pairings.end() && last_inserted!=pair->second) {
+            Triangle_2 triangle(pair->first[0],pair->first[1],pair->second);
+            t_area_loss=abs(triangle.area());
+            if (t_area_loss<min_area_loss) {
+                min_area_loss=t_area_loss;
+                min_loss_edge=pair->first;
+            }
+            if (t_area_loss>max_area_loss) {
+                max_area_loss=t_area_loss;
+                max_loss_edge=pair->first;
+            }
             placements.insert(std::pair<Segment_2,int>(edge,it-Polygon.edges().begin()));
             continue;
         }
@@ -87,9 +101,16 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
         if (!failure && is_visible(edge,closest_point,Polygon)) {
             pairings[edge]=closest_point;
             placements.insert(std::pair<Segment_2,int>(edge,it-Polygon.edges().begin()));
-            
-            //point_candidates.push_back(n_point);
-            //point_to_edge.push_back(position); 
+            Triangle_2 triangle(edge[0],edge[1],closest_point);
+            t_area_loss=abs(triangle.area());
+            if (t_area_loss<min_area_loss) {
+                min_area_loss=t_area_loss;
+                min_loss_edge=edge;
+            }
+            if (t_area_loss>max_area_loss) {
+                max_area_loss=t_area_loss;
+                max_loss_edge=edge;
+            }
         }
         else {
             pairings.erase(edge);
@@ -137,53 +158,35 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
             pairings.erase(broken_edge);            
             return t_area_loss;
         case '2'://pick edge that maximizes Area loss, thus minimizing total polygon Area
-            max_area_loss=0;
-            selection=-1;
-            for(int i=0;i<point_candidates.size();i++){
-                Point_2 point=point_candidates.at(i);
-                index=point_to_edge.at(i);
-                Segment_2 edge=Polygon.edge(index);
-                triangle=Triangle_2(edge[0],edge[1],point);
-                double temp=abs(triangle.area());
+            pair=*pairings.find(max_loss_edge);
+            new_point=pair.second;
+            broken_edge=max_loss_edge;
 
-                if (temp>max_area_loss) {
-                    max_area_loss=temp;
-                    new_point=point;
-                    selection=index+1;//inserted point is placed before iterator, so to place it after we do the +1 operation
-                    t_area_loss=temp;
-                }
-                index++;
-            }
-            if (selection==-1) {
-                std::cout<<"WTF, 2"<<std::endl;
-            }
-            Polygon.insert(it+selection,new_point);
+            placement=*placements.find(broken_edge);
+            index=placement.second+1;
+            
+            Polygon.insert(it+index,new_point);
+            
+            last_inserted=new_point;
             remaining_points.remove(new_point);
-            return t_area_loss;
+            
+            pairings.erase(broken_edge);            
+            return max_area_loss;
         case '3'://pick edge that minimizes Area loss, maximizing total polygon Area
-            min_area_loss=std::numeric_limits<double>::max();
-            selection=-1;
-            for(int i=0;i<point_candidates.size();i++){
-                Point_2 point=point_candidates.at(i);
-                index=point_to_edge.at(i);
-                Segment_2 edge=Polygon.edge(index);
-                triangle=Triangle_2(edge[0],edge[1],point);
-                double temp=abs(triangle.area());
+            pair=*pairings.find(min_loss_edge);
+            new_point=pair.second;
+            broken_edge=min_loss_edge;
 
-                if (temp<min_area_loss) {
-                    min_area_loss=temp;
-                    new_point=point;
-                    selection=index+1;//inserted point is placed before iterator, so to place it after we do the +1 operation
-                    t_area_loss=temp;
-                }
-                index++;
-            }
-            if (selection==-1) {
-                std::cout<<"WTF, 3"<<std::endl;
-            }
-            Polygon.insert(it+selection,new_point);
+            placement=*placements.find(broken_edge);
+            index=placement.second+1;
+            
+            Polygon.insert(it+index,new_point);
+            
+            last_inserted=new_point;
             remaining_points.remove(new_point);
-            return t_area_loss;
+            
+            pairings.erase(broken_edge);            
+            return min_area_loss;
     }
     return 0;
 } 
@@ -210,7 +213,7 @@ double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Cri
     }
     Area=Polygon.area();
     while (Points.size()>0) {//iterate over list of points
-        std::cout<<Polygon.vertices().size()<<std::endl;
+        //std::cout<<Polygon.vertices().size()<<std::endl;
         double loss=Edge_Selection(Polygon,Points,Criteria);//add point to polygon by breaking of the appropriate edge and then update the polygon's area based on the area lost from assimilated a point
         if (loss==0) {
             return 0;
