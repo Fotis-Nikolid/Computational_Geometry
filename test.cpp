@@ -1,3 +1,4 @@
+#if 0
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -12,7 +13,7 @@
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Point_2<K> Point_2;
 typedef CGAL::Polygon_2<K> Polygon_2;
-int main(int argc,char* argv[]) {
+int main(int argc,char* argv[]) {//receives starting file number, ending file number and a directory, and performs selected algorithm with all criteria for all files
     DIR *dir;
     struct dirent *ent;
     
@@ -167,3 +168,4 @@ int main(int argc,char* argv[]) {
         return EXIT_FAILURE;
     }
 }
+#endif
