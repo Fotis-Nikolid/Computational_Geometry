@@ -93,10 +93,17 @@ int main(int argc,char* argv[]) {//receives starting file number, ending file nu
                 l3_points.push_back(Point_2(x,y));
             }
 
-            //Incremental<K> agl1;
-            Polygon<K> p1(v_points,"convex_hull","1","");
+            /*Polygon<K> p1(v_points,"convex_hull","1","");
             Polygon<K> p2(v_points,"convex_hull","2","");
-            Polygon<K> p3(v_points,"convex_hull","3","");
+            Polygon<K> p3(v_points,"convex_hull","3","");*/
+
+            /*Polygon<K> p1(v_points,"incremental","1","1a");
+            Polygon<K> p2(v_points,"incremental","2","1a");
+            Polygon<K> p3(v_points,"incremental","3","1a");*/
+
+            Polygon<K> p1(v_points,"incremental","1","2a");
+            Polygon<K> p2(v_points,"incremental","2","2a");
+            Polygon<K> p3(v_points,"incremental","3","2a");
             
             double random = p1.Area();
             double min = p2.Area();
@@ -108,51 +115,51 @@ int main(int argc,char* argv[]) {//receives starting file number, ending file nu
             if (random!=0) {
                 if (!p1.Simple()) {
                     success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 1"<<std::endl;
+                    std::cout<<"Error: "<<file_name<<" Polygon not simple, 1"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
                 if (p1.Size()!=points) {
                     success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p1.Size()<<"<"<<points<<", 1"<<std::endl;
+                    std::cout<<"Error: "<<file_name<<" Polygon has less points "<<p1.Size()<<"<"<<points<<", 1"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
             }
             else {
                 success=false;
-                std::cout<<"Hull error: "<<file_name<<" Deadlock, 1"<<std::endl;
+                std::cout<<"Error: "<<file_name<<" Deadlock, 1"<<std::endl;
             }
             if (min!=0) {
                 if (!p2.Simple()) {
                     success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 2"<<std::endl;
+                    std::cout<<"Error: "<<file_name<<" Polygon not simple, 2"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
                 if (p2.Size()!=points) {
                     success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p2.Size()<<"<"<<points<<", 2"<<std::endl;
+                    std::cout<<"Error: "<<file_name<<" Polygon has less points "<<p2.Size()<<"<"<<points<<", 2"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
             }
             else {
                 success=false;
-                std::cout<<"Hull error: "<<file_name<<" Deadlock, 2"<<std::endl;
+                std::cout<<"Error: "<<file_name<<" Deadlock, 2"<<std::endl;
             }
             //std::cout<<"H2"<<std::endl;
             if (max!=0) {
                 if (!p3.Simple()) {
                     success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Polygon not simple, 3"<<std::endl;
+                    std::cout<<"Error: "<<file_name<<" Polygon not simple, 3"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
                 if (p3.Size()!=points) {
                     success=false;
-                    std::cout<<"Hull error: "<<file_name<<" Polygon has less points "<<p3.Size()<<"<"<<points<<", 3"<<std::endl;
+                    std::cout<<"Error: "<<file_name<<" Polygon has less points "<<p3.Size()<<"<"<<points<<", 3"<<std::endl;
                     //exit(EXIT_FAILURE);
                 }
             }
             else {
                 success=false;
-                std::cout<<"Hull error: "<<file_name<<" Deadlock, 3"<<std::endl;
+                std::cout<<"Error: "<<file_name<<" Deadlock, 3"<<std::endl;
             }
             if (success) {
                 std::cout<<file_name<<" (Hull) ----- OK"<<std::endl;
