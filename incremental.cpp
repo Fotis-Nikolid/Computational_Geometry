@@ -90,15 +90,15 @@ template<class Kernel> void Incremental<Kernel>::Sort(std::vector<Point_2>& Poin
     }
     else if(how_to_sort == "1b")
     {
-        std::sort(Points.begin(), Points.end(), comp_x_less<Kernel>);
+        std::sort(Points.begin(), Points.end(), comp_x_more<Kernel>);
     }
     else if(how_to_sort == "2a")
     {
-        std::sort(Points.begin(), Points.end(), comp_x_less<Kernel>);
+        std::sort(Points.begin(), Points.end(), comp_y_less<Kernel>);
     }
     else if(how_to_sort == "2b")
     {
-        std::sort(Points.begin(), Points.end(), comp_x_less<Kernel>);
+        std::sort(Points.begin(), Points.end(), comp_y_more<Kernel>);
     }
 }
 
