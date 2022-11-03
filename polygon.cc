@@ -46,12 +46,6 @@ template<class Kernel>
 float Polygon<Kernel>::Area() {
     return dt_Area;
 }
-
-template<class Kernel>
-float Polygon<Kernel>::Ratio() {
-    
-}
-
 template<class Kernel>
 bool Polygon<Kernel>::Simple() 
 {
