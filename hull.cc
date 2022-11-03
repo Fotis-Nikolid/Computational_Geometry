@@ -140,7 +140,7 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
             triangle=Triangle_2(broken_edge[0],broken_edge[1],new_point);
             
             t_area_loss=abs(triangle.area());//calculate area loss
-            Polygon.insert(Polygon.vertices().begin()+index,new_point);//insert point to the correct index of the polygon, effectively breaking the edge and creating two new ones
+            Polygon.insert(Polygon.begin()+index,new_point);//insert point to the correct index of the polygon, effectively breaking the edge and creating two new ones
             
             last_inserted=new_point;//used in informing the next iteration of the Edge_Selection to know for which edge-point pairs it is neccessary to recalculate the closest points
             remaining_points.remove(new_point);//remove from set of points left to insert
@@ -155,7 +155,7 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
             placement=*placements.find(broken_edge);
             index=placement.second+1;
             
-            Polygon.insert(Polygon.vertices().begin()+index,new_point);
+            Polygon.insert(Polygon.begin()+index,new_point);
             
             last_inserted=new_point;
             remaining_points.remove(new_point);
@@ -170,7 +170,7 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
             placement=*placements.find(broken_edge);
             index=placement.second+1;
             
-            Polygon.insert(Polygon.vertices().begin()+index,new_point);
+            Polygon.insert(Polygon.begin()+index,new_point);
             
             last_inserted=new_point;
             remaining_points.remove(new_point);
