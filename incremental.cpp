@@ -376,7 +376,7 @@ template<class Kernel> bool Incremental<Kernel>::visible(const Segment_2 seg, co
 
 template<class Kernel> bool Incremental<Kernel>::red_visible(const Segment_2 seg, const Point_2 new_point) 
 {
-    CGAL::Orientation point_orientation = CGAL::orientation(new_point, seg[0], seg[1]);//find the relative position between the new point and the line created by the edge
+    CGAL::Orientation point_orientation = CGAL::orientation(seg[0], seg[1], new_point);//find the relative position between the new point and the line created by the edge
     CGAL::Orientation polygon_orientation;
 
     //if point on top of the line presented by segment, then the semgment is not visible by the point
@@ -392,7 +392,7 @@ template<class Kernel> bool Incremental<Kernel>::red_visible(const Segment_2 seg
             continue;
         }
         //find orientation between the line and the rest of the polygon
-        polygon_orientation = CGAL::orientation(vertex, seg[0], seg[1]);
+        polygon_orientation = CGAL::orientation(seg[0], seg[1], vertex);
         break;
     }
     //if point and polygon have different orientations to the semgent, then edge is visible by the point
