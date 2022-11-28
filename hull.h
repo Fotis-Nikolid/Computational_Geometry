@@ -21,7 +21,9 @@ class Hull {
     typedef CGAL::Segment_2<Kernel> Segment_2;
     typedef CGAL::Triangle_2<Kernel> Triangle_2;
 
-    private:   
+    private:  
+        Edge_2 first_edge;
+        Edge_2 last_edge; 
         //data structs       
         std::unordered_map<Segment_2,Point_2> pairings;
         Point_2 last_inserted;

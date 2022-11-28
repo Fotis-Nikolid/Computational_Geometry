@@ -65,6 +65,9 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
     
     for(auto it=Polygon.edges().begin();it<Polygon.edges().end();++it){//iterate edges and for each one find the closest point, if there is one
         Segment_2 edge=*it;
+        if (edge==first_edge || edge==last_edge) {//These two edges must never be broken
+            continue;
+        }
         auto pair=pairings.find(edge);//check if we have already found the closest point of the edge in a previous iteration
         
         //The Optimization!
@@ -184,12 +187,15 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
 //only function call that is exposed
 //given a list of Points and a criteria for edge selection, creates the Polygon and returns it's area 
 template<class Kernel>
-double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria) {
+double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria,Edge_2 edge_to_keep1=NULL,Edge_2 edge_to_keep2=NULL) {
     Point_2 n_point;
     double Area;
     std::ofstream file;
     srand(time(0));
     
+    first_edge=edge_to_keep1;
+    last_edge=edge_to_keep2;
+
     #if 0  
     //used for testing purposes
         file.open("steps.txt");
