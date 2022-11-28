@@ -68,6 +68,12 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
         if (edge==first_edge || edge==last_edge) {//These two edges must never be broken
             continue;
         }
+        else {
+            Edge_2 reverse_edge(edge[1],edge[0]);
+            if (reverse_edge==first_edge || reverse_edge==last_edge) {//These two edges must never be broken
+                continue;
+            }
+        }
         auto pair=pairings.find(edge);//check if we have already found the closest point of the edge in a previous iteration
         
         //The Optimization!
