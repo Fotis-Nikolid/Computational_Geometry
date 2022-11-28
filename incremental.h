@@ -13,6 +13,8 @@ template<class Kernel> class Incremental
     typedef CGAL::Triangle_2<Kernel> Triangle_2;
 
     private: 
+        Point_2 edge_point;
+        bool failed;
         Polygon_2 Convex_Hull_Polygon;
         Polygon_2 Real_Polygon;
 
@@ -30,10 +32,10 @@ template<class Kernel> class Incremental
 
         RedEdgesBoundaries find_red_edges_boundaries_and_recreate_convex_hull(const Point_2);
 
-        void construct_new_polygon(const RedEdgesBoundaries, const Point_2, const char);
+        int construct_new_polygon(const RedEdgesBoundaries, const Point_2, const char);
 
     public:
-        Incremental(const std::vector<Point_2>, const std::string, const char);
+        Incremental(const std::vector<Point_2>, const std::string, const char,Point_2);
         float getPolygonArea();
         Polygon_2 getPolygon();
 };
