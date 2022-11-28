@@ -9,6 +9,7 @@
 #include <list>
 #include "simulated_annealing.h"
 #include "incremental.h"
+#include "hull.h"
 #include <time.h>
 #include <climits>
 
@@ -50,6 +51,7 @@ std::vector<std::vector<CGAL::Point_2<Kernel>>> Simulated_Annealing::point_subse
     std::sort(Points.begin(), Points.end(), comp_func<Kernel>);
     int m=100;
     int k=std::ceil((Points.size()-1)/(m-1));
+    
 }
 
 template<class Kernel>
@@ -104,8 +106,41 @@ double Simulated_Annealing::global_step(CGAL::Polygon_2<Kernel>& Polygon) {
 }
 
 template<class Kernel>
-void Simulated_Annealing::sub_division(CGAL::Polygon_2<Kernel>& Polygon)3 {
+void Simulated_Annealing::sub_division(CGAL::Polygon_2<Kernel>& Polygon,std::vector<CGALL::Point_2<Kernel>> Points,std::string Criteria,int Iterations) {
+    std::vector<std::vector<Point_2>> Subsets;
+    Subsets=point_subsets(Points);
+    std::list<Polygon_2> polygons;
+    
+    char crit;
+    if (Criteria=="max") {
+        crit='3';
+    }
+    else if (Criteria=="min") {
+        crit='2';
+    }
+    else {
+        crit='1';
+    }
+    
+    for (auto subset:Subsets) {
+        Polygon_2 poly;
+        
+        Incremental inc(subset,'1a',crit,subset[subset.size()-2]);
+        if (inc.getPolygonArea()==0) {//incremental failed
+            Hull hull;
+            std::list<Point_2> points(subset.begin(),subset.end());
+            Edge_2 e1,e2;
+            e1=Edge_2(subset[0],subset[1]);
+            e2=Edge_2(subset[subset.size()-1],subset[subset.size()-2]);
+            hull.solve(poly,points,crit,e1,e2);
+        }
 
+        solve(poly,Criteria,"global",Iterations);
+
+        polygons.append(poly);
+        
+    }
+    
 }
 
 template<class Kernel>
