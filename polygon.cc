@@ -7,28 +7,30 @@
 #include "polygon.h"
 
 //receives a vector of points, and an algorithm with associated criteria, and then creates the polygon based on the algorithm chosen
-template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std::string alg, std::string Edge_Selection, std::string Sorting)
+template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std::string Algorithm, std::string Criteria,std::string Step_Choice="local",Attempts=1,Iterations=100)
 {
-    if(Edge_Selection != "1" && Edge_Selection != "2" && Edge_Selection != "3")
+    if(Criteria!="max" && Criteria!="min")
     {
-        std::cerr << "An -edge_selection argument must be given ( 1:random area, 2:minimum area, 3:max area )" << std::endl;
+        std::cerr << "An criteria argument must be given (max or min)" << std::endl;
         exit(1);
     }
-    if(alg == "convex_hull")
+    if(Algorithm == "local_step")
     {
-        Hull<Kernel> alg;
-        std::list<Point_2> list(Points.begin(),Points.end());
-        dt_Area = alg.solve(pol, list, *(Edge_Selection.c_str()));
+
     }
-    else if(alg == "incremental")
+    else if(Algorithm == "simulated_annealing")
     {
-        Incremental<Kernel> inc(Points, Sorting, *(Edge_Selection.c_str()));
-        dt_Area = inc.getPolygonArea();
-        pol = inc.getPolygon();
+        Simulated_Annealing algorithm;
+        if (Step_Choice=="local" || Step_Choice=="global") {
+            dt_Area=algorithm.solve(pol,Points,Criteria,Step_Choice,Iterations,Attempts);
+        }
+        else if (Step_Choice=="subdivision") {
+            dt_Area=algorithm.expanded_solve(pol,Points,Criteria,Iterations,Attempts);
+        }
     }
     else
     {
-        std::cerr << "Algorithm " + alg + " not implemented" << std::endl;
+        std::cerr << "Algorithm " + Algorithm + " not implemented" << std::endl;
         exit(1);
     }
 }

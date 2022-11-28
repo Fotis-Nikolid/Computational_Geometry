@@ -4,8 +4,8 @@
 #include <CGAL/Polygon_2.h>
 #include <iostream>
 #include <vector>
-#include "hull.h"
-#include "incremental.h"
+#include "simulated_annealing.h"
+#include "local_search.h"
 
 template <class Kernel> class Polygon {
     typedef CGAL::Polygon_2<Kernel> Polygon_2;
@@ -18,7 +18,7 @@ template <class Kernel> class Polygon {
         
     public:
         //Given a set of Points and a choice of (Agorithm,Criteria) creates a simple polygon
-        Polygon(std::vector<Point_2>, std::string, std::string, std::string);
+        Polygon(std::vector<Point_2>, std::string, std::string,std::string,int,int);
         int Size();
         Polygon_2 get_Polygon();
         float Area();
