@@ -71,8 +71,12 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
                 solved = true;
                 diff = sr;
             }
+
+            vertices_pot.pop_back();
         }
     }while(diff >= threshold)
 
     return solved;
 }
+
+template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(
