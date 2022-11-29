@@ -172,3 +172,15 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
     
     return diff;
 }
+
+template<class Kernel> bool LocalSearch<Kernel>::visible_points(const Point_2 p1, const Point_2 p2)
+{
+    Segment_2 seg = Segment_2(p1, p2);
+    for(Segment_2 PolygonEdge : Real_Polygon.edges())
+    {
+        if(do_intersect(PolygonEdge, seg))
+            return false;
+    }
+
+    return true;
+}
