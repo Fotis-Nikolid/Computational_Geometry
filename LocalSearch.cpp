@@ -79,7 +79,7 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
     return solved;
 }
 
-template<class Kernel> double relocate_edges(CGAL::Polygon_2<Kernel>& Pol, int start, int end, int edge_destroy)
+template<class Kernel> void relocate_edges(CGAL::Polygon_2<Kernel>& Pol, int start, int end, int edge_destroy)
 {
     return 0.0;
 }
@@ -91,8 +91,15 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
     double diff = 0.0;
     const int dist = Polygon.vertices().end() - Polygon.vertices().begin();
 
-    for(int i = 0 ; i < Polygon.vertices().size() ; i++)
+    for(int i = 0 ; i < dist ; i++)
     {
+        int before_i  = i - 1;
+
+        if(before_i == -1)
+        {
+            before_i = dist - 1;
+        }
+
         int end = i + (L - 1);
         if(end >= dist)
         {
@@ -113,7 +120,28 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
             }
         }
 
-        
+        int after_end = end + 1;
+        if(after_end == dist)
+        {
+            after_end = 0;
+        }
+
+        int edge_end = edge_destroy + 1;
+        if(edge_end == dist)
+        {
+            edge_end = 0;
+        }
+
+        if(this->visible_points(*(Polygon.vertices().begin() + before_i), *(Polygon.vertices().begin() + after_end)) && this->visible_points(*(Polygon.vertices().begin() + i), *(Polygon.vertices().begin() + edge_destroy)) && this->visible_points(*(Polygon.vertices().begin() + after_end), *(Polygon.vertices().begin() + edge_end)))
+        {
+            relocate_edges(temp, i, end, edge_destroy);
+
+            if(this->compare(BestPol, temp))
+            {
+                BestPol = Polygon_2(temp);
+                diff = abs(abs(Polygon.area()) - abs(BestPol.area()));
+            }
+        }
     }
 
     if(diff != 0.0)
