@@ -79,14 +79,31 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
     return solved;
 }
 
-template<class Kernel> void relocate_edges(CGAL::Polygon_2<Kernel>& Pol, int start, int end, int edge_destroy)
+template<class Kernel> void LocalSearch<Kernel>::relocate_edges(Polygon_2& Pol, int start, int end, int edge_destroy, int L)
 {
-    return 0.0;
+    if(end < start)
+    {
+        edge_destroy -= end + 1;
+        Poly.erase(Pol.vertices().begin() + start, Pol.vertices().end());
+        Pol.erase(Pol.vertices().begin(), Pol.vertices().begin() + end + 1);
+        Pol.insert(Pol.vertices().begin() + edge_destroy + 1, Polygon.vertices().begin() + start, Polygon.vertices().end());
+        int dist = Polygon.vertices().end() - Polygon.vertices().begin() - start;
+        int rest = edge_destroy + 1 + dist; //MIGHT BE WRONG
+        Pol.insert(Pol.vertices().begin() + rest, Polygon.vertices().begin(), Polygon.vertices().end() + end + 1);
+    }
+    else
+    {
+        if(edge_destroy > end)
+        {
+            edge_destroy -= L;
+        }
+        Poly.erase(Pol.vertices().begin() + start, Pol.vertices().begin() + end + 1);
+        Pol.insert(Pol.vertices().begin() + edge_destroy + 1, Polygon.vertices().begin() + start, Pol.vertices().begin() + end + 1);
+    }
 }
 
 template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int edge_destroy, const int L)
 {
-    Polygon_2 temp(Polygon);
     Polygon_2 BestPol(Polygon);
     double diff = 0.0;
     const int dist = Polygon.vertices().end() - Polygon.vertices().begin();
@@ -104,6 +121,11 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
         if(end >= dist)
         {
             end = end - dist;
+            //debuging
+            if(end < 0)
+            {
+                std::cerr << "End less that 0 in swap" << std::endl;
+            }
             //if edge to destory is included in L then stop searching you have found all avaible L 
             if(edge_destroy >= i || edge_destroy <= end)
             {
@@ -134,7 +156,8 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
 
         if(this->visible_points(*(Polygon.vertices().begin() + before_i), *(Polygon.vertices().begin() + after_end)) && this->visible_points(*(Polygon.vertices().begin() + i), *(Polygon.vertices().begin() + edge_destroy)) && this->visible_points(*(Polygon.vertices().begin() + after_end), *(Polygon.vertices().begin() + edge_end)))
         {
-            relocate_edges(temp, i, end, edge_destroy);
+            Polygon_2 temp(Polygon);
+            relocate_edges(temp, i, end, edge_destroy, L);
 
             if(this->compare(BestPol, temp))
             {
