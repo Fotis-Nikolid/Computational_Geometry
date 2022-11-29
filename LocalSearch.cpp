@@ -1,0 +1,76 @@
+#ifndef LOCALSEARCH_CPP
+#define LOCALSEARCH_CPP
+#include <algorithm>
+#include <limits>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include "LocalSearch.h"
+#include "incremental.h"
+
+
+template<class Kernel> bool comp_min(const CGAL::Polygon_2<Kernel> p1, const CGAL::Polygon_2<Kernel> p2)
+{
+    return p2.area() < p1.area();
+}
+
+template<class Kernel> bool comp_max(const CGAL::Polygon_2<Kernel> p1, const CGAL::Polygon_2<Kernel> p2)
+{
+    return p2.area() > p1.area();
+}
+
+template<class Kernel> LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2> Points, const std::string min_or_max, const int L, const int K, const double threshold)
+{
+    if(min_or_max == "min")
+    {
+        this->compare = comp_min;
+    }
+    else if(min_or_max == "max")
+    {
+        this->compare = comp_max;
+    }
+
+    this->Polygon = Polygon_2(Incremental(Points, "1a", '1').getPolygon());
+
+    std::srand(std::time(nullptr));
+
+    for(int k = K ; k > 0 ; k--)
+    {
+        bool solved = solve_specific_K(min_or_max, L, k, threshold);
+        //if a better polygon can not be found with this L try L-1 until one is found or L goes to 0
+        for(int l = L - 1 ; l > 0 && solved == false ; l--)
+        {
+            solved = solve_specific_K(min_or_max, l, k, threshold);
+        }
+    }
+}
+
+template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, const int K , const double threshold)
+{
+    bool solved = false;
+    double diff = 0.0;
+
+    std::vector<int> vertices_pot(Polygon.vertices().size(), 0);
+
+    for(int i = 0 ; i < Polygon.vertices().size() ; i++)
+    {
+        vertices_pot[i] = i;
+    }
+
+    do
+    {
+        for(int i = 0 ; i < K ; i++)
+        {
+            //pick random edge
+            std::swap(vertices_pot[vertices_pot.size() - 1], vertices_pot[std::rand()%vertices_pot.size()]);
+
+            double sr = swap_L_with_edge(vertices_pot[vertices_pot.size() - 1], L);
+
+            if(sr != 0.0)
+            {
+                solved = true;
+                diff = sr;
+            }
+        }
+    }while(diff >= threshold)
+}
