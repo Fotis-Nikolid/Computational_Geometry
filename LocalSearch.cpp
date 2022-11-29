@@ -81,6 +81,7 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
 
 template<class Kernel> void LocalSearch<Kernel>::relocate_edges(Polygon_2& Pol, int start, int end, int edge_destroy, int L)
 {
+    //if end is after 0 potiton
     if(end < start)
     {
         edge_destroy -= end + 1;
@@ -154,11 +155,13 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
             edge_end = 0;
         }
 
+        //check if 3 new edges are visible
         if(this->visible_points(*(Polygon.vertices().begin() + before_i), *(Polygon.vertices().begin() + after_end)) && this->visible_points(*(Polygon.vertices().begin() + i), *(Polygon.vertices().begin() + edge_destroy)) && this->visible_points(*(Polygon.vertices().begin() + after_end), *(Polygon.vertices().begin() + edge_end)))
         {
             Polygon_2 temp(Polygon);
+            //swap L potition
             relocate_edges(temp, i, end, edge_destroy, L);
-
+            //check if new polygon is better
             if(this->compare(BestPol, temp))
             {
                 BestPol = Polygon_2(temp);
