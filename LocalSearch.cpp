@@ -11,12 +11,12 @@
 
 template<class Kernel> bool comp_min(const CGAL::Polygon_2<Kernel> p1, const CGAL::Polygon_2<Kernel> p2)
 {
-    return p2.area() < p1.area();
+    return std::abs(p2.area()) < std::abs(p1.area());
 }
 
 template<class Kernel> bool comp_max(const CGAL::Polygon_2<Kernel> p1, const CGAL::Polygon_2<Kernel> p2)
 {
-    return p2.area() > p1.area();
+    return std::abs(p2.area()) > std::abs(p1.area());
 }
 
 template<class Kernel> LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2> Points, const std::string min_or_max, const int L, const int K, const double threshold)
@@ -79,4 +79,45 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
     return solved;
 }
 
-template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(
+template<class Kernel> double relocate_edges(CGAL::Polygon_2<Kernel>& Pol, int start, int end, int edge_destroy)
+{
+    return 0.0;
+}
+
+template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int edge_destroy, const int L)
+{
+    Polygon_2 temp(Polygon);
+    Polygon_2 BestPol(Polygon);
+    double diff = 0.0;
+    const int dist = Polygon.vertices().end() - Polygon.vertices().begin();
+
+    for(int i = 0 ; i < Polygon.vertices().size() ; i++)
+    {
+        int end = i + (L - 1);
+        if(end >= dist)
+        {
+            end = end - dist;
+            //if edge to destory is included in L then stop searching you have found all avaible L 
+            if(edge_destroy >= i || edge_destroy <= end)
+            {
+                break;
+            }
+        }
+        else
+        {
+            //if edge to destory is included in L then skip all the L that includes it 
+            if(edge_destroy <= end && edge_destroy >= i)
+            {
+                i = edge_destroy + 1;
+                continue;
+            }
+        }
+
+        
+    }
+
+    if(diff != 0.0)
+        Polygon = BestPol;
+    
+    return diff;
+}
