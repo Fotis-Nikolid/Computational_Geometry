@@ -73,4 +73,6 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
             }
         }
     }while(diff >= threshold)
+
+    return solved;
 }
