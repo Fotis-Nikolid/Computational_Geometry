@@ -24,11 +24,12 @@ template<class Kernel> class kdTree
 
         Pvector::iterator find_median(Pvector::iterator, Pvector::iterator, int);
         Node* insert(Pvector::iterator, Pvector::iterator, int depth = 0);
+        void points_inside_bounds(Pvector&, Node* ,const int, const int, const int, const int, int depth = 0);
     
     public:
         kdTree(Pvector);
         ~kdTree();
-        Pvector find_points_inside_bounds(int, int, int, int);//upper x , y lower x , y (in this order)
+        Pvector find_points_inside_bounds(const int, const int, const int, const int);//upper x , y lower x , y (in this order)
 };
 
 #include "kd_tree.cpp"
