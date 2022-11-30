@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <ctime>
 #include "localsearch.h"
-#include "incremental.h"
 
 
 template<class Kernel> bool comp_min(const CGAL::Polygon_2<Kernel> p1, const CGAL::Polygon_2<Kernel> p2)
