@@ -22,8 +22,8 @@ template<class Kernel> class kdTree
 
         Node* root;
 
-        Pvector::iterator find_median(Pvector::iterator, Pvector::iterator);
-        Node insert(Pvector::iterator, Pvector::iterator, int);
+        Pvector::iterator find_median(Pvector::iterator, Pvector::iterator, int);
+        Node* insert(Pvector::iterator, Pvector::iterator, int depth = 0);
     
     public:
         kdTree(Pvector);
