@@ -121,3 +121,5 @@ template<class Kernel> kdTree<Kernel>::~kdTree()
 {
     delete root;
 }
+
+#endif
