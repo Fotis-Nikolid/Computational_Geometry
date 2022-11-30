@@ -17,6 +17,7 @@ template<class Kernel> class kdTree
                 Node* left;
                 Node* right;
                 Node(Point_2, Node*, Node*);
+                ~Node();
         };
 
         Node* root;
@@ -26,6 +27,7 @@ template<class Kernel> class kdTree
     
     public:
         kdTree(Pvector);
+        ~kdTree();
         Pvector find_points_inside_bounds(int, int, int, int);//upper x , y lower x , y (in this order)
 };
 
