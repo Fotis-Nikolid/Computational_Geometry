@@ -186,3 +186,5 @@ template<class Kernel> bool LocalSearch<Kernel>::visible_points(const Point_2 p1
 
     return true;
 }
+
+#endif
