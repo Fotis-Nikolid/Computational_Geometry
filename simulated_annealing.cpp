@@ -51,6 +51,28 @@ std::vector<std::vector<CGAL::Point_2<Kernel>>> Simulated_Annealing::point_subse
     std::sort(Points.begin(), Points.end(), comp_func<Kernel>);
     int m=100;
     int k=std::ceil((Points.size()-1)/(m-1));
+    std::vector<std::vector<Point_2>> subsets;
+    int subset_n=1;
+    for (int i=0;i<Points.size()-2;i++) {
+        Point_2 p1,p2,p3;
+        p1=Points.at(i);
+        p2=Points.at(i+1);
+        p3=Points.at(i+2);
+        if (p1.y()<p2.y() && p3.y()<p2.y()) {
+            if (i>(subset_n*m*0.9)) {
+                subsets[subset_n].append(p1);
+                subsets[subset_n].append(p2);//add the connecting point of the two subsets
+
+                //subsets[subset_n+1].append(p2); //these two operations will occure naturally in the next two loops
+                //subsets[subset_n+1].append(p3);
+                subset_n++;
+            }
+        }
+        else {
+            subsets[subset_n].append(p1);
+        }
+        
+    }
     
 }
 
