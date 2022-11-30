@@ -24,6 +24,6 @@ template<class Kernel> class LocalSearch
         LocalSearch(const std::vector<Point_2>, const std::string, const int, const int, const double);
 };
 
-#include "incremental.cpp"
+#include "localsearch.cpp"
 
 #endif

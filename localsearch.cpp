@@ -5,7 +5,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
-#include "LocalSearch.h"
+#include "localsearch.h"
 #include "incremental.h"
 
 
