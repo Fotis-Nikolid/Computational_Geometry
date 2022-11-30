@@ -32,5 +32,4 @@ template<class Kernel> class kdTree
 };
 
 #include "kd_tree.cpp"
-
 #endif

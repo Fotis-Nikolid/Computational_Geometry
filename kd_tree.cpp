@@ -65,5 +65,4 @@ template<class Kernel> kdTree<Kernel>::kdTree(Pvector points)
 
 template<class Kernel> Pvector kdTree<Kernel>::find_points_inside_bounds(int upper_x, int upper_y, int lower_x , int lower_y)
 {
-    
 }
