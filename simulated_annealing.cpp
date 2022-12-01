@@ -76,6 +76,47 @@ std::vector<std::vector<CGAL::Point_2<Kernel>>> Simulated_Annealing::point_subse
     return subsets;
     
 }
+template<class Kernel>
+CGAL::Polygon_2<Kernel> merge_polygons(std::vector<CGAL::Polygon_2<Kernel>> Polygons) {
+    Polygon_2 merged_polygon=polygons.at(0);
+    for (int i=1;i<Polygons.size();i++) {
+        Polygon_2 poly=polygons.at(i);
+        Polygon_2::Vertices::iterator join_iter; //iterator to point that both polygons connect
+        Polygon_2::Vertices::iterator prev_iter; //iterator to previous topological point to join point(it is downwards to the left)
+        Polygon_2::Vertices::iterator next_iter; //iterator to next topological point to join point(it is downwards to the right)
+        bool found_join=false;
+        for (join_iter=merge_polygon.vertices().start();join_iter<merge_polygon.vertices().end();join_iter++) {//find iterator of the point of connection between the two polygons
+            for (auto poly_it=poly.vertices().start();poly_it<poly.vertices().end();poly_it++) {
+                if (*join_iter==*poly_it) {//find common point iterator between two polygons
+                    next_iter=poly_it;//get next point to jin point(belongs to the 2nd polygon)
+                    if (next_iter==poly.vertices().end()) {//in case we loop around to the polygon's start
+                        next_iter=poly.vertices().start();
+                    }
+                    found_join=true;
+                    break;
+                    
+                }
+            }
+            if (found_join) {
+                break;
+            }
+        }
+        //get previous point of join point(belongs to the 1st polygon), so that we connect the previous and the next points together(erasing their connection to the join point)
+        if (join_iter==poly.vertices().start()) {
+            prev_iter=std::prev(merge_polygon.vertices().end());
+        }   
+        else {
+            prev_iter=std::prev(join_iter);
+        }
+
+        //insert all points of the 2nd polygon after the previous point iterator, all the way to the join point(thus merging the two polygons) 
+        Polygon_2::Vertices::iterator insert_it=prev_iter;
+        for (auto it=next_iter;*it!=*join_iter;it++) {//iterate from the next point iterator of the 2nd polygon all the way circling back until we arrive at the join point, inserting each polygons point along the way 
+            merge_polygon.insert(insert_it,*it);//update the merged polygon
+            insert_it=std::next(insert_it);//move the iterator along to continue inserting
+        }
+    }
+}
 
 //find 2 consecutive points and swap their positions
 template<class Kernel>

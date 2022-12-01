@@ -26,7 +26,8 @@ class Simulated_Annealing {
         double calculate_energy(double Area,double Hull_Area,std::string Criteria,int p_Size);
         bool validity_check(Triangle_2 t1,Triangle_2 t2,Polygon_2 Polygon);
         std::vector<std::vector<Point_2>> point_subsets(std::vector<Point_2>);
-        
+        void merge_polygons(std::vector<Polygon_2>);
+
         double local_step(Polygon_2& Polygon);
         double global_step(Polygon_2& Polygon);
         double sub_division(Polygon_2& Polygon);
