@@ -18,18 +18,17 @@ template<class Kernel> Incremental<Kernel>::Incremental(const std::vector<Point_
         std::cerr << "In incremental algorithm -initialization argument must be given (with value 1a or 1b or 2a or 2b)" << std::endl;
         exit(1);
     }
-
-    std::vector<Point_2> ps(Points);
-    //sort the ps vector
-    this->Sort(ps, how_to_sort);
+    
+    //sort the Points vector
+    this->Sort(Points, how_to_sort);
     //create the triangle (if the have the same x or y then its not a triangle its a polygon)
-    this->Initialize(ps);
+    this->Initialize(Points);
 
     //keep removing point from the end of the vector
-    while(!ps.empty())
+    while(!Points.empty())
     {
-        Point_2 point = ps.back();
-        ps.pop_back();
+        Point_2 point = Points.back();
+        Points.pop_back();
         //find the red edges and create the new convex hull polygon with the new point
         Incremental<Kernel>::RedEdgesBoundaries limits = this->find_red_edges_boundaries_and_recreate_convex_hull(point);
         //find a edge of the real polygon and add the new point
@@ -123,15 +122,15 @@ template<class Kernel> inline bool equal_two_points(const CGAL::Point_2<Kernel> 
     return (A.x() == B.x()) || (A.y() == B.y());
 }
 
-template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>& ps)
+template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>& Points)
 {
     //and the last 3 points of the vecotr in the trinagle and remove them from the vector
-    Point_2 A(ps.back());
-    ps.pop_back();
-    Point_2 B(ps.back());
-    ps.pop_back();
-    Point_2 C(ps.back());
-    ps.pop_back();
+    Point_2 A(Points.back());
+    Points.pop_back();
+    Point_2 B(Points.back());
+    Points.pop_back();
+    Point_2 C(Points.back());
+    Points.pop_back();
     
     Real_Polygon.push_back(A);
     Real_Polygon.push_back(B);
@@ -144,9 +143,9 @@ template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>
         Point_2 p;
         do
         {
-            p = Point_2(ps.back());
+            p = Point_2(Points.back());
             Real_Polygon.push_back(p);
-            ps.pop_back();            
+            Points.pop_back();            
         }while(equal_two_points(A, p));
     }
     
