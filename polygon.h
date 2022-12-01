@@ -15,13 +15,15 @@ template <class Kernel> class Polygon {
     private:
         Polygon_2 pol;
         float dt_Area;
+        float initial_area;
         
     public:
         //Given a set of Points and a choice of (Agorithm,Criteria) creates a simple polygon
-        Polygon(std::vector<Point_2>, std::string, std::string,std::string,int,int);
+        Polygon(std::vector<Point_2>, std::string algorithm, std::string step_choice,std::string criteria,int L,int threashold,int Attempts=1);        
         int Size();
         Polygon_2 get_Polygon();
         float Area();
+        float Init_Area();
         bool Simple();
 };
 

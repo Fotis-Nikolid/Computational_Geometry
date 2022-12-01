@@ -26,13 +26,14 @@ class Simulated_Annealing {
         double calculate_energy(double Area,double Hull_Area,std::string Criteria,int p_Size);
         bool validity_check(Triangle_2 t1,Triangle_2 t2,Polygon_2 Polygon);
         std::vector<std::vector<Point_2>> point_subsets(std::vector<Point_2>);
-        
+        void merge_polygons(std::vector<Polygon_2>);
+
         double local_step(Polygon_2& Polygon);
         double global_step(Polygon_2& Polygon);
         double sub_division(Polygon_2& Polygon);
     public:
-        double solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations);
-        double solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations,int Attempts);
+        double solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations,double& Init_Area);
+        double solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations,double& Init_Area,int Attempts);
         double expanded_solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations,int Attempts=1);
 };
 
