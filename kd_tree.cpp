@@ -8,7 +8,7 @@
 #include "kd_tree.h"
 
 
-template<class Kernel> kdTree<Kernel>::Node Node(Point_2 p, Node* left, Node* right)
+template<class Kernel> kdTree<Kernel>::Node Node(const Point_2& p, Node* left, Node* right)
 {
     this->point = p;
     this->left = left;
@@ -21,16 +21,16 @@ template<class Kernel> kdTree<Kernel>::Node ~Node()
     delete right;
 }
 
-template<class Kernel> bool compare_x(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
+template<class Kernel> bool compare_x(const CGAL::Point_2<Kernel>& p1, const CGAL::Point_2<Kernel>& p2)
 {
     return p1.x() < p2.x();
 }
-template<class Kernel> bool compare_y(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2)
+template<class Kernel> bool compare_y(const CGAL::Point_2<Kernel>& p1, const CGAL::Point_2<Kernel>& p2)
 {
     return p1.y() < p2.y();
 }
 
-template<class Kernel> Pvector::iterator kdTree<Kernel>::find_median(Pvector::iterator begin, Pvector::iterator end, int x_or_y)
+template<class Kernel> Pvector::iterator& kdTree<Kernel>::find_median(Pvector::iterator begin, Pvector::iterator end, const int x_or_y)
 {
     if(x_or_y == 0)
     {
@@ -58,9 +58,7 @@ template<class Kernel> Node* kdTree<Kernel>::insert(Pvector::iterator begin, Pve
 
 template<class Kernel> kdTree<Kernel>::kdTree(Pvector points)
 {
-    Pvector v(points);
-
-    this->root = this->insert(v.begin(), v.end(), 0);
+    this->root = this->insert(points.begin(), points.end(), 0);
 }
 
 template<class Kernel> void kdTree<Kernel>::points_inside_bounds(Pvector& points, Node *traverse, const int upper_x, const int upper_y, const int lower_x , const int lower_y, int depth = 0)
@@ -110,7 +108,7 @@ template<class Kernel> void kdTree<Kernel>::points_inside_bounds(Pvector& points
     }
 }
 
-template<class Kernel> Pvector kdTree<Kernel>::find_points_inside_bounds(const int upper_x, const int upper_y, const int lower_x , const int lower_y)
+template<class Kernel> Pvector& kdTree<Kernel>::find_points_inside_bounds(const int upper_x, const int upper_y, const int lower_x , const int lower_y)
 {
     Pvector points;
     this->points_inside_bounds(points, root, upper_x, upper_y, lower_x, lower_y);

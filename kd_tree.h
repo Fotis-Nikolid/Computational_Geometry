@@ -16,20 +16,20 @@ template<class Kernel> class kdTree
                 Point_2 point;
                 Node* left;
                 Node* right;
-                Node(Point_2, Node*, Node*);
+                Node(const Point_2&, Node*, Node*);
                 ~Node();
         };
 
         Node* root;
 
-        Pvector::iterator find_median(Pvector::iterator, Pvector::iterator, int);
+        Pvector::iterator& find_median(Pvector::iterator, Pvector::iterator, const int);
         Node* insert(Pvector::iterator, Pvector::iterator, int depth = 0);
         void points_inside_bounds(Pvector&, Node* ,const int, const int, const int, const int, int depth = 0);
     
     public:
         kdTree(Pvector);
         ~kdTree();
-        Pvector find_points_inside_bounds(const int, const int, const int, const int);//upper x , y lower x , y (in this order)
+        Pvector& find_points_inside_bounds(const int, const int, const int, const int);//upper x , y lower x , y (in this order)
 };
 
 #include "kd_tree.cpp"
