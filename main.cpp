@@ -19,8 +19,11 @@ int main(int argc, char *argv[])
   std::ifstream infile;
   std::ofstream outfile;
   std::string algorithm;
-  std::string edge_selection;
-  std::string sorting;
+  std::string criteria;
+  int attempts=1;
+  int L;
+  double threshold;
+  std::string step_choice;
 
   for(int i = 1 ; i < argc ; i++)
   {
@@ -41,13 +44,25 @@ int main(int argc, char *argv[])
       {
         algorithm=opt;
       }
-      else if(arg == "-edge_selection")
+      else if(arg == "-L")
       {
-        edge_selection=opt;
+        L=atoi(opt);
       }
-      else if(arg == "-initialization")
+      else if(arg == "-attempts")
       {
-        sorting = opt;
+        attempts=atoi(opt);
+      }
+      else if(arg == "-min")
+      {
+        criteria="min";
+      }
+      else if(arg == "-max")
+      {
+        criteria="max";
+      }
+      else if(arg == "-threashold")
+      {
+        threshold=atol(opt);
       }
       else
       {
@@ -91,7 +106,7 @@ int main(int argc, char *argv[])
   }
   
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  Polygon<K> poly(v_points, algorithm, edge_selection, sorting);
+  Polygon<K> poly(v_points,algorithm,step_choice,criteria,L,threshold,attempts);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   Polygon_2 real_poly(poly.get_Polygon());
@@ -109,13 +124,13 @@ int main(int argc, char *argv[])
   for (const Segment_2 edge: real_poly.edges()) {
     outfile<<edge<<std::endl;
   }
-  outfile<<"Algorithm: "<<algorithm<<"_edge_selection_"<<edge_selection;
-  if (algorithm=="incremental") {
-    outfile<<"_initialization_"<<sorting;
-  }
+  outfile<<"Algorithm: "<<algorithm<<"_"<<criteria<<std::endl;
+
   outfile<<std::endl;
   outfile<<"area: "<<poly.Area()<<std::endl;
+  outfile<<"area_initial: "<<poly.Init_Area()<<std::endl;
   outfile<<"ratio: "<<poly.Area()/convex_hull_area<<std::endl;
+  outfile<<"ratio_initial: "<<poly.Init_Area()/convex_hull_area<<std::endl;
   outfile<<"construction time: "<<std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()<<std::endl;
 
   return 0;

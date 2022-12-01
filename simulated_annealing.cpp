@@ -88,7 +88,7 @@ CGAL::Polygon_2<Kernel> merge_polygons(std::vector<CGAL::Polygon_2<Kernel>> Poly
         for (join_iter=merge_polygon.vertices().start();join_iter<merge_polygon.vertices().end();join_iter++) {//find iterator of the point of connection between the two polygons
             for (auto poly_it=poly.vertices().start();poly_it<poly.vertices().end();poly_it++) {
                 if (*join_iter==*poly_it) {//find common point iterator between two polygons
-                    next_iter=poly_it;//get next point to jin point(belongs to the 2nd polygon)
+                    next_iter=poly_it;//get next point to join point(belongs to the 2nd polygon)
                     if (next_iter==poly.vertices().end()) {//in case we loop around to the polygon's start
                         next_iter=poly.vertices().start();
                     }
@@ -225,7 +225,7 @@ void Simulated_Annealing::sub_division(CGAL::Polygon_2<Kernel>& Polygon,std::vec
 
 //perform one attemp with local or global with either min max or random starting polygon
 template<class Kernel>
-double Simulated_Annealing::solve(CGAL::Polygon_2<Kernel>& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,int Iterations) {
+double Simulated_Annealing::solve(CGAL::Polygon_2<Kernel>& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,int Iterations,double& initial_area) {
     srand((unsigned)time(NULL));
     
     Polygon_2 convex_hull;
@@ -248,6 +248,7 @@ double Simulated_Annealing::solve(CGAL::Polygon_2<Kernel>& Polygon,std::vector<C
      
     int size=Polygon.vertices().size();
     double area=inc.getPolygonArea();
+    initial_area=area;
     
     double energy=calculate_energy(area,hull_area,Criteria,size);//calculate initial energy state of starting polygon
     
@@ -287,20 +288,23 @@ double Simulated_Annealing::solve(CGAL::Polygon_2<Kernel>& Polygon,std::vector<C
 
 //perform mulitple attempts with randomized starting polygons and pick the best polygon out of all
 template<class Kernel>
-double Simulated_Annealing::solve(CGAL::Polygon_2<Kernel>& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,int Iterations,int Attempts) {
+double Simulated_Annealing::solve(CGAL::Polygon_2<Kernel>& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,int Iterations,int Attempts,double& initial_area) {
     Polygon_2 best_poly;
     double p_area=(Criteria=="max"?0:std::numeric_limits<double>::max());//initialize area depending on maximization or minimization
     for (int i=0;i<Attempts;i++) {
-        double area=solve(Polygon,Points,'random',Step_Choice,Iterations);
+        int t_area;
+        double area=solve(Polygon,Points,'random',Step_Choice,Iterations,t_area);
         if (Criteria=="max" && area>p_area) {
             if (area>p_area) {
                 p_area=area;
+                initial_area=t_area;
                 best_poly=Polygon;
             }
         }
         else {
             if (area<p_area) {
                 p_area=area;
+                initial_area=t_area;
                 best_poly=Polygon;
             }
         }

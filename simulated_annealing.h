@@ -32,8 +32,8 @@ class Simulated_Annealing {
         double global_step(Polygon_2& Polygon);
         double sub_division(Polygon_2& Polygon);
     public:
-        double solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations);
-        double solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations,int Attempts);
+        double solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations,double& Init_Area);
+        double solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations,double& Init_Area,int Attempts);
         double expanded_solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations,int Attempts=1);
 };
 
