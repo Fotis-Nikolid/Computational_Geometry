@@ -8,17 +8,17 @@
 #include "localsearch.h"
 
 
-template<class Kernel> bool comp_min(const CGAL::Polygon_2<Kernel> p1, const CGAL::Polygon_2<Kernel> p2)
+template<class Kernel> bool comp_min(const CGAL::Polygon_2<Kernel>& p1, const CGAL::Polygon_2<Kernel>& p2)
 {
     return std::abs(p2.area()) < std::abs(p1.area());
 }
 
-template<class Kernel> bool comp_max(const CGAL::Polygon_2<Kernel> p1, const CGAL::Polygon_2<Kernel> p2)
+template<class Kernel> bool comp_max(const CGAL::Polygon_2<Kernel>& p1, const CGAL::Polygon_2<Kernel>& p2)
 {
     return std::abs(p2.area()) > std::abs(p1.area());
 }
 
-template<class Kernel> LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2> Points, const std::string min_or_max, const int L, const int K, const double threshold)
+template<class Kernel> LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2>& Points, const std::string& min_or_max, const int L, const int K, const double threshold)
 {
     if(min_or_max == "min")
     {
@@ -29,7 +29,7 @@ template<class Kernel> LocalSearch<Kernel>::LocalSearch(const std::vector<Point_
         this->compare = comp_max;
     }
 
-    this->Polygon = Polygon_2(Incremental(Points, "1a", '1').getPolygon());
+    this->Polygon(Incremental(Points, "1a", '1').getPolygon());
 
     std::srand(std::time(nullptr));
 
@@ -163,7 +163,7 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
             //check if new polygon is better
             if(this->compare(BestPol, temp))
             {
-                BestPol = Polygon_2(temp);
+                BestPol = temp;
                 diff = abs(abs(Polygon.area()) - abs(BestPol.area()));
             }
         }
@@ -175,7 +175,7 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
     return diff;
 }
 
-template<class Kernel> bool LocalSearch<Kernel>::visible_points(const Point_2 p1, const Point_2 p2)
+template<class Kernel> bool LocalSearch<Kernel>::visible_points(const Point_2& p1, const Point_2& p2)
 {
     Segment_2 seg = Segment_2(p1, p2);
     for(Segment_2 PolygonEdge : Real_Polygon.edges())

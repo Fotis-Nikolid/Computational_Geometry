@@ -12,15 +12,15 @@ template<class Kernel> class LocalSearch
 
     private:
         Polygon_2 Polygon;
-        bool (*compare)(Polygon_2, Polygon_2);
+        bool (*compare)(const Polygon_2&, const Polygon_2&);
 
-        bool visible_points(const Point_2, const Point_2);
+        bool visible_points(const Point_2&, const Point_2&);
         void relocate_edges(Polygon_2&, int, int, int, int);
         double swap_L_with_edge(const int, const int);
         bool solve_specific_K(const int, const int, const double);
     
     public:
-        LocalSearch(const std::vector<Point_2>, const std::string, const int, const int, const double);
+        LocalSearch(const std::vector<Point_2>&, const std::string&, const int, const int, const double);
 };
 
 #include "localsearch.cpp"
