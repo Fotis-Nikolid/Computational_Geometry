@@ -7,29 +7,22 @@
 template<class Kernel> class kdTree
 {
     typedef CGAL::Point_2<Kernel>  Point_2;
-    typedef std::vector<Point_2> Pvector;
+    typedef std::vector<Point_2> PointsVector;
+    typedef typename PointsVector::iterator PointsIterator;
 
     private:
-        class Node
-        {
-            public:
-                Point_2 point;
-                Node* left;
-                Node* right;
-                Node(const Point_2&, Node*, Node*);
-                ~Node();
-        };
+        class Node;
 
         Node* root;
 
-        Pvector::iterator& find_median(Pvector::iterator, Pvector::iterator, const int);
-        Node* insert(Pvector::iterator, Pvector::iterator, int depth = 0);
-        void points_inside_bounds(Pvector&, Node* ,const int, const int, const int, const int, int depth = 0);
+        PointsIterator find_median(PointsIterator, PointsIterator, const int);
+        Node* insert(PointsIterator, PointsIterator, int depth = 0);
+        void points_inside_bounds(PointsVector&, Node* ,const int, const int, const int, const int, int depth = 0);
     
     public:
-        kdTree(Pvector);
+        kdTree(PointsVector);
         ~kdTree();
-        Pvector& find_points_inside_bounds(const int, const int, const int, const int);//upper x , y lower x , y (in this order)
+        PointsVector find_points_inside_bounds(const int, const int, const int, const int);//upper x , y lower x , y (in this order)
 };
 
 #include "kd_tree.cpp"

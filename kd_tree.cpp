@@ -7,19 +7,25 @@
 #include <ctime>
 #include "kd_tree.h"
 
-
-template<class Kernel> kdTree<Kernel>::Node Node(const Point_2& p, Node* left, Node* right)
+template<class Kernel> class kdTree<Kernel>::Node
 {
-    this->point = p;
-    this->left = left;
-    this->right = right;
-}
+    public:
+        Point_2 point;
+        Node* left;
+        Node* right;
 
-template<class Kernel> kdTree<Kernel>::Node ~Node()
-{
-    delete left;
-    delete right;
-}
+        Node(const CGAL::Point_2<Kernel>& p, typename kdTree<Kernel>::Node* l, typename kdTree<Kernel>::Node* r)
+        {
+            point = p;
+            left = l;
+            right = r;
+        }
+        ~Node()
+        {
+            delete left;
+            delete right;
+        }
+};
 
 template<class Kernel> bool compare_x(const CGAL::Point_2<Kernel>& p1, const CGAL::Point_2<Kernel>& p2)
 {
@@ -30,7 +36,7 @@ template<class Kernel> bool compare_y(const CGAL::Point_2<Kernel>& p1, const CGA
     return p1.y() < p2.y();
 }
 
-template<class Kernel> Pvector::iterator& kdTree<Kernel>::find_median(Pvector::iterator begin, Pvector::iterator end, const int x_or_y)
+template<class Kernel> typename std::vector<CGAL::Point_2<Kernel>>::iterator kdTree<Kernel>::find_median(PointsIterator begin, PointsIterator end, const int x_or_y)
 {
     if(x_or_y == 0)
     {
@@ -44,25 +50,28 @@ template<class Kernel> Pvector::iterator& kdTree<Kernel>::find_median(Pvector::i
     return ((end - begin)/2) + begin;
 }
 
-template<class Kernel> Node* kdTree<Kernel>::insert(Pvector::iterator begin, Pvector::iterator end, int depth = 0)
+template<class Kernel> typename kdTree<Kernel>::Node* kdTree<Kernel>::insert(PointsIterator begin, PointsIterator end, int depth)
 {
     if(begin >= end)
     {
         return nullptr;
     }
 
-    Pvector::iterator it = find_median(begin, end, depth % 2);
+    PointsIterator it = find_median(begin, end, depth % 2);
 
     return new Node(*it, this->insert(begin, it, depth + 1), this->insert(it + 1, end, depth + 1));
 }
 
-template<class Kernel> kdTree<Kernel>::kdTree(Pvector points)
+template<class Kernel> kdTree<Kernel>::kdTree(PointsVector points)
 {
     this->root = this->insert(points.begin(), points.end(), 0);
 }
 
-template<class Kernel> void kdTree<Kernel>::points_inside_bounds(Pvector& points, Node *traverse, const int upper_x, const int upper_y, const int lower_x , const int lower_y, int depth = 0)
+template<class Kernel> void kdTree<Kernel>::points_inside_bounds(PointsVector& points, Node *traverse, const int upper_x, const int upper_y, const int lower_x , const int lower_y, int depth)
 {
+    if(traverse == nullptr)
+        return;
+    
     int x = traverse->point.x();
     int y = traverse->point.y();
 
@@ -70,11 +79,11 @@ template<class Kernel> void kdTree<Kernel>::points_inside_bounds(Pvector& points
     {
         if(x < lower_x)
         {
-            this->points_inside_bounds(points, traverse->left, upper_x, upper_y, lower_x, lower_y, depth + 1);
+            this->points_inside_bounds(points, traverse->right, upper_x, upper_y, lower_x, lower_y, depth + 1);
         }
         else if(x > upper_x)
         {
-            this->points_inside_bounds(points, traverse->right, upper_x, upper_y, lower_x, lower_y, depth + 1);
+            this->points_inside_bounds(points, traverse->left, upper_x, upper_y, lower_x, lower_y, depth + 1);
         }
         else
         {
@@ -90,11 +99,11 @@ template<class Kernel> void kdTree<Kernel>::points_inside_bounds(Pvector& points
     {
         if(y < lower_y)
         {
-            this->points_inside_bounds(points, traverse->left, upper_x, upper_y, lower_x, lower_y, depth + 1);
+            this->points_inside_bounds(points, traverse->right, upper_x, upper_y, lower_x, lower_y, depth + 1);
         }
         else if(y > upper_y)
         {
-            this->points_inside_bounds(points, traverse->right, upper_x, upper_y, lower_x, lower_y, depth + 1);
+            this->points_inside_bounds(points, traverse->left, upper_x, upper_y, lower_x, lower_y, depth + 1);
         }
         else
         {
@@ -108,9 +117,9 @@ template<class Kernel> void kdTree<Kernel>::points_inside_bounds(Pvector& points
     }
 }
 
-template<class Kernel> Pvector& kdTree<Kernel>::find_points_inside_bounds(const int upper_x, const int upper_y, const int lower_x , const int lower_y)
+template<class Kernel> typename std::vector<CGAL::Point_2<Kernel>> kdTree<Kernel>::find_points_inside_bounds(const int upper_x, const int upper_y, const int lower_x , const int lower_y)
 {
-    Pvector points;
+    PointsVector points;
     this->points_inside_bounds(points, root, upper_x, upper_y, lower_x, lower_y);
     return points;
 }
