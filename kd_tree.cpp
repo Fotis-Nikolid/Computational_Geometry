@@ -117,7 +117,7 @@ template<class Kernel> void kdTree<Kernel>::points_inside_bounds(PointsVector& p
     }
 }
 
-template<class Kernel> typename std::vector<CGAL::Point_2<Kernel>> kdTree<Kernel>::find_points_inside_bounds(const int upper_x, const int upper_y, const int lower_x , const int lower_y)
+template<class Kernel> void kdTree<Kernel>::find_points_inside_bounds(PointsVector& points, const int upper_x, const int upper_y, const int lower_x , const int lower_y)
 {
     PointsVector points;
     this->points_inside_bounds(points, root, upper_x, upper_y, lower_x, lower_y);

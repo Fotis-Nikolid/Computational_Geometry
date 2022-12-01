@@ -22,7 +22,7 @@ template<class Kernel> class kdTree
     public:
         kdTree(PointsVector);
         ~kdTree();
-        PointsVector find_points_inside_bounds(const int, const int, const int, const int);//upper x , y lower x , y (in this order)
+        void find_points_inside_bounds(PointsVector&, const int, const int, const int, const int);//upper x , y lower x , y (in this order)
 };
 
 #include "kd_tree.cpp"
