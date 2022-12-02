@@ -202,8 +202,18 @@ template<class Kernel> bool LocalSearch<Kernel>::visible_points(const Point_2& p
     Segment_2 seg = Segment_2(p1, p2);
     for(Segment_2 PolygonEdge : Polygon.edges())
     {
-        if(do_intersect(PolygonEdge, seg))
-            return false;
+        auto intersect_p = intersection(PolygonEdge, seg);
+        if(intersect_p)
+        {
+            if(Point_2* p=boost::get<Point_2 >(&*intersect_p))
+            {
+                if(*p != p1 && *p != p2) return false;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 
     return true;
