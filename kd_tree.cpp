@@ -14,11 +14,8 @@ template<class Kernel> class kdTree<Kernel>::Node
         Node* left;
         Node* right;
 
-        Node(const CGAL::Point_2<Kernel>& p, typename kdTree<Kernel>::Node* l, typename kdTree<Kernel>::Node* r)
+        Node(const CGAL::Point_2<Kernel>& p, typename kdTree<Kernel>::Node* l, typename kdTree<Kernel>::Node* r) : point(p), left(l), right(r)
         {
-            point = p;
-            left = l;
-            right = r;
         }
         ~Node()
         {
