@@ -244,7 +244,9 @@ double Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<
         
     } 
     //merge the polygons
-    //apply local step 
+    Polygon=merge_polygons(polygons);
+    
+    return Polygon.area();
     
 }
 
