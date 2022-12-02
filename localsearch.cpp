@@ -73,7 +73,7 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
 
             vertices_pot.pop_back();
         }
-    }while(diff >= threshold)
+    }while(diff >= threshold);
 
     return solved;
 }
@@ -84,7 +84,7 @@ template<class Kernel> void LocalSearch<Kernel>::relocate_edges(Polygon_2& Pol, 
     if(end < start)
     {
         edge_destroy -= end + 1;
-        Poly.erase(Pol.vertices().begin() + start, Pol.vertices().end());
+        Pol.erase(Pol.vertices().begin() + start, Pol.vertices().end());
         Pol.erase(Pol.vertices().begin(), Pol.vertices().begin() + end + 1);
         Pol.insert(Pol.vertices().begin() + edge_destroy + 1, Polygon.vertices().begin() + start, Polygon.vertices().end());
         int dist = Polygon.vertices().end() - Polygon.vertices().begin() - start;
@@ -97,7 +97,7 @@ template<class Kernel> void LocalSearch<Kernel>::relocate_edges(Polygon_2& Pol, 
         {
             edge_destroy -= L;
         }
-        Poly.erase(Pol.vertices().begin() + start, Pol.vertices().begin() + end + 1);
+        Pol.erase(Pol.vertices().begin() + start, Pol.vertices().begin() + end + 1);
         Pol.insert(Pol.vertices().begin() + edge_destroy + 1, Polygon.vertices().begin() + start, Pol.vertices().begin() + end + 1);
     }
 }
@@ -178,7 +178,7 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
 template<class Kernel> bool LocalSearch<Kernel>::visible_points(const Point_2& p1, const Point_2& p2)
 {
     Segment_2 seg = Segment_2(p1, p2);
-    for(Segment_2 PolygonEdge : Real_Polygon.edges())
+    for(Segment_2 PolygonEdge : Polygon.edges())
     {
         if(do_intersect(PolygonEdge, seg))
             return false;
