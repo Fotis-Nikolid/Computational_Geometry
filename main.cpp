@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
       v_points.push_back(Point_2(x,y));
   }
 
-  LocalSearch l(v_points, criteria, L, 3, threashold);
+  LocalSearch<Kernel> l(v_points, criteria, L, 3, threashold);
 
   std::cout << l.getPolygonArea() << std::endl;
   
