@@ -21,6 +21,8 @@ template<class Kernel> class LocalSearch
     
     public:
         LocalSearch(const std::vector<Point_2>&, const std::string&, const int, const int, const double);
+        float getPolygonArea();
+        Polygon_2 getPolygon();
 };
 
 #include "localsearch.cpp"
