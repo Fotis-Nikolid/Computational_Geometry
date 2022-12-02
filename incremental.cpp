@@ -8,50 +8,40 @@
 #include "incremental.h"
 
 
-template<class Kernel> Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, const std::string how_to_sort, const char how_to_remove_edge,Point_2 edge_point)
+template<class Kernel> Incremental<Kernel>::Incremental(const std::vector<Point_2> Points, const std::string how_to_sort, const char how_to_remove_edge)
 {
-    edge_point=edge_point;
-    failed=false;
     //error handling
     if(how_to_sort != "1a" && how_to_sort != "1b" && how_to_sort != "2a" && how_to_sort != "2b")
     {
         std::cerr << "In incremental algorithm -initialization argument must be given (with value 1a or 1b or 2a or 2b)" << std::endl;
         exit(1);
     }
-    
-    //sort the Points vector
-    this->Sort(Points, how_to_sort);
+
+    std::vector<Point_2> ps(Points);
+    //sort the ps vector
+    this->Sort(ps, how_to_sort);
     //create the triangle (if the have the same x or y then its not a triangle its a polygon)
-    this->Initialize(Points);
+    this->Initialize(ps);
 
     //keep removing point from the end of the vector
-    while(!Points.empty())
+    while(!ps.empty())
     {
-        Point_2 point = Points.back();
-        Points.pop_back();
+        Point_2 point = ps.back();
+        ps.pop_back();
         //find the red edges and create the new convex hull polygon with the new point
         Incremental<Kernel>::RedEdgesBoundaries limits = this->find_red_edges_boundaries_and_recreate_convex_hull(point);
         //find a edge of the real polygon and add the new point
-        if (this->construct_new_polygon(limits, point, how_to_remove_edge)<0) {
-            failed=true;
-            break;
-        }
+        this->construct_new_polygon(limits, point, how_to_remove_edge);
     }
 }
 
 template<class Kernel> float Incremental<Kernel>::getPolygonArea()
-{   
-    if (failed) {
-        return 0;
-    }
+{
     return std::abs(Real_Polygon.area());
 }
 
 template<class Kernel> CGAL::Polygon_2<Kernel> Incremental<Kernel>::getPolygon()
-{   
-    if (failed) {
-        return NULL;
-    }
+{
     return Real_Polygon;
 }
 
@@ -122,15 +112,15 @@ template<class Kernel> inline bool equal_two_points(const CGAL::Point_2<Kernel> 
     return (A.x() == B.x()) || (A.y() == B.y());
 }
 
-template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>& Points)
+template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>& ps)
 {
     //and the last 3 points of the vecotr in the trinagle and remove them from the vector
-    Point_2 A(Points.back());
-    Points.pop_back();
-    Point_2 B(Points.back());
-    Points.pop_back();
-    Point_2 C(Points.back());
-    Points.pop_back();
+    Point_2 A(ps.back());
+    ps.pop_back();
+    Point_2 B(ps.back());
+    ps.pop_back();
+    Point_2 C(ps.back());
+    ps.pop_back();
     
     Real_Polygon.push_back(A);
     Real_Polygon.push_back(B);
@@ -143,9 +133,9 @@ template<class Kernel> void Incremental<Kernel>::Initialize(std::vector<Point_2>
         Point_2 p;
         do
         {
-            p = Point_2(Points.back());
+            p = Point_2(ps.back());
             Real_Polygon.push_back(p);
-            Points.pop_back();            
+            ps.pop_back();            
         }while(equal_two_points(A, p));
     }
     
@@ -202,21 +192,18 @@ template<class Kernel> typename Incremental<Kernel>::RedEdgesBoundaries Incremen
     return vertices;
 }
 
-template<class Kernel> int Incremental<Kernel>::construct_new_polygon(const Incremental<Kernel>::RedEdgesBoundaries red_limits, const Point_2 new_point, const char how_to_remove_edge)
+template<class Kernel> void Incremental<Kernel>::construct_new_polygon(const Incremental<Kernel>::RedEdgesBoundaries red_limits, const Point_2 new_point, const char how_to_remove_edge)
 {
     typename Polygon_2::Vertices::iterator lower_limit_iter = Real_Polygon.vertices_begin();
     typename Polygon_2::Vertices::iterator uper_limit_iter = Real_Polygon.vertices_begin();
     int vertices_counter = 0;
-    bool force_connection=false;
+
     //find the range of the candidate edges that can be broken and connected with the new vertex
     //we are searching for first_vertex and second_vertex of the red_limits
     //expect in one case , the first_vertex will be always found before the second_vertex
     //in the case that the last edge of the polygon is in that range then the second_vertex will be found in vertices_begin()
     for(Point_2 p : Real_Polygon.vertices())
     {
-        if (p==edge_point) {
-            force_connection=true;
-        }
         //if we have found the range then there no point in looking up more vertices
         if(lower_limit_iter != Real_Polygon.vertices_begin() && uper_limit_iter != Real_Polygon.vertices_begin()) break;
 
@@ -246,48 +233,8 @@ template<class Kernel> int Incremental<Kernel>::construct_new_polygon(const Incr
         }
         vertices_counter++;
     }
-    if (force_connection) {
-        std::vector<int> Visible_Edges;//vector that saves the potition of the visible edges
-        //from the candidate edges find the visible ones
-        for(typename Polygon_2::Vertices::iterator iter = lower_limit_iter ; iter <= uper_limit_iter ; iter++)
-        {
-            Segment_2 seg;
 
-            if(iter == Real_Polygon.vertices_end() - 1)
-            {
-                seg = Segment_2(*iter, *(Real_Polygon.vertices_begin()));
-            }
-            else
-            {
-                seg = Segment_2(*iter, *(iter + 1));
-            }
-
-            if(this->visible(seg, new_point))
-            {
-                Visible_Edges.push_back(iter - Real_Polygon.begin());
-            }
-        }
-        //pick a random visible edge to break
-        int pick=0;
-        for (int i=0;i<Visible_Edges.size();i++) {
-            Edge_2 edge;
-            edge=*(Real_Polygon.begin()+Visible_Edges[i]);
-            if (edge[0]==edge_point && edge[1].y()>edge[0].y()) {
-                pick=i;
-                break;
-            }
-            else if (edge[1]==edge_point && edge[0].y()>edge[1].y()) {
-                pick=i;
-                break;
-            }
-        }
-        if (pick==0) {
-            return -1;
-        }
-        //insert the two new edges in the random potition
-        Real_Polygon.insert(Visible_Edges[i] + 1 + Real_Polygon.begin(), new_point);
-    }
-    //in the case we are picking random edge to break
+    //in the case we are picking random edge to brake
     if(how_to_remove_edge == '1')
     {
         std::srand(std::time(nullptr));
@@ -395,7 +342,6 @@ template<class Kernel> int Incremental<Kernel>::construct_new_polygon(const Incr
 
         Real_Polygon = NewPolygon;
     }
-    return 0;
 }
 
 template<class Kernel> bool Incremental<Kernel>::visible(const Segment_2 seg, const Point_2 new_point)
@@ -430,7 +376,7 @@ template<class Kernel> bool Incremental<Kernel>::visible(const Segment_2 seg, co
 
 template<class Kernel> bool Incremental<Kernel>::red_visible(const Segment_2 seg, const Point_2 new_point) 
 {
-    CGAL::Orientation point_orientation = CGAL::orientation(new_point, seg[0], seg[1]);//find the relative position between the new point and the line created by the edge
+    CGAL::Orientation point_orientation = CGAL::orientation(seg[0], seg[1], new_point);//find the relative position between the new point and the line created by the edge
     CGAL::Orientation polygon_orientation;
 
     //if point on top of the line presented by segment, then the semgment is not visible by the point
@@ -446,7 +392,7 @@ template<class Kernel> bool Incremental<Kernel>::red_visible(const Segment_2 seg
             continue;
         }
         //find orientation between the line and the rest of the polygon
-        polygon_orientation = CGAL::orientation(vertex, seg[0], seg[1]);
+        polygon_orientation = CGAL::orientation(seg[0], seg[1], vertex);
         break;
     }
     //if point and polygon have different orientations to the semgent, then edge is visible by the point

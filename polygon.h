@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 #include "simulated_annealing.h"
-#include "local_search.h"
+#include "localsearch.h"
 
 template <class Kernel> class Polygon {
     typedef CGAL::Polygon_2<Kernel> Polygon_2;
@@ -14,16 +14,16 @@ template <class Kernel> class Polygon {
 
     private:
         Polygon_2 pol;
-        float dt_Area;
-        float initial_area;
+        double dt_Area;
+        double initial_area;
         
     public:
         //Given a set of Points and a choice of (Agorithm,Criteria) creates a simple polygon
-        Polygon(std::vector<Point_2>, std::string algorithm, std::string step_choice,std::string criteria,int L,int threashold,int Attempts=1);        
+        Polygon(std::vector<Point_2>, std::string algorithm, std::string step_choice,std::string criteria,int L,double threashold,int Attempts=1);        
         int Size();
         Polygon_2 get_Polygon();
-        float Area();
-        float Init_Area();
+        double Area();
+        double Init_Area();
         bool Simple();
 };
 

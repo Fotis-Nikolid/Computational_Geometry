@@ -22,8 +22,8 @@ class Hull {
     typedef CGAL::Triangle_2<Kernel> Triangle_2;
 
     private:  
-        Edge_2 first_edge;
-        Edge_2 last_edge; 
+        Segment_2 first_edge;
+        Segment_2 last_edge; 
         //data structs       
         std::unordered_map<Segment_2,Point_2> pairings;
         Point_2 last_inserted;
@@ -31,7 +31,7 @@ class Hull {
         bool is_visible(Segment_2 Edge,Point_2 n_point,Polygon_2 Polygon);
         double Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remaining_points,char criteria);
     public:
-        double solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria);
+        double solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria,Segment_2 edge_to_keep1=NULL,Segment_2 edge_to_keep2=NULL);
         
 
 };
