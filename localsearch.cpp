@@ -167,7 +167,6 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
         }
 
         //check if 3 new edges are visible
-        std::cout << *(Polygon.vertices_begin() + before_i) << " " << *(Polygon.vertices_begin() + after_end) << std::endl;
         if(this->visible_points(*(Polygon.vertices_begin() + before_i), *(Polygon.vertices_begin() + after_end)) && this->visible_points(*(Polygon.vertices_begin() + i), *(Polygon.vertices_begin() + edge_destroy)) && this->visible_points(*(Polygon.vertices_begin() + after_end), *(Polygon.vertices_begin() + edge_end)))
         {
             Polygon_2 temp(Polygon);
