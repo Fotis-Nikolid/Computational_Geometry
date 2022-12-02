@@ -20,6 +20,7 @@ template<class Kernel> class kdTree
         void points_inside_bounds(PointsVector&, Node* ,const int, const int, const int, const int, int depth = 0);
     
     public:
+        kdTree();
         kdTree(PointsVector);
         ~kdTree();
         void find_points_inside_bounds(PointsVector&, const int, const int, const int, const int);//upper x , y lower x , y (in this order)

@@ -64,6 +64,10 @@ template<class Kernel> kdTree<Kernel>::kdTree(PointsVector points)
     this->root = this->insert(points.begin(), points.end(), 0);
 }
 
+template<class Kernel> kdTree<Kernel>::kdTree()
+{
+}
+
 template<class Kernel> void kdTree<Kernel>::points_inside_bounds(PointsVector& points, Node *traverse, const int upper_x, const int upper_y, const int lower_x , const int lower_y, int depth)
 {
     if(traverse == nullptr)
