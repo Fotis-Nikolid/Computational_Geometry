@@ -46,11 +46,11 @@ int main(int argc, char *argv[])
       }
       else if(arg == "-L")
       {
-        L=atoi(opt);
+        L=atoi(opt.c_str());
       }
       else if(arg == "-attempts")
       {
-        attempts=atoi(opt);
+        attempts=atoi(opt.c_str());
       }
       else if(arg == "-min")
       {
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
       }
       else if(arg == "-threashold")
       {
-        threshold=atol(opt);
+        threshold=atol(opt.c_str());
       }
       else
       {

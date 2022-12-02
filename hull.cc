@@ -69,7 +69,7 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
             continue;
         }
         else {
-            Edge_2 reverse_edge(edge[1],edge[0]);
+            Segment_2 reverse_edge(edge[1],edge[0]);
             if (reverse_edge==first_edge || reverse_edge==last_edge) {//These two edges must never be broken
                 continue;
             }
@@ -193,7 +193,7 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
 //only function call that is exposed
 //given a list of Points and a criteria for edge selection, creates the Polygon and returns it's area 
 template<class Kernel>
-double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria,Edge_2 edge_to_keep1=NULL,Edge_2 edge_to_keep2=NULL) {
+double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria,Segment_2 edge_to_keep1,Segment_2 edge_to_keep2) {
     Point_2 n_point;
     double Area;
     std::ofstream file;
