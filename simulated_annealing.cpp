@@ -85,12 +85,12 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
         typename Polygon_2::Vertices::iterator prev_iter; //iterator to previous topological point to join point(it is downwards to the left)
         typename Polygon_2::Vertices::iterator next_iter; //iterator to next topological point to join point(it is downwards to the right)
         bool found_join=false;
-        for (join_iter=merge_polygon.vertices().start();join_iter<merge_polygon.vertices().end();join_iter++) {//find iterator of the point of connection between the two polygons
-            for (auto poly_it=poly.vertices().start();poly_it<poly.vertices().end();poly_it++) {
+        for (join_iter=merge_polygon.vertices().begin();join_iter<merge_polygon.vertices().end();join_iter++) {//find iterator of the point of connection between the two polygons
+            for (auto poly_it=poly.vertices().begin();poly_it<poly.vertices().end();poly_it++) {
                 if (*join_iter==*poly_it) {//find common point iterator between two polygons
                     next_iter=poly_it;//get next point to join point(belongs to the 2nd polygon)
                     if (next_iter==poly.vertices().end()) {//in case we loop around to the polygon's start
-                        next_iter=poly.vertices().start();
+                        next_iter=poly.vertices().begin();
                     }
                     found_join=true;
                     break;
@@ -102,7 +102,7 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
             }
         }
         //get previous point of join point(belongs to the 1st polygon), so that we connect the previous and the next points together(erasing their connection to the join point)
-        if (join_iter==poly.vertices().start()) {
+        if (join_iter==poly.vertices().begin()) {
             prev_iter=std::prev(merge_polygon.vertices().end());
         }   
         else {
@@ -120,20 +120,20 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
 
 //find 2 consecutive points and swap their positions
 template<class Kernel>
-double Simulated_Annealing<Kernel>::local_step(Polygon_2& Polygon) {
+void Simulated_Annealing<Kernel>::local_step(typename Polygon_2::Vertices::iterator begin,typename Polygon_2::Vertices::iterator end) {
     while (true) {
-        int random_pick=rand()/Polygon.vertices().size();//pick a random point of the polygon, to begin the swap in the 2 following points
-        typename Polygon_2::Vertices::iterator prev,swap1,swap2,next;
+        int random_pick=rand()/(end-begin);//pick a random point of the polygon, to begin the swap in the 2 following points
+        typename Polygon_2::Vertices::iterator prev=begin;
+        typename Polygon_2::Vertices::iterator swap1,swap2,next;
         Point_2 swap_t;
         
-        prev=Polygon.vertices().start();
         prev=std::next(prev,random_pick);//point which is previous to the two consecutive points being swapped
         
-        auto iter=prev;
+        typename Polygon_2::Vertices::iterator iter=prev;
         for (int i=0;i<3;i++) {//get the iterators of the 3 following points
-            iter++;
-            if (iter==Polygon.vertices().end()) {//given that some of the points might be after the end of the polygon(meaning we circle back), restart the iterator
-                iter=Polygon.vertices().start();
+            iter=std::next(iter);
+            if (iter==end) {//given that some of the points might be after the end of the polygon(meaning we circle back), restart the iterator
+                iter=begin;
             }
             switch (i) {
                 case 0:
@@ -182,13 +182,13 @@ double Simulated_Annealing<Kernel>::local_step(Polygon_2& Polygon) {
         //in order to check if result creates a simple point, we must check whether any point exists inside of the two "triangles" being formed by the swap operation
         //however, as to minimize the amount of points this validity check should be performed
         //we use kd-trees to get only the points that exist inside the rectangle created by the four points
-        kd_tree->find_points_inside_bounds(points, upper_x,upper_x, lower_x, lower_y);//upper x , y lower x , y (in this order)
+        kd_tree.find_points_inside_bounds(points, upper_x,upper_x, lower_x, lower_y);//upper x , y lower x , y (in this order)
 
         Triangle_2 t1,t2;
         t1=Triangle_2(*prev,*swap1,*swap2);
         t2=Triangle_2(*swap1,*swap2,*next);
         if (!validity_check(t1,t2,points)) {//check if there new polygon is simple
-            return Polygon.area();//return new polygon area and thus exit the loop
+            return ;//return new polygon area and thus exit the loop
         }
         //if resulting polygon is not simple, the while loop will restart
     }
@@ -197,6 +197,7 @@ double Simulated_Annealing<Kernel>::local_step(Polygon_2& Polygon) {
 template<class Kernel>
 double Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
     //local search with L=1
+    return 0.0;
 }
 
 template<class Kernel>
@@ -288,7 +289,8 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
         while (true) {
             t_Polygon=Polygon;
             if (Step_Choice=="local") {
-                n_area=local_step(t_Polygon);
+                local_step(t_Polygon.begin(),t_Polygon.end());
+                n_area=t_Polygon.area();
             }
             else if (Step_Choice=="global") {
                 n_area=global_step(t_Polygon);

@@ -32,7 +32,7 @@ class Simulated_Annealing {
         std::vector<std::vector<Point_2>> point_subsets(std::vector<Point_2>);
         Polygon_2 merge_polygons(std::vector<Polygon_2>);
 
-        double local_step(Polygon_2& Polygon);
+        void local_step(typename Polygon_2::Vertices::iterator begin,typename Polygon_2::Vertices::iterator end);
         double global_step(Polygon_2& Polygon);
         double sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations);
     public:
