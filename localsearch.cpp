@@ -202,6 +202,7 @@ template<class Kernel> bool LocalSearch<Kernel>::visible_points(const Point_2& p
     Segment_2 seg = Segment_2(p1, p2);
     for(Segment_2 PolygonEdge : Polygon.edges())
     {
+        
         auto intersect_p = intersection(PolygonEdge, seg);
         if(intersect_p)
         {
