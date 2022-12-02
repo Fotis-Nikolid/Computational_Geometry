@@ -64,7 +64,7 @@ template<class Kernel> kdTree<Kernel>::kdTree(PointsVector points)
     this->root = this->insert(points.begin(), points.end(), 0);
 }
 
-template<class Kernel> kdTree<Kernel>::kdTree()
+template<class Kernel> kdTree<Kernel>::kdTree() : root(nullptr)
 {
 }
 
