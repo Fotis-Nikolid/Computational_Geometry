@@ -45,6 +45,10 @@ int main(int argc, char *argv[])
       {
         algorithm=opt;
       }
+      else if(arg == "-annealing")
+      {
+        step_choice=opt;
+      }
       else if(arg == "-L")
       {
         L=atoi(opt.c_str());
@@ -61,7 +65,7 @@ int main(int argc, char *argv[])
       {
         criteria="max";
       }
-      else if(arg == "-threashold")
+      else if(arg == "-threshold")
       {
         threshold=atol(opt.c_str());
       }
@@ -106,11 +110,8 @@ int main(int argc, char *argv[])
       v_points.push_back(Point_2(x,y));
   }
 
-  LocalSearch<K> l(v_points, criteria, L, 3, threshold);
 
-  std::cout << l.getPolygonArea() << std::endl;
-  
-  /*std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
   Polygon<K> poly(v_points,algorithm,step_choice,criteria,L,threshold,attempts);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
@@ -118,8 +119,11 @@ int main(int argc, char *argv[])
   if (poly.Simple() && poly.Size() == v_points.size()) {
     std::cout<<"Correct"<<std::endl;
   }
+  else if (poly.Size() != v_points.size()) {
+    std::cout<<"Error: Wrong Number of points "<<poly.Size()<<std::endl;
+  }
   else {
-    std::cout<<"Error"<<std::endl;
+    std::cout<<"Error: Not simple"<<std::endl;
   }
 
   outfile<<"Polygonization"<<std::endl;
@@ -136,7 +140,7 @@ int main(int argc, char *argv[])
   outfile<<"area_initial: "<<poly.Init_Area()<<std::endl;
   outfile<<"ratio: "<<poly.Area()/convex_hull_area<<std::endl;
   outfile<<"ratio_initial: "<<poly.Init_Area()/convex_hull_area<<std::endl;
-  outfile<<"construction time: "<<std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()<<std::endl;*/
+  outfile<<"construction time: "<<std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()<<std::endl;
 
   return 0;
 }

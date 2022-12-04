@@ -120,10 +120,18 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
 
 //find 2 consecutive points and swap their positions
 template<class Kernel>
-void Simulated_Annealing<Kernel>::local_step(typename Polygon_2::Vertices::iterator begin,typename Polygon_2::Vertices::iterator end) {
-    while (true) {
-        int random_pick=rand()/(end-begin);//pick a random point of the polygon, to begin the swap in the 2 following points
-        typename Polygon_2::Vertices::iterator prev=begin;
+bool Simulated_Annealing<Kernel>::local_step(Polygon_2& Polygon) {
+    std::vector<int> choices;
+    Polygon_2 temp_Polygon(Polygon);
+    for (int i=0;i<temp_Polygon.size();i++) {
+        choices.push_back(i);
+    } 
+    while (choices.size()!=0) {
+        int r_index=rand()%(choices.size());//pick a random point of the polygon, to begin the swap in the 2 following points
+        int random_pick=choices[r_index];
+        choices[r_index]=choices[choices.size()-1];
+        choices.pop_back();
+        typename Polygon_2::Vertices::iterator prev=temp_Polygon.vertices_begin();
         typename Polygon_2::Vertices::iterator swap1,swap2,next;
         Point_2 swap_t;
         
@@ -132,8 +140,8 @@ void Simulated_Annealing<Kernel>::local_step(typename Polygon_2::Vertices::itera
         typename Polygon_2::Vertices::iterator iter=prev;
         for (int i=0;i<3;i++) {//get the iterators of the 3 following points
             iter=std::next(iter);
-            if (iter==end) {//given that some of the points might be after the end of the polygon(meaning we circle back), restart the iterator
-                iter=begin;
+            if (iter==temp_Polygon.vertices_end()) {//given that some of the points might be after the end of the polygon(meaning we circle back), restart the iterator
+                iter=temp_Polygon.vertices_begin();
             }
             switch (i) {
                 case 0:
@@ -182,22 +190,25 @@ void Simulated_Annealing<Kernel>::local_step(typename Polygon_2::Vertices::itera
         //in order to check if result creates a simple point, we must check whether any point exists inside of the two "triangles" being formed by the swap operation
         //however, as to minimize the amount of points this validity check should be performed
         //we use kd-trees to get only the points that exist inside the rectangle created by the four points
-        kd_tree.find_points_inside_bounds(points, upper_x,upper_x, lower_x, lower_y);//upper x , y lower x , y (in this order)
-
+        CGAL::Fuzzy_iso_box<CGAL::Search_traits_2<Kernel>> exact_range(Point_2(lower_x,lower_y),Point_2(upper_x,upper_y));
+        tree.search( std::back_inserter(points), exact_range);
         Triangle_2 t1,t2;
         t1=Triangle_2(*prev,*swap1,*swap2);
         t2=Triangle_2(*swap1,*swap2,*next);
-        if (!validity_check(t1,t2,points)) {//check if there new polygon is simple
-            return ;//return new polygon area and thus exit the loop
+        if (validity_check(t1,t2,points)) {//check if there new polygon is simple
+            Polygon=temp_Polygon;
+            return true;//return new polygon area and thus exit the loop
         }
         //if resulting polygon is not simple, the while loop will restart
     }
+    return false;
+    
 }   
 
 template<class Kernel>
-double Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
+bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
     //local search with L=1
-    return 0.0;
+    return false;
 }
 
 template<class Kernel>
@@ -250,13 +261,15 @@ double Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<
     
 }
 
-//perform one attemp with local or global with either min max or random starting polygon
+//perform one attempt with local or global with either min max or random starting polygon
 template<class Kernel>
 double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,int Iterations,double& initial_area) {
     srand((unsigned)time(NULL));
     if (!tree_exists) {
+        for(auto point:Points) {
+            tree.insert(point);//initialize a kd_tree from the set of points if it has not already been initialized
+        }        
         tree_exists=true;
-        kd_tree=kdTree<Kernel>(Points);//initialize a kd_tree from the set of points if it has not already been initialized
     }
 
     Polygon_2 convex_hull;
@@ -287,15 +300,21 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
     double n_area,n_energy;
 
     double Temperature=1;
+    bool success;
     while (Temperature>=0) {
         while (true) {
             t_Polygon=Polygon;
             if (Step_Choice=="local") {
-                local_step(t_Polygon.begin(),t_Polygon.end());
+                success=local_step(t_Polygon);
                 n_area=t_Polygon.area();
             }
             else if (Step_Choice=="global") {
-                n_area=global_step(t_Polygon);
+                success=global_step(t_Polygon);
+                n_area=t_Polygon.area();
+            }
+            if (!success) {
+                Temperature=-1;
+                break;
             }
             n_energy=calculate_energy(n_area,hull_area,Criteria,size);//find energy of altered polygon
             
@@ -329,10 +348,10 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<Point_2
         double t_area;
         double area;
         if (i==0) {//only the first polygon should be initialized as optimal area, while the rest should be initialized randomly
-            solve(Polygon,Points,Criteria,Step_Choice,Iterations,t_area);
+            area=solve(Polygon,Points,Criteria,Step_Choice,Iterations,t_area);
         }
         else {
-            solve(Polygon,Points,"random",Step_Choice,Iterations,t_area);
+            area=solve(Polygon,Points,"random",Step_Choice,Iterations,t_area);
         }
         if (Criteria=="max" && area>p_area) {
             if (area>p_area) {
