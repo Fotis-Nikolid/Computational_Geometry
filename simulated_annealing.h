@@ -30,7 +30,7 @@ class Simulated_Annealing {
         //internal helper functions
         bool comp_func(const Point_2 p1, const Point_2 p2);
         double calculate_energy(double Area,double Hull_Area,std::string Criteria,int p_Size);
-        bool validity_check(Triangle_2 t1,Triangle_2 t2,std::vector<Point_2> Points);
+        bool validity_check(Point_2,Point_2,Point_2,Point_2,std::vector<Point_2> Points);
         std::vector<std::vector<Point_2>> point_subsets(std::vector<Point_2>);
         Polygon_2 merge_polygons(std::vector<Polygon_2>);
 

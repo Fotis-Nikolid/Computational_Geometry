@@ -31,15 +31,26 @@ double Simulated_Annealing<Kernel>::calculate_energy(double Area,double Hull_Are
 
 //Checks whether after a change in order of two consecutive points, if the polygon remains simple
 template<class Kernel>
-bool Simulated_Annealing<Kernel>::validity_check(Triangle_2 t1,Triangle_2 t2,std::vector<Point_2> Points) {
+bool Simulated_Annealing<Kernel>::validity_check(Point_2 prev,Point_2 point1,Point_2 point2,Point_2 next,std::vector<Point_2> Points) {
+    Triangle_2 t1,t2;
+    t1=Triangle_2(prev,point1,point2);
+    t2=Triangle_2(point1,point2,next);
+    const auto cross_point=intersection(Segment_2(prev,point1),Segment_2(point2,next));//check if two new lines itersect with eachother
+    if (cross_point) {
+        return false;
+    }
     for (auto point: Points) {
         //This is performed by checking if any point exists inside one of the two new triangles being formed by the new ordering of vertices
         //Has been discussed in class and shown to be a correct approach, which saves us the added complexity of doing a visibility check
         if (t1.bounded_side(point)!=CGAL::ON_UNBOUNDED_SIDE) {//if not outside of triangle, thus inside or on it's boundary, then polygon is not valid
-            return false;
+            if (!(point==t1[0] || point==t1[1] || point==t1[2])) {
+                return false;
+            }
         }
         if (t2.bounded_side(point)!=CGAL::ON_UNBOUNDED_SIDE) {
-            return false;
+            if (!(point==t2[0] || point==t2[1] || point==t2[2])) { 
+                return false;
+            }
         }
     }
     return true;
@@ -122,11 +133,11 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
 template<class Kernel>
 bool Simulated_Annealing<Kernel>::local_step(Polygon_2& Polygon) {
     std::vector<int> choices;
-    Polygon_2 temp_Polygon(Polygon);
-    for (int i=0;i<temp_Polygon.size();i++) {
+    for (int i=0;i<Polygon.size();i++) {
         choices.push_back(i);
     } 
     while (choices.size()!=0) {
+        Polygon_2 temp_Polygon(Polygon);
         int r_index=rand()%(choices.size());//pick a random point of the polygon, to begin the swap in the 2 following points
         int random_pick=choices[r_index];
         choices[r_index]=choices[choices.size()-1];
@@ -192,10 +203,8 @@ bool Simulated_Annealing<Kernel>::local_step(Polygon_2& Polygon) {
         //we use kd-trees to get only the points that exist inside the rectangle created by the four points
         CGAL::Fuzzy_iso_box<CGAL::Search_traits_2<Kernel>> exact_range(Point_2(lower_x,lower_y),Point_2(upper_x,upper_y));
         tree.search( std::back_inserter(points), exact_range);
-        Triangle_2 t1,t2;
-        t1=Triangle_2(*prev,*swap1,*swap2);
-        t2=Triangle_2(*swap1,*swap2,*next);
-        if (validity_check(t1,t2,points)) {//check if there new polygon is simple
+        
+        if (validity_check(*prev,*swap1,*swap2,*next,points)) {//check if there new polygon is simple
             Polygon=temp_Polygon;
             return true;//return new polygon area and thus exit the loop
         }
@@ -257,7 +266,7 @@ double Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<
     //merge the polygons
     Polygon=merge_polygons(polygons);
     
-    return Polygon.area();
+    return abs(Polygon.area());
     
 }
 
@@ -274,7 +283,7 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
 
     Polygon_2 convex_hull;
     CGAL::convex_hull_2(Points.begin(),Points.end(),std::back_inserter(convex_hull));
-    double hull_area=convex_hull.area();//needed to calculate state energy
+    double hull_area=abs(convex_hull.area());//needed to calculate state energy
 
     char crit;
     if (Criteria=="max") {
@@ -289,30 +298,36 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
     
     Incremental<Kernel> inc(Points,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
     Polygon=inc.getPolygon();
-     
+
     int size=Polygon.vertices().size();
     double area=inc.getPolygonArea();
     initial_area=area;
     
     double energy=calculate_energy(area,hull_area,Criteria,size);//calculate initial energy state of starting polygon
     
-    Polygon_2 t_Polygon;
-    double n_area,n_energy;
+    Polygon_2 t_Polygon,best_Polygon(Polygon);
+    double n_area,n_energy,p_area=area;
 
     double Temperature=1;
     bool success;
-    while (Temperature>=0) {
+    bool no_change=true;
+    int BadStepsCount=0;
+    int BadStepsThreshold=50;
+    int RetryCount=0;
+    int RetryThreshold=4;
+    while (Temperature>0) {
         while (true) {
             t_Polygon=Polygon;
             if (Step_Choice=="local") {
                 success=local_step(t_Polygon);
-                n_area=t_Polygon.area();
+                n_area=abs(t_Polygon.area());
             }
             else if (Step_Choice=="global") {
                 success=global_step(t_Polygon);
-                n_area=t_Polygon.area();
+                n_area=abs(t_Polygon.area());
             }
-            if (!success) {
+            if (!success) {//there exists no point combination capable of swapping
+                std::cout<<"Deadlock, exiting..."<<std::endl;
                 Temperature=-1;
                 break;
             }
@@ -320,9 +335,30 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
             
             double EnergyDifference=n_energy-energy;//energy difference
             if (EnergyDifference<0) {//if change is positive
+                no_change=false;
+                BadStepsCount++;
+                if ((Criteria=="max" && n_area>p_area) || (Criteria=="min" && n_area<p_area)) {
+                    //std::cout<<"Found new best"<<std::endl;
+                    BadStepsCount=0;
+                    RetryCount=0;
+                    p_area=n_area;
+                    best_Polygon=t_Polygon;
+                }
                 break;//keep solution
             }
             else {//else if change is negative, only apply it by performing the Metropolis criteria
+                BadStepsCount++;
+                if (BadStepsCount>BadStepsThreshold) {//if we have taken too many bad actions without finding a better result, backtrack to best Polygon found and retry
+                    t_Polygon=best_Polygon;
+                    RetryCount++;
+                    //std::cout<<"Number of Bad Steps exceeded, Resetting..."<<std::endl;
+                    break;
+                }
+                if (RetryCount>RetryThreshold) {
+                    std::cout<<"Maximum Number of Resets reached, Stopping..."<<std::endl;
+                    Temperature=-1;//if number of backtracks to the same best solution is exceeds threshold, stop loop and return best solution
+                    break;
+                }
                 double R=((double) rand())/RAND_MAX;
                 double threshold=std::exp(-EnergyDifference/Temperature);//Metropolis formula
                 if (R<=threshold) {
@@ -336,6 +372,11 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
 
         Temperature=Temperature-1.0/Iterations;
     }
+    if (no_change) {
+        std::cout<<"No optimizations found"<<std::endl;
+    }
+    Polygon=best_Polygon;
+    area=p_area;
     return area;
 }
 
@@ -347,24 +388,21 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<Point_2
     for (int i=0;i<Attempts;i++) {
         double t_area;
         double area;
-        if (i==0) {//only the first polygon should be initialized as optimal area, while the rest should be initialized randomly
-            area=solve(Polygon,Points,Criteria,Step_Choice,Iterations,t_area);
-        }
-        else {
-            area=solve(Polygon,Points,"random",Step_Choice,Iterations,t_area);
-        }
-        if (Criteria=="max" && area>p_area) {
+        Polygon_2 poly;
+        //the starting polygon should be initialized as optimal area, while the rest should be initialized randomly
+        area=solve(poly,Points,Criteria,Step_Choice,Iterations,t_area);
+        if (Criteria=="max") {
             if (area>p_area) {
                 p_area=area;
                 initial_area=t_area;
-                best_poly=Polygon;
+                best_poly=poly;
             }
         }
         else {
             if (area<p_area) {
                 p_area=area;
                 initial_area=t_area;
-                best_poly=Polygon;
+                best_poly=poly;
             }
         }
     }
