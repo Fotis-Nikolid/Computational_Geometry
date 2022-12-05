@@ -174,6 +174,7 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
             Polygon_2 temp(Polygon);
             //swap L potition
             relocate_edges(temp, i, end, edge_destroy, L);
+            
             //check if new polygon is better
             if(this->compare(BestPol, temp))
             { 
