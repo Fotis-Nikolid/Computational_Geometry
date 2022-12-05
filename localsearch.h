@@ -26,5 +26,4 @@ template<class Kernel> class LocalSearch
 };
 
 #include "localsearch.cpp"
-
 #endif
