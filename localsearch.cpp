@@ -11,6 +11,7 @@
 
 template<class Kernel> bool comp_min(const CGAL::Polygon_2<Kernel>& p1, const CGAL::Polygon_2<Kernel>& p2)
 {
+    //p1 old best p2 temp
     return std::abs(p2.area()) < std::abs(p1.area());
 }
 
@@ -19,7 +20,7 @@ template<class Kernel> bool comp_max(const CGAL::Polygon_2<Kernel>& p1, const CG
     return std::abs(p2.area()) > std::abs(p1.area());
 }
 
-template<class Kernel> LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2>& Points, const std::string& min_or_max, const int L, const int K, const double threshold) : Polygon(Incremental<Kernel>(Points, "1a", '1').getPolygon())
+template<class Kernel> LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2>& Points, const std::string& min_or_max, const int L, const int K, const double threshold) : Polygon(Incremental<Kernel>(Points, "1a", '2').getPolygon())
 {
     if(min_or_max == "min")
     {
@@ -30,15 +31,6 @@ template<class Kernel> LocalSearch<Kernel>::LocalSearch(const std::vector<Point_
         this->compare = comp_max;
     }
 
-    /*for(Point_2 p : Polygon.vertices())
-    {
-        std::cout << p << std::endl;
-    }
-    std::cout << "-" << std::endl;
-    for(Segment_2 s : Polygon.edges())
-    {
-        std::cout << s << std::endl;
-    }*/
     std::cout << getPolygonArea() << std::endl;
 
     std::srand(std::time(nullptr));
@@ -57,23 +49,23 @@ template<class Kernel> LocalSearch<Kernel>::LocalSearch(const std::vector<Point_
 template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, const int K , const double threshold)
 {
     bool solved = false;
-    double diff = 0.0;
-
-    std::vector<int> vertices_pot(Polygon.vertices().size(), 0);
-
-    for(int i = 0 ; i < Polygon.vertices().size() ; i++)
-    {
-        vertices_pot[i] = i;
-    }
+    double diff;
 
     do
     {
+        diff = 0.0;
+        int old_choice = -1;
         for(int i = 0 ; i < K ; i++)
         {
             //pick random edge
-            std::swap(vertices_pot[vertices_pot.size() - 1], vertices_pot[std::rand()%vertices_pot.size()]);
+            if(temp.size() == 0)
+            {
+                break;
+            }
+            
+            std::swap(temp[vertices_pot.size() - 1], temp[std::rand()%temp.size()]);
 
-            double sr = swap_L_with_edge(vertices_pot[vertices_pot.size() - 1], L);
+            double sr = swap_L_with_edge(temp[temp.size() - 1], L);
 
             if(sr != 0.0)
             {
@@ -88,37 +80,44 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
     return solved;
 }
 
-template<class Kernel> void LocalSearch<Kernel>::relocate_edges(Polygon_2& Pol, int start, int end, int edge_destroy, int L)
+template<class Kernel> void LocalSearch<Kernel>::relocate_edges(Polygon_2& Pol, int Lstart, int Lend, int edge_destroy, int L)
 {
-    //std::cout << Pol << std::endl;
-    //if end is after 0 potiton
-    if(end < start)
+
+    //if start is after end then L ends after the polygon start
+    if(Lend < Lstart)
     {
-        edge_destroy -= end + 1;
-        Pol.erase(Pol.vertices_begin() + start, Pol.vertices_end());
-        Pol.erase(Pol.vertices_begin(), Pol.vertices_begin() + end + 1);
-        Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + start, Polygon.vertices_end());
-        int dist = Polygon.vertices_end() - Polygon.vertices_begin() - start;
-        int rest = edge_destroy + 1 + dist; //MIGHT BE WRONG
-        Pol.insert(Pol.vertices_begin() + rest, Polygon.vertices_begin(), Polygon.vertices_end() + end + 1);
+        //after we remove L points then the edge destroy location moves end + 1 seats to the left
+        edge_destroy -= Lend + 1;
     }
+    //else if L ends behind polygon end
     else
     {
-        if(edge_destroy > end)
+        //if edge destroy is after the L then we need to move it
+        if(edge_destroy > Lend)
         {
+            //move L seats
             edge_destroy -= L;
-        }
-        Pol.erase(Pol.vertices_begin() + start, Pol.vertices_begin() + end + 1);
-        Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + start, Pol.vertices_begin() + end + 1);
+        } 
     }
-    //std::cout << Pol << std::endl;
+
+    Pol.erase(Pol.vertices_begin() + Lstart, Pol.vertices_begin() + Lend + 1);
+
+    Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + Lstart, Polygon.vertices_begin() + Lend + 1);
+
 }
 
 template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int edge_destroy, const int L)
 {
-    Polygon_2 BestPol(Polygon);
-    double diff = 0.0;
     const int dist = Polygon.vertices_end() - Polygon.vertices_begin();
+
+    if(L >= dist)
+    {
+        return 0.0;
+    }
+
+    double diff = 0.0;
+
+    Polygon_2 BestPol(Polygon);
 
     for(int i = 0 ; i < dist ; i++)
     {
@@ -167,14 +166,18 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(const int ed
         }
 
         //check if 3 new edges are visible
-        if(this->visible_points(*(Polygon.vertices_begin() + before_i), *(Polygon.vertices_begin() + after_end)) && this->visible_points(*(Polygon.vertices_begin() + i), *(Polygon.vertices_begin() + edge_destroy)) && this->visible_points(*(Polygon.vertices_begin() + after_end), *(Polygon.vertices_begin() + edge_end)))
+        if(this->visible_points(*(Polygon.vertices_begin() + before_i), *(Polygon.vertices_begin() + after_end)) 
+           && this->visible_points(*(Polygon.vertices_begin() + i), *(Polygon.vertices_begin() + edge_destroy)) 
+           && this->visible_points(*(Polygon.vertices_begin() + end), *(Polygon.vertices_begin() + edge_end))
+          )
         {
             Polygon_2 temp(Polygon);
             //swap L potition
             relocate_edges(temp, i, end, edge_destroy, L);
+            
             //check if new polygon is better
             if(this->compare(BestPol, temp))
-            {
+            { 
                 BestPol = temp;
                 diff = abs(abs(Polygon.area()) - abs(BestPol.area()));
             }
