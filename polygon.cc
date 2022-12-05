@@ -22,10 +22,21 @@ template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std
     {
         Simulated_Annealing<Kernel> algorithm;
         if (Step_Choice=="local" || Step_Choice=="global") {
-            dt_Area=algorithm.solve(pol,Points,Criteria,Step_Choice,Iterations,Attempts,initial_area);
+            if (algorithm.solve(pol,Points,Criteria,Step_Choice,Iterations,Attempts,initial_area)) {
+                dt_Area=pol.area();
+            }
+            else {
+                failed=true;
+            }
+
         }
         else if (Step_Choice=="subdivision") {
-
+            if (algorithm.sub_division(pol,Points,Criteria,Iterations,initial_area)) {
+                dt_Area=pol.area();
+            }
+            else {
+                failed=true;
+            }
         }
     }
     else
@@ -39,6 +50,12 @@ template<class Kernel>
 int Polygon<Kernel>::Size() {
     return pol.vertices().size();
 }
+
+template<class Kernel>
+bool Polygon<Kernel>::Success() {
+    return !failed;
+}
+
 
 template<class Kernel>
 CGAL::Polygon_2<Kernel> Polygon<Kernel>::get_Polygon() {

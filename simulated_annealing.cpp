@@ -15,7 +15,7 @@
 
 
 template<class Kernel> 
-bool Simulated_Annealing<Kernel>::comp_func(const Point_2 p1, const Point_2 p2) {//used for topological sorting by x-axis in increasing order
+static bool comp_func(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2) {//used for topological sorting by x-axis in increasing order
     return (p1.x()>p2.x());
 }
 
@@ -59,7 +59,7 @@ bool Simulated_Annealing<Kernel>::validity_check(Point_2 prev,Point_2 point1,Poi
 //Breaks the set of points into multiple subsets for which smaller polygon's will be created using global steps and then joined to then perform local steps
 template<class Kernel>
 std::vector<std::vector<CGAL::Point_2<Kernel>>> Simulated_Annealing<Kernel>::point_subsets(std::vector<Point_2> Points) {
-    std::sort(Points.begin(), Points.end(), comp_func);
+    std::sort(Points.begin(), Points.end(), comp_func<Kernel>);
     int m=100;//average number of points per subset
     int k=std::ceil((Points.size()-1)/(m-1));//desirable number of subsets created, depending on the orientation of the points this is not always possible
     std::vector<std::vector<Point_2>> subsets;
@@ -96,12 +96,12 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
         typename Polygon_2::Vertices::iterator prev_iter; //iterator to previous topological point to join point(it is downwards to the left)
         typename Polygon_2::Vertices::iterator next_iter; //iterator to next topological point to join point(it is downwards to the right)
         bool found_join=false;
-        for (join_iter=merge_polygon.vertices().begin();join_iter<merge_polygon.vertices().end();join_iter++) {//find iterator of the point of connection between the two polygons
-            for (auto poly_it=poly.vertices().begin();poly_it<poly.vertices().end();poly_it++) {
+        for (join_iter=merge_polygon.vertices_begin();join_iter<merge_polygon.vertices_end();join_iter++) {//find iterator of the point of connection between the two polygons
+            for (auto poly_it=poly.vertices_begin();poly_it<poly.vertices_end();poly_it++) {
                 if (*join_iter==*poly_it) {//find common point iterator between two polygons
                     next_iter=poly_it;//get next point to join point(belongs to the 2nd polygon)
-                    if (next_iter==poly.vertices().end()) {//in case we loop around to the polygon's start
-                        next_iter=poly.vertices().begin();
+                    if (next_iter==poly.vertices_end()) {//in case we loop around to the polygon's start
+                        next_iter=poly.vertices_begin();
                     }
                     found_join=true;
                     break;
@@ -113,8 +113,8 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
             }
         }
         //get previous point of join point(belongs to the 1st polygon), so that we connect the previous and the next points together(erasing their connection to the join point)
-        if (join_iter==poly.vertices().begin()) {
-            prev_iter=std::prev(merge_polygon.vertices().end());
+        if (join_iter==poly.vertices_begin()) {
+            prev_iter=std::prev(merge_polygon.vertices_end());
         }   
         else {
             prev_iter=std::prev(join_iter);
@@ -127,6 +127,7 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
             insert_it=std::next(insert_it);//move the iterator along to continue inserting
         }
     }
+    return merge_polygon;
 }
 
 //find 2 consecutive points and swap their positions
@@ -221,12 +222,12 @@ bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
 }
 
 template<class Kernel>
-double Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations) {
+bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations,double& initial_area) {
     std::vector<std::vector<Point_2>> Subsets;
     
     Subsets=point_subsets(Points);//break points into multiple subsets
     
-    std::list<Polygon_2> polygons;
+    std::vector<Polygon_2> polygons;
     
     char crit;
     if (Criteria=="max") {
@@ -245,28 +246,35 @@ double Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<
         
         Hull<Kernel> hull;
         std::list<Point_2> points(subset.begin(),subset.end());
-        Segment_2 e1,e2;
-        e1=Segment_2(subset[0],subset[1]);//first edge in subset
-        e2=Segment_2(subset[subset.size()-1],subset[subset.size()-2]);//last edge in subset
+        Point_2 p1,p2;
+        p1=subset[0];//first point in subset
+        p2=subset[subset.size()-1];//last point in subset
         //use altered version of Hull algorithm which will make sure not to break any of the two lines needed for the criteria to work
         if (subset_n==0) {
-            hull.solve(poly,points,crit,NULL,e2);//only keep the last edge(first does not matter in the 1st subset)
+            hull.solve(poly,points,crit,NULL,&p2);//only keep the last edge(first does not matter in the 1st subset)
         }   
-        else if (subset) {
-            hull.solve(poly,points,crit,e1,NULL);//only keep the first edge(last does not matter in the last subset)
+        else if (subset_n==subset.size()-1) {
+            hull.solve(poly,points,crit,&p1,NULL);//only keep the first edge(last does not matter in the last subset)
         }
         else {
-            hull.solve(poly,points,crit,e1,e2);//keep both edges
+            hull.solve(poly,points,crit,&p1,&p2);//keep both edges
         }
-        solve(poly,Criteria,"global",Iterations);//solve subset based on global 
+        //solve(poly,Criteria,"global",Iterations);//solve subset based on global 
 
-        polygons.append(poly);
+        polygons.push_back(poly);
         
     } 
     //merge the polygons
     Polygon=merge_polygons(polygons);
+    if (!Polygon.is_simple()) {
+        std::cout<<"Not simple"<<std::endl;
+    }
+    if (Polygon.vertices().size()!=Points.size()) {
+        std::cout<<"Size wrong: "<<Polygon.vertices().size()<<std::endl;
+    }
     
-    return abs(Polygon.area());
+    double tmp;
+    return solve(Polygon,Points,Criteria,"local",Iterations,tmp);//apply local step to the merged Polygon
     
 }
 
@@ -297,8 +305,9 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
     }
     
     Incremental<Kernel> inc(Points,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
-    Polygon=inc.getPolygon();
-
+    if (Polygon.size()==0) {
+        Polygon=inc.getPolygon();
+    }
     int size=Polygon.vertices().size();
     double area=inc.getPolygonArea();
     initial_area=area;

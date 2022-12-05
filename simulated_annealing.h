@@ -28,7 +28,6 @@ class Simulated_Annealing {
         CGAL::Kd_tree<CGAL::Search_traits_2<Kernel>> tree;
         bool tree_exists=false;
         //internal helper functions
-        bool comp_func(const Point_2 p1, const Point_2 p2);
         double calculate_energy(double Area,double Hull_Area,std::string Criteria,int p_Size);
         bool validity_check(Point_2,Point_2,Point_2,Point_2,std::vector<Point_2> Points);
         std::vector<std::vector<Point_2>> point_subsets(std::vector<Point_2>);
@@ -36,11 +35,11 @@ class Simulated_Annealing {
 
         bool local_step(Polygon_2& Polygon);
         bool global_step(Polygon_2& Polygon);
-        double sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations);
+        
     public:
         double solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations,double& Init_Area);
         double solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations,int Attempts,double& Init_Area);
-        double expanded_solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations,int Attempts=1);
+        bool sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations,double& initial_area);
 };
 
 #include "simulated_annealing.cpp"

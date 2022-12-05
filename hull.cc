@@ -65,12 +65,12 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
     
     for(auto it=Polygon.edges().begin();it<Polygon.edges().end();++it){//iterate edges and for each one find the closest point, if there is one
         Segment_2 edge=*it;
-        if (edge==first_edge || edge==last_edge) {//These two edges must never be broken
+        if ((first_edge!=NULL && edge==*first_edge) || (last_edge!=NULL && edge==*last_edge)) {//These two edges must never be broken
             continue;
         }
         else {
             Segment_2 reverse_edge(edge[1],edge[0]);
-            if (reverse_edge==first_edge || reverse_edge==last_edge) {//These two edges must never be broken
+            if ((first_edge!=NULL && reverse_edge==*first_edge) ||  (last_edge!=NULL && reverse_edge==*last_edge)) {//These two edges must never be broken
                 continue;
             }
         }
@@ -193,14 +193,13 @@ double Hull<Kernel>::Edge_Selection(Polygon_2& Polygon,std::list<Point_2>& remai
 //only function call that is exposed
 //given a list of Points and a criteria for edge selection, creates the Polygon and returns it's area 
 template<class Kernel>
-double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria,Segment_2 edge_to_keep1,Segment_2 edge_to_keep2) {
+double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Criteria,Point_2* edge_point1,Point_2* edge_point2) {
     Point_2 n_point;
     double Area;
     std::ofstream file;
     srand(time(0));
     
-    first_edge=edge_to_keep1;
-    last_edge=edge_to_keep2;
+    
 
     #if 0  
     //used for testing purposes
@@ -216,10 +215,34 @@ double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Cri
         Points.remove(vertex);//remove any point part of the convex hull from the list of points(as it is already part of the polygon)
         last_inserted=vertex;//for the Edge_Selection to work correctely without having to add a special if statement
     }
+    for (auto edge:Polygon.edges()) {//iterate over all edges of convex hull, to find the ones containing the join points of the spatial subdivision algorithm
+        first_edge=NULL;
+        last_edge=NULL;
+        if (edge_point1!=NULL) {//in case that we do care about first edge
+            //since the join point belongs in two edges, find the one for which the criteria for merging for spatial subdivision is true
+            if ((edge[0]==*edge_point1 && edge[1].y()<edge[0].y()) || (edge[1]==*edge_point1 && edge[0].y()<edge[1].y())) {
+                first_edge=new Segment_2(edge);
+            }
+        }
+        if (edge_point2!=NULL) {//in case that we do care about second edge
+            if ((edge[0]==*edge_point2 && edge[1].y()<edge[0].y()) || (edge[1]==*edge_point2 && edge[0].y()<edge[1].y())) {
+                last_edge=new Segment_2(edge);
+            }
+        }
+        
+    }
+
+
     Area=Polygon.area();
     while (Points.size()>0) {//iterate over list of points
         double loss=Edge_Selection(Polygon,Points,Criteria);//add point to polygon by breaking of the appropriate edge and then update the polygon's area based on the area lost from assimilated a point
         if (loss==0) {//an error has occured
+            if (first_edge!=NULL) {
+                free(first_edge);
+            }
+            if (last_edge!=NULL) {
+                free(last_edge);
+            }
             return 0;
         }
         Area-=loss;//reduce the polygon's area by the area of the triangle that was "cut off" from the polygon
@@ -232,6 +255,12 @@ double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Cri
             }
             file<<"-"<<std::endl;
         #endif
+    }
+    if (first_edge!=NULL) {
+        free(first_edge);
+    }
+    if (last_edge!=NULL) {
+        free(last_edge);
     }
     return Area;
 }

@@ -13,6 +13,7 @@ template <class Kernel> class Polygon {
     typedef CGAL::Segment_2<Kernel> Segment_2;
 
     private:
+        bool failed=false;
         Polygon_2 pol;
         double dt_Area;
         double initial_area;
@@ -25,6 +26,7 @@ template <class Kernel> class Polygon {
         double Area();
         double Init_Area();
         bool Simple();
+        bool Success();
 };
 
 #include "polygon.cc"
