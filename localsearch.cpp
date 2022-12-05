@@ -77,7 +77,7 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
     }
     else
     {
-        do
+        /*do
         {
             diff = 0.0;
             std::unordered_map<Segment_2, bool>seg_map; //map that holds the random edge picks so we dont repick them
@@ -109,7 +109,7 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
                 }
             }
 
-        }while(diff >= threshold);
+        }while(diff >= threshold);*/
     }
 
     return solved;
