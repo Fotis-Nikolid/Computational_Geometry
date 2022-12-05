@@ -57,13 +57,7 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
         int old_choice = -1;
         for(int i = 0 ; i < K ; i++)
         {
-            //pick random edge
-            if(temp.size() == 0)
-            {
-                break;
-            }
-            
-            std::swap(temp[vertices_pot.size() - 1], temp[std::rand()%temp.size()]);
+            /*std::swap(temp[vertices_pot.size() - 1], temp[std::rand()%temp.size()]);
 
             double sr = swap_L_with_edge(temp[temp.size() - 1], L);
 
@@ -73,7 +67,7 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
                 diff = sr;
             }
 
-            vertices_pot.pop_back();
+            vertices_pot.pop_back();*/
         }
     }while(diff >= threshold);
 
