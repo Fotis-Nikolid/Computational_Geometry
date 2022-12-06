@@ -52,17 +52,18 @@ template<class Kernel> LocalSearch<Kernel>::LocalSearch(const std::vector<Point_
 template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, const double threshold, const int K)
 {
     bool solved = false;
-    double diff;
+    double diff = 0.0;
+    Polygon_2 BestPolygon;
 
     if(K == 0 || K >= Polygon.edges().size() - 1)
     {
+        Polygon_2 temp;
         do
         {
-            Polygon_2 BestPolygon(Polygon);
             diff = 0.0;
             for(Segment_2 edge : Polygon.edges())
             {
-                Polygon_2 temp(Polygon);
+                temp = Polygon;
                 //swap the random edge with the best L
                 double sr = swap_L_with_edge(&temp, edge[0], L);
 
@@ -77,7 +78,7 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
             if(diff > 0.0)
                 Polygon = BestPolygon
 
-        }while(diff >= threshold);
+        }while(diff > threshold);
     }
     else
     {
@@ -163,6 +164,8 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(Polygon_2* B
         return 0.0;
     }
 
+    Polygon_2 temp;
+
     double diff = 0.0;
 
     for(int i = 0 ; i < dist ; i++)
@@ -218,7 +221,7 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(Polygon_2* B
            && this->visible_points(*(Polygon.vertices_begin() + end), *(Polygon.vertices_begin() + edge_end))
           )
         {
-            Polygon_2 temp(Polygon);
+            temp = Polygon;
             //swap L potition
             relocate_edges(temp, i, end, edge_destroy, L);
             
