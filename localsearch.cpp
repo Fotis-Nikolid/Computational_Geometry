@@ -82,9 +82,9 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
     }
     else
     {
-        /*do
+        Polygon_2 temp;
+        do
         {
-            Polygon_2 BestPolygon(Polygon);
             diff = 0.0;
             std::unordered_map<Segment_2, bool>seg_map; //map that holds the random edge picks so we dont repick them
             //find K random edges and swap them with L
@@ -100,14 +100,17 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
                     seg = (Segment_2)*(Polygon.edges_begin() + pick);
                 }
 
+                temp = Polygon;
+
                 //swap the random edge with the best L
                 double sr = swap_L_with_edge(pick, L);
 
                 //if we found an L that has better than the current Polygon
-                if(sr != 0.0)
+                if(sr > diff)
                 {
-                    solved = true;
+                    BestPolygon = temp;
                     diff = sr;
+                    solved = true;
                 }
                 else
                 {
@@ -115,7 +118,10 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
                 }
             }
 
-        }while(diff >= threshold);*/
+            if(diff > 0.0)
+                Polygon = BestPolygon
+
+        }while(diff > threshold);
     }
 
     return solved;
