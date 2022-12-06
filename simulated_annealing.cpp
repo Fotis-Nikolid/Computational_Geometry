@@ -256,12 +256,72 @@ bool Simulated_Annealing<Kernel>::local_step(Polygon_2& Polygon) {
     }
     return false;
     
-}   
+}
+
+template <class Kernel>
+bool visible_points(const CGAL::Polygon_2<Kernel>& Polygon, const CGAL::Point_2<Kernel> &p1, const CGAL::Point_2<Kernel> &p2)
+{
+    CGAL::Segment_2 seg = CGAL::Segment_2<Kernel>(p1, p2);
+    for (CGAL::Segment_2 PolygonEdge : Polygon.edges())
+    {
+
+        auto intersect_p = intersection(PolygonEdge, seg);
+        if (intersect_p)
+        {
+            if (CGAL::Point_2<Kernel> *p = boost::get<CGAL::Point_2<Kernel>>(&*intersect_p))
+            {
+                if (*p != p1 && *p != p2)
+                    return false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
 
 template<class Kernel>
 bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
     //local search with L=1
-    return false;
+    int point1_index;
+    int point2_index;
+
+    std::vector<int> vertexes_indexes(Polygon.vertices().size(), 0);
+
+    for(int i = 0 ; i < vertexes_indexes.size() ; i++)
+    {
+        vertexes_indexes[i] = i;
+    }
+
+    do
+    {
+        if(vertexes_indexes.size() < 2) return false;
+
+
+        point1_index = std::rand()%vertexes_indexes.size();
+        point2_index = std::rand()%vertexes_indexes.size();
+        while(point2_index == point1_index)
+        {
+            point2_index = std::rand()%vertexes_indexes.size();
+        }
+
+        std::swap(vertexes_indexes[point1_index], vertexes_indexes[vertexes_indexes.size() - 1]);
+        point1_index = vertexes_indexes[vertexes_indexes.size() - 1];
+
+        std::swap(vertexes_indexes[point2_index], vertexes_indexes[vertexes_indexes.size() - 2]);
+        point2_index = vertexes_indexes[vertexes_indexes.size() - 2];
+
+        vertexes_indexes.pop_back();
+        vertexes_indexes.pop_back();
+
+    }while(!visible_points(Polygon, *(Polygon.vertices_begin() + point1_index), *(Polygon.vertices_begin() + point2_index)));
+    
+    
+
+    return true;
 }
 
 template<class Kernel>
