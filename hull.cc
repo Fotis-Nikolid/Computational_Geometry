@@ -215,16 +215,16 @@ double Hull<Kernel>::solve(Polygon_2& Polygon,std::list<Point_2> Points,char Cri
         Points.remove(vertex);//remove any point part of the convex hull from the list of points(as it is already part of the polygon)
         last_inserted=vertex;//for the Edge_Selection to work correctely without having to add a special if statement
     }
+    first_edge=NULL;
+    last_edge=NULL;
     for (auto edge:Polygon.edges()) {//iterate over all edges of convex hull, to find the ones containing the join points of the spatial subdivision algorithm
-        first_edge=NULL;
-        last_edge=NULL;
-        if (edge_point1!=NULL) {//in case that we do care about first edge
+        if (edge_point1!=NULL && first_edge==NULL) {//in case that we do care about first edge
             //since the join point belongs in two edges, find the one for which the criteria for merging for spatial subdivision is true
             if ((edge[0]==*edge_point1 && edge[1].y()<edge[0].y()) || (edge[1]==*edge_point1 && edge[0].y()<edge[1].y())) {
                 first_edge=new Segment_2(edge);
             }
         }
-        if (edge_point2!=NULL) {//in case that we do care about second edge
+        if (edge_point2!=NULL && last_edge==NULL) {//in case that we do care about second edge
             if ((edge[0]==*edge_point2 && edge[1].y()<edge[0].y()) || (edge[1]==*edge_point2 && edge[0].y()<edge[1].y())) {
                 last_edge=new Segment_2(edge);
             }

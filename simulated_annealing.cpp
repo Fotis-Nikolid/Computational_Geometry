@@ -16,7 +16,7 @@
 
 template<class Kernel> 
 static bool comp_func(const CGAL::Point_2<Kernel> p1, const CGAL::Point_2<Kernel> p2) {//used for topological sorting by x-axis in increasing order
-    return (p1.x()>p2.x());
+    return (p1.x()<p2.x());
 }
 
 template<class Kernel>
@@ -63,27 +63,35 @@ std::vector<std::vector<CGAL::Point_2<Kernel>>> Simulated_Annealing<Kernel>::poi
     int m=100;//average number of points per subset
     int k=std::ceil((Points.size()-1)/(m-1));//desirable number of subsets created, depending on the orientation of the points this is not always possible
     std::vector<std::vector<Point_2>> subsets;
-    int subset_n=1;
+    bool more_points=false;
+    std::vector<Point_2> subset;
     for (int i=0;i<Points.size()-2;i++) {
         Point_2 p1,p2,p3;
         p1=Points.at(i);
         p2=Points.at(i+1);
         p3=Points.at(i+2);
         if (p1.y()<p2.y() && p3.y()<p2.y()) {//if next 3 consecutive points form the pattern needed for breaking into subsets
-            if (i>(subset_n*m*0.9)) {//only break if around the point expected of a subset break or afterwards
-                subsets[subset_n].push_back(p1);
-                subsets[subset_n].push_back(p2);//add the connecting point of the two subsets
+            if (i>((subsets.size()+1)*m*0.9)) {//only break if around the point expected of a subset break or afterwards
+                subset.push_back(p1);
+                subset.push_back(p2);//add the connecting point of the two subsets
+                subsets.push_back(subset);
+                subset.clear();
 
-                //subsets[subset_n+1].append(p2); //these two operations will occure naturally in the next two loops
-                //subsets[subset_n+1].append(p3);
-                subset_n++;//following iterations will add points  
+                subset.push_back(p2);
+                subset.push_back(p3);
+                i+=2;//skip two next points                
+            }
+            else {//if criteria for breaking is not met, simple add the point to current subset
+                subset.push_back(p1);
             }
         }
         else {//if criteria for breaking is not met, simple add the point to current subset
-            subsets[subset_n].push_back(p1);
+            subset.push_back(p1);
         }
-        
     }
+    subset.push_back(Points.at(Points.size()-1));
+    subset.push_back(Points.at(Points.size()-2));
+    subsets.push_back(subset);  
     return subsets;
     
 }
@@ -99,9 +107,17 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
         for (join_iter=merge_polygon.vertices_begin();join_iter<merge_polygon.vertices_end();join_iter++) {//find iterator of the point of connection between the two polygons
             for (auto poly_it=poly.vertices_begin();poly_it<poly.vertices_end();poly_it++) {
                 if (*join_iter==*poly_it) {//find common point iterator between two polygons
-                    next_iter=poly_it;//get next point to join point(belongs to the 2nd polygon)
+                    next_iter=std::next(poly_it);//get next point to join point(belongs to the 2nd polygon)
                     if (next_iter==poly.vertices_end()) {//in case we loop around to the polygon's start
                         next_iter=poly.vertices_begin();
+                    }
+                    if (next_iter->y()>=poly_it->y()) {
+                        if (poly_it==poly.vertices_begin()) {
+                            next_iter=std::prev(poly.vertices_end());
+                        }   
+                        else {
+                            next_iter=std::prev(poly_it);
+                        }
                     }
                     found_join=true;
                     break;
@@ -113,18 +129,45 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
             }
         }
         //get previous point of join point(belongs to the 1st polygon), so that we connect the previous and the next points together(erasing their connection to the join point)
-        if (join_iter==poly.vertices_begin()) {
-            prev_iter=std::prev(merge_polygon.vertices_end());
-        }   
-        else {
-            prev_iter=std::prev(join_iter);
+        prev_iter=std::next(join_iter);//get next point to join point(belongs to the 2nd polygon)
+        if (prev_iter==merge_polygon.vertices_end()) {//in case we loop around to the polygon's start
+            prev_iter=merge_polygon.vertices_begin();
         }
-
+        if (prev_iter->y()>=join_iter->y()) {
+            if (join_iter==merge_polygon.vertices_begin()) {
+                prev_iter=std::prev(merge_polygon.vertices_end());
+            }   
+            else {
+                prev_iter=std::prev(join_iter);
+            }
+        }
+        
         //insert all points of the 2nd polygon after the previous point iterator, all the way to the join point(thus merging the two polygons) 
-        typename Polygon_2::Vertices::iterator insert_it=prev_iter;
-        for (auto it=next_iter;*it!=*join_iter;it++) {//iterate from the next point iterator of the 2nd polygon all the way circling back until we arrive at the join point, inserting each polygons point along the way 
-            merge_polygon.insert(insert_it,*it);//update the merged polygon
-            insert_it=std::next(insert_it);//move the iterator along to continue inserting
+        int insert_pos=join_iter-merge_polygon.begin();
+        auto it=next_iter;
+        Point_2 join_point=*join_iter;
+        std::vector<Point_2> v_points1,v_points2;
+        bool next_vector=false;
+        while (*it!=join_point) {//iterate from the next point iterator of the 2nd polygon all the way circling back until we arrive at the join point, inserting each polygons point along the way 
+            if (!next_vector) {
+                v_points1.push_back(*it);
+            }
+            else {
+                v_points2.push_back(*it);
+            }
+            //merge_polygon.insert(merge_polygon.begin()+insert_pos,*it);//update the merged polygon
+            //insert_pos++;//move the iterator along to continue inserting
+            
+            it=std::next(it);
+            if (it==poly.vertices_end()) {
+                next_vector=true;
+                it=poly.vertices_begin();
+            }
+        }
+        merge_polygon.insert(join_iter,v_points1.begin(),v_points1.end());
+        insert_pos+=v_points1.size();
+        if (v_points2.size()!=0) {
+            merge_polygon.insert(merge_polygon.vertices_begin()+insert_pos,v_points1.begin(),v_points2.end());
         }
     }
     return merge_polygon;
@@ -224,7 +267,6 @@ bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
 template<class Kernel>
 bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations,double& initial_area) {
     std::vector<std::vector<Point_2>> Subsets;
-    
     Subsets=point_subsets(Points);//break points into multiple subsets
     
     std::vector<Polygon_2> polygons;
@@ -253,25 +295,21 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
         if (subset_n==0) {
             hull.solve(poly,points,crit,NULL,&p2);//only keep the last edge(first does not matter in the 1st subset)
         }   
-        else if (subset_n==subset.size()-1) {
+        else if (subset_n==(Subsets.size()-1)) {
             hull.solve(poly,points,crit,&p1,NULL);//only keep the first edge(last does not matter in the last subset)
         }
         else {
             hull.solve(poly,points,crit,&p1,&p2);//keep both edges
         }
         //solve(poly,Criteria,"global",Iterations);//solve subset based on global 
-
+        subset_n++;
         polygons.push_back(poly);
         
     } 
+
     //merge the polygons
+    
     Polygon=merge_polygons(polygons);
-    if (!Polygon.is_simple()) {
-        std::cout<<"Not simple"<<std::endl;
-    }
-    if (Polygon.vertices().size()!=Points.size()) {
-        std::cout<<"Size wrong: "<<Polygon.vertices().size()<<std::endl;
-    }
     
     double tmp;
     return solve(Polygon,Points,Criteria,"local",Iterations,tmp);//apply local step to the merged Polygon
@@ -347,7 +385,6 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
                 no_change=false;
                 BadStepsCount++;
                 if ((Criteria=="max" && n_area>p_area) || (Criteria=="min" && n_area<p_area)) {
-                    //std::cout<<"Found new best"<<std::endl;
                     BadStepsCount=0;
                     RetryCount=0;
                     p_area=n_area;
@@ -360,7 +397,7 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
                 if (BadStepsCount>BadStepsThreshold) {//if we have taken too many bad actions without finding a better result, backtrack to best Polygon found and retry
                     t_Polygon=best_Polygon;
                     RetryCount++;
-                    //std::cout<<"Number of Bad Steps exceeded, Resetting..."<<std::endl;
+                    std::cout<<"Number of Bad Steps exceeded, Resetting..."<<std::endl;
                     break;
                 }
                 if (RetryCount>RetryThreshold) {
