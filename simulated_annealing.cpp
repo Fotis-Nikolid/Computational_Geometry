@@ -6,6 +6,7 @@
 #include <CGAL/convex_hull_2.h>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <list>
 #include "simulated_annealing.h"
 #include "incremental.h"
@@ -319,7 +320,7 @@ bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
 
     }while(!visible_points(Polygon, *(Polygon.vertices_begin() + point1_index), *(Polygon.vertices_begin() + point2_index)));
     
-    
+    std::iter_swap(Polygon.vertices_begin() + point1_index, Polygon.vertices_begin() + point2_index);
 
     return true;
 }
