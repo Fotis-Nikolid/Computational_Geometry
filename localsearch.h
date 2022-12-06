@@ -16,7 +16,7 @@ template<class Kernel> class LocalSearch
 
         bool visible_points(const Point_2&, const Point_2&);
         void relocate_edges(Polygon_2&, int, int, int, int);
-        double swap_L_with_edge(Polygon_2&, const int, const int);
+        double swap_L_with_edge(Polygon_2*, const int, const int);
         bool solve_specific_K(const int, const double, const int K = 0);
     
     public:

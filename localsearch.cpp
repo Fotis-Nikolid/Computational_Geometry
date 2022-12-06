@@ -54,7 +54,7 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
     bool solved = false;
     double diff;
 
-    if(K == 0)
+    if(K == 0 || K >= Polygon.edges().size() - 1)
     {
         do
         {
@@ -64,14 +64,18 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
             {
                 Polygon_2 temp(Polygon);
                 //swap the random edge with the best L
-                double sr = swap_L_with_edge(temp, edge[0], L);
+                double sr = swap_L_with_edge(&temp, edge[0], L);
 
                 if(sr > diff)
                 {
                     BestPolygon = temp;
+                    diff = sr;
                     solved = true;
                 }
             }
+
+            if(diff > 0.0)
+                Polygon = BestPolygon
 
         }while(diff >= threshold);
     }
@@ -79,6 +83,7 @@ template<class Kernel> bool LocalSearch<Kernel>::solve_specific_K(const int L, c
     {
         /*do
         {
+            Polygon_2 BestPolygon(Polygon);
             diff = 0.0;
             std::unordered_map<Segment_2, bool>seg_map; //map that holds the random edge picks so we dont repick them
             //find K random edges and swap them with L
@@ -148,7 +153,7 @@ template<class Kernel> void LocalSearch<Kernel>::relocate_edges(Polygon_2& Pol, 
     }
 }
 
-template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(Polygon_2& BestPol, const int edge_destroy, const int L)
+template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(Polygon_2* BestPol, const int edge_destroy, const int L)
 {
     //edge_destoy points to the location of the Segment_2[0] , where the segment is the edge we will destroy and put L
     const int dist = Polygon.vertices_end() - Polygon.vertices_begin();
@@ -218,10 +223,10 @@ template<class Kernel> double LocalSearch<Kernel>::swap_L_with_edge(Polygon_2& B
             relocate_edges(temp, i, end, edge_destroy, L);
             
             //check if new polygon is better
-            if(this->compare(BestPol, temp))
+            if(this->compare(*BestPol, temp))
             {
-                BestPol = temp;
-                diff = abs(abs(Polygon.area()) - abs(BestPol.area()));
+                *BestPol = temp;
+                diff = abs(abs(Polygon.area()) - abs(BestPol->area()));
             }
         }
     }
