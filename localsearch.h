@@ -15,12 +15,25 @@ template<class Kernel> class LocalSearch
         bool (*compare)(const Polygon_2&, const Polygon_2&);
 
         bool visible_points(const Point_2&, const Point_2&);
-        void relocate_edges(Polygon_2&, int, int, int, int);
-        double swap_L_with_edge(const int, const int);
-        bool solve_specific_K(const int, const int, const double);
+        
+        //(Polygon to set changes, index of the first vertex of L, index of the last, index of the edge[0], L)
+        //remove L from the current potion and put it after edge[0]
+        void RelocateEdges(Polygon_2&, int, int, int, int);
+
+        //(Polygon to save the minimized polygon, index of edge[0] to replace, L)
+        //returns the difference between the old and new area
+        //finds the best L to put in the edge potion
+        double ReplaceEdgeWithBest_L(Polygon_2*, const int, const int);
+
+        bool solve(const int, const double, const int);
     
     public:
-        LocalSearch(const std::vector<Point_2>&, const std::string&, const int, const int, const double);
+        //(points, min or max)
+        LocalSearch(const std::vector<Point_2>&, const std::string&);
+
+        //(L, threshold, K)
+        bool MinimizePolygon(const int, const double, const int K = 0);
+
         float getPolygonArea();
         Polygon_2 getPolygon();
 };
