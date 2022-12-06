@@ -290,33 +290,14 @@ bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
     int point1_index;
     int point2_index;
 
-    std::vector<int> vertexes_indexes(Polygon.vertices().size(), 0);
-
-    for(int i = 0 ; i < vertexes_indexes.size() ; i++)
-    {
-        vertexes_indexes[i] = i;
-    }
-
     do
     {
-        if(vertexes_indexes.size() < 2) return false;
-
-
-        point1_index = std::rand()%vertexes_indexes.size();
-        point2_index = std::rand()%vertexes_indexes.size();
+        point1_index = std::rand()%Polygon.vertices().size();
+        point2_index = std::rand()%Polygon.vertices().size();
         while(point2_index == point1_index)
         {
-            point2_index = std::rand()%vertexes_indexes.size();
+            point2_index = std::rand()%Polygon.vertices().size();
         }
-
-        std::swap(vertexes_indexes[point1_index], vertexes_indexes[vertexes_indexes.size() - 1]);
-        point1_index = vertexes_indexes[vertexes_indexes.size() - 1];
-
-        std::swap(vertexes_indexes[point2_index], vertexes_indexes[vertexes_indexes.size() - 2]);
-        point2_index = vertexes_indexes[vertexes_indexes.size() - 2];
-
-        vertexes_indexes.pop_back();
-        vertexes_indexes.pop_back();
 
     }while(!visible_points(Polygon, *(Polygon.vertices_begin() + point1_index), *(Polygon.vertices_begin() + point2_index)));
     
