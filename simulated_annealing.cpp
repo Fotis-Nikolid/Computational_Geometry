@@ -144,7 +144,7 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
         }
         
         //insert all points of the 2nd polygon after the previous point iterator, all the way to the join point(thus merging the two polygons) 
-        int insert_pos=join_iter-merge_polygon.begin();
+        int insert_prev=join_iter-merge_polygon.begin();
         auto it=next_iter;
         Point_2 join_point=*join_iter;
         std::vector<Point_2> v_points1,v_points2;
@@ -156,8 +156,8 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
             else {
                 v_points2.push_back(*it);
             }
-            //merge_polygon.insert(merge_polygon.begin()+insert_pos,*it);//update the merged polygon
-            //insert_pos++;//move the iterator along to continue inserting
+            //merge_polygon.insert(merge_polygon.begin()+insert_prev,*it);//update the merged polygon
+            //insert_prev++;//move the iterator along to continue inserting
             
             it=std::next(it);
             if (it==poly.vertices_end()) {
@@ -166,9 +166,9 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
             }
         }
         merge_polygon.insert(join_iter,v_points1.begin(),v_points1.end());
-        insert_pos+=v_points1.size();
+        insert_prev+=v_points1.size();
         if (v_points2.size()!=0) {
-            merge_polygon.insert(merge_polygon.vertices_begin()+insert_pos,v_points1.begin(),v_points2.end());
+            merge_polygon.insert(merge_polygon.vertices_begin()+insert_prev,v_points1.begin(),v_points2.end());
         }
     }
     return merge_polygon;
@@ -262,10 +262,12 @@ bool Simulated_Annealing<Kernel>::local_step(Polygon_2& Polygon) {
 template <class Kernel>
 bool visible_points(const CGAL::Polygon_2<Kernel>& Polygon, const CGAL::Point_2<Kernel> &p1, const CGAL::Point_2<Kernel> &p2)
 {
-    CGAL::Segment_2 seg = CGAL::Segment_2<Kernel>(p1, p2);
-    for (CGAL::Segment_2 PolygonEdge : Polygon.edges())
-    {
-
+    CGAL::Segment_2<Kernel> seg = CGAL::Segment_2<Kernel>(p1, p2);
+    for (CGAL::Segment_2<Kernel> PolygonEdge : Polygon.edges())
+    {   
+        if (seg==PolygonEdge || CGAL::Segment_2<Kernel>(p2, p1)==PolygonEdge ) {
+            continue;
+        }
         auto intersect_p = intersection(PolygonEdge, seg);
         if (intersect_p)
         {
@@ -287,21 +289,56 @@ bool visible_points(const CGAL::Polygon_2<Kernel>& Polygon, const CGAL::Point_2<
 template<class Kernel>
 bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
     //local search with L=1
-    int point1_index;
-    int point2_index;
+    int insert_prev,insert_next;
+    int move_pos,move_prev,move_next;
 
-    do
-    {
-        point1_index = std::rand()%Polygon.vertices().size();
-        point2_index = std::rand()%Polygon.vertices().size();
-        while(point2_index == point1_index)
-        {
-            point2_index = std::rand()%Polygon.vertices().size();
+    while (true) {
+        Polygon_2 t_Poly=Polygon_2(Polygon);
+        insert_prev = std::rand()%t_Poly.vertices().size();
+        move_pos = std::rand()%t_Poly.vertices().size();
+        while(abs(insert_prev-move_pos)<=2) {
+            move_pos = std::rand()%t_Poly.vertices().size();
         }
+        insert_next=insert_prev+1;
+        move_next=move_pos+1;
+        move_prev=(move_next!=0)?(move_pos-1):(t_Poly.vertices().size()-1);
+        if ((t_Poly.vertices_begin()+insert_next)==t_Poly.vertices_end()) {
+            insert_next=0;
+        }
+        if ((t_Poly.vertices_begin()+move_next)==t_Poly.vertices_end()) {
+            move_next=0;
+        }
+        Point_2 moved_point=*(t_Poly.vertices_begin()+move_pos);
 
-    }while(!visible_points(Polygon, *(Polygon.vertices_begin() + point1_index), *(Polygon.vertices_begin() + point2_index)));
-    
-    std::iter_swap(Polygon.vertices_begin() + point1_index, Polygon.vertices_begin() + point2_index);
+        t_Poly.erase((t_Poly.vertices_begin()+move_pos));
+        if (move_pos<move_next) {
+            move_next--;
+        }
+        if (move_pos<insert_prev) {
+            insert_prev--;
+        }
+        if (move_pos<insert_next) {
+            insert_next--;
+        }
+        
+        Point_2 in_next=*(t_Poly.vertices_begin()+insert_next);
+        Point_2 in_prev=*(t_Poly.vertices_begin()+insert_prev);
+        Point_2 mv_next=*(t_Poly.vertices_begin()+move_next);
+        Point_2 mv_prev=*(t_Poly.vertices_begin()+move_prev);
+        
+        
+        t_Poly.insert((t_Poly.vertices_begin()+insert_next),moved_point);
+        
+
+        bool check1=visible_points<Kernel>(t_Poly,in_next,moved_point);
+        bool check2=visible_points<Kernel>(t_Poly,in_prev,moved_point);
+        bool check3=visible_points<Kernel>(t_Poly,mv_prev,mv_next);
+        if (check1 && check2 && check3) {
+            Polygon=t_Poly;
+            break;
+        }
+  
+    }   
 
     return true;
 }
