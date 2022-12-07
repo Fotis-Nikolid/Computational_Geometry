@@ -1,3 +1,0 @@
-/home/fotisnikolidais/Desktop/project/Computational_Geometry/CMakeFiles/main.dir
-/home/fotisnikolidais/Desktop/project/Computational_Geometry/CMakeFiles/edit_cache.dir
-/home/fotisnikolidais/Desktop/project/Computational_Geometry/CMakeFiles/rebuild_cache.dir
