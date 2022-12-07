@@ -14,7 +14,7 @@ template<class Kernel> class LocalSearch
         Polygon_2 Polygon;
         bool (*compare)(const Polygon_2&, const Polygon_2&);
 
-        bool visible_points(const Point_2&, const Point_2&);
+        bool visible_points(const Point_2&, const Point_2&, const std::unordered_map<Segment_2, bool>&);
         
         //(Polygon to set changes, index of the first vertex of L, index of the last, index of the edge[0], L)
         //remove L from the current potion and put it after edge[0]
