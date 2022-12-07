@@ -70,12 +70,11 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
         do
         {
             diff = 0.0;
-            int edge_vertex_index = 0;
-            for (Segment_2 edge : Polygon.edges())
+            for (int edge_index = 0 ; edge_index < Polygon.edges().size() ; edge_index++)
             {
                 temp = Polygon;
                 // swap the random edge with the best L
-                double new_diff = ReplaceEdgeWithBest_L(&temp, edge_vertex_index, L);
+                double new_diff = ReplaceEdgeWithBest_L(&temp, edge_index, L);
 
                 //if we found an L that has better area than the current Polygon
                 if (new_diff > diff)
@@ -84,8 +83,6 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                     diff = new_diff;
                     solved = true;
                 }
-
-                edge_vertex_index++;
             }
 
             if (diff > 0.0)
@@ -122,10 +119,7 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                     BestPolygon = temp;
                     diff = new_diff;
                 }
-                else
-                {
-                    random_edge_indexes[pick] = true;
-                }
+                random_edge_indexes[pick] = true;
             }
 
             if (diff > 0.0)
@@ -185,6 +179,13 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
             before_Lstart = dist - 1;
         }
 
+        int edge_end = edge_destroy + 1;
+        // if we will destoy the last edge of the polygon then the Segment[1] = first polygon vertex
+        if (edge_end == dist)
+        {
+            edge_end = 0;
+        }
+
         int Lend = Lstart + (L - 1);
         // if L Lends after the last Polygon vertex
         if (Lend >= dist)
@@ -194,7 +195,7 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
             // then the Lend will be in the first vertex + remaining elements
             Lend = Lend - dist;
             // if edge to destory is included in L then stop searching you have found all avaible L
-            if (edge_destroy >= Lstart || edge_destroy <= Lend)
+            if (edge_destroy <= Lend)
             {
                 break;
             }
@@ -202,7 +203,7 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
         else
         {
             // if edge to destory is included in L then skip all the L that includes it
-            if (edge_destroy <= Lend && edge_destroy >= Lstart)
+            if ((edge_destroy <= Lend && edge_destroy >= Lstart) || edge_end == Lstart)
             {
                 Lstart = edge_destroy + 1;
                 continue;
@@ -214,13 +215,6 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
         if (after_Lend == dist)
         {
             after_Lend = 0;
-        }
-
-        int edge_end = edge_destroy + 1;
-        // if we will destoy the last edge of the polygon then the Segment[1] = first polygon vertex
-        if (edge_end == dist)
-        {
-            edge_end = 0;
         }
 
         //3 new edges will be created , as we put L in the place of the edge we choose to destroy
@@ -254,11 +248,6 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
         // swap L potition
         RelocateEdges(temp, Lstart, Lend, edge_destroy, L);
 
-        if(temp.is_simple())
-            std::cout << "OLE" << std::endl;
-        else
-            std::cout << "WTF" << std::endl;
-
         // check if new polygon is better
         if (this->compare(*BestPol, temp))
         {
@@ -291,18 +280,12 @@ void LocalSearch<Kernel>::RelocateEdges(Polygon_2 &Pol, int Lstart, int Lend, in
         {
             Pol.insert(Pol.vertices_begin() + edge_destroy + 1, *it);
         }
-
-        //Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + Lstart, Polygon.vertices_end());
-
-        // calculate the new potion to insert after the first insert
-        //int new_pot = edge_destroy + 1 + ((Polygon.vertices_end() - Polygon.vertices_begin()) - Lstart);
-
-        //Pol.insert(Pol.vertices_begin() + new_pot, Polygon.vertices_begin(), Polygon.vertices_begin() + Lend + 1);
     }
     // else if L Lends behind polygon Lend
     else
     {
         Pol.erase(Pol.vertices_begin() + Lstart, Pol.vertices_begin() + Lend + 1);
+
         // if edge destroy is after the L then we need to move it
         if (edge_destroy > Lend)
         {
@@ -315,7 +298,6 @@ void LocalSearch<Kernel>::RelocateEdges(Polygon_2 &Pol, int Lstart, int Lend, in
             Pol.insert(Pol.vertices_begin() + edge_destroy + 1, *it);
         }
 
-        //Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + Lstart, Polygon.vertices_begin() + Lend + 1);
     }
 }
 

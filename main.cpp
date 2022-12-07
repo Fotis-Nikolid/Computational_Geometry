@@ -10,20 +10,21 @@
 #include "polygon.h"
 #include "localsearch.h"
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-typedef CGAL::Point_2<K> Point_2;
-typedef CGAL::Segment_2<K> Segment_2;
-typedef CGAL::Polygon_2<K> Polygon_2;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
+typedef CGAL::Point_2<Kernel> Point_2;
+typedef CGAL::Segment_2<Kernel> Segment_2;
+typedef CGAL::Polygon_2<Kernel> Polygon_2;
 
 int main(int argc, char *argv[])
 {
   std::ifstream infile;
   std::ofstream outfile;
   std::string algorithm;
-  std::string criteria;
+  std::string criteria("min");
   int attempts=1;
-  int L;
-  double threshold;
+  int L = 0;
+  int K = 0;
+  double threshold = 0.0;
   std::string step_choice;
 
   for(int i = 1 ; i < argc ; i++)
@@ -69,6 +70,10 @@ int main(int argc, char *argv[])
       {
         threshold=atol(opt.c_str());
       }
+      else if(arg == "-K")
+      {
+        K = atoi(opt.c_str());
+      }
       else
       {
         std::cout << "Option " + arg + " is not avaible" << std::endl;
@@ -110,9 +115,8 @@ int main(int argc, char *argv[])
       v_points.push_back(Point_2(x,y));
   }
 
-
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  Polygon<K> poly(v_points,algorithm,step_choice,criteria,L,threshold,attempts);
+  Polygon<Kernel> poly(v_points,algorithm,step_choice,criteria,L,threshold,attempts);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   Polygon_2 real_poly(poly.get_Polygon());
