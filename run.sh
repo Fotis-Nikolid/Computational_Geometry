@@ -1,1 +1,0 @@
-./main -i data/uniform/uniform-0001000-1.instance -o output.txt -algorithm local_search -L 3 -min -threshold 0
