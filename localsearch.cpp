@@ -282,12 +282,22 @@ void LocalSearch<Kernel>::RelocateEdges(Polygon_2 &Pol, int Lstart, int Lend, in
         // after we remove L points then the edge destroy location moves Lend + 1 seats to the left
         edge_destroy -= Lend + 1;
 
-        Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + Lstart, Polygon.vertices_end());
+        for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() + Lstart ; it < Polygon.vertices_end() ; it++)
+        {
+            Pol.insert(Pol.vertices_begin() + edge_destroy + 1, *it);
+        }
+
+        for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() ; it <= Polygon.vertices_begin() + Lend ; it++)
+        {
+            Pol.insert(Pol.vertices_begin() + edge_destroy + 1, *it);
+        }
+
+        //Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + Lstart, Polygon.vertices_end());
 
         // calculate the new potion to insert after the first insert
-        int new_pot = edge_destroy + 1 + ((Polygon.vertices_end() - Polygon.vertices_begin()) - Lstart);
+        //int new_pot = edge_destroy + 1 + ((Polygon.vertices_end() - Polygon.vertices_begin()) - Lstart);
 
-        Pol.insert(Pol.vertices_begin() + new_pot, Polygon.vertices_begin(), Polygon.vertices_begin() + Lend + 1);
+        //Pol.insert(Pol.vertices_begin() + new_pot, Polygon.vertices_begin(), Polygon.vertices_begin() + Lend + 1);
     }
     // else if L Lends behind polygon Lend
     else
@@ -300,7 +310,12 @@ void LocalSearch<Kernel>::RelocateEdges(Polygon_2 &Pol, int Lstart, int Lend, in
             edge_destroy -= L;
         }
 
-        Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + Lstart, Polygon.vertices_begin() + Lend + 1);
+        for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() + Lstart ; it <= Polygon.vertices_begin() + Lend ; it++)
+        {
+            Pol.insert(Pol.vertices_begin() + edge_destroy + 1, *it);
+        }
+
+        //Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + Lstart, Polygon.vertices_begin() + Lend + 1);
     }
 }
 
