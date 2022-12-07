@@ -137,11 +137,35 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
     return solved;
 }
 
+//this function is helper function only used inside ReplaceEdgeWithBest_L
+template <class Kernel>
+bool LinesIntersect(const CGAL::Segment_2<Kernel>& seg1, const CGAL::Segment_2<Kernel>& seg2)
+{
+    auto intersect_p = intersection(seg1, seg2);
+    if (intersect_p)
+    {
+        if (CGAL::Point_2<Kernel> *p = boost::get<CGAL::Point_2<Kernel>>(&*intersect_p))
+        {
+            if (*p == seg1[1] && seg2[1] == seg1[1])
+                return false;
+            else if(*p == seg1[0] && seg2[0] == seg1[0])
+                return false;
+            else
+                return true;
+        }
+        else
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 template <class Kernel>
 double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int edge_destroy, const int L)
 {
     // edge_destoy points to the location of the Segment_2[0] , where the segment is the edge we will destroy and put L
-    const int dist = Polygon.vertices_Lend() - Polygon.vertices_begin();
+    const int dist = Polygon.vertices_end() - Polygon.vertices_begin();
 
     if (L >= dist - 1)
     {
@@ -212,10 +236,10 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
             continue;
         }
 
-        const std::unordered_map<Segment_2, bool> map;
-        map[*(Polygon.edges_begin() + before_Lstart)] = true;
-        map[*(Polygon.edges_begin() + Lend)] = true;
-        map[*(Polygon.edges_begin() + edge_destroy)] = true;
+        std::unordered_map<Segment_2, bool> map;
+        map[(Segment_2)*(Polygon.edges_begin() + before_Lstart)] = true;
+        map[(Segment_2)*(Polygon.edges_begin() + Lend)] = true;
+        map[(Segment_2)*(Polygon.edges_begin() + edge_destroy)] = true;
 
         // check if the 3 new edges are visible
         if (!this->visible_points(NewEdge3[0], NewEdge3[1], map) 
@@ -241,46 +265,22 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
     return diff;
 }
 
-//this function is helper function only used inside ReplaceEdgeWithBest_L
-template <class Kernel>
-bool LinesIntersect(const CGAL::Segment_2<Kernel>& seg1, const CGAL::Segment_2<Kernel>& seg2)
-{
-    auto intersect_p = intersection(seg1, seg2);
-    if (intersect_p)
-    {
-        if (CGAL::Point_2<Kernel> *p = boost::get<CGAL::Point_2<Kernel>>(&*intersect_p))
-        {
-            if (*p == seg1[1] && seg2[1] == seg1[1])
-                return false;
-            else if(*p == seg1[0] && seg2[0] == seg1[0])
-                return false;
-            else
-                return true;
-        }
-        else
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
 template <class Kernel>
 void LocalSearch<Kernel>::RelocateEdges(Polygon_2 &Pol, int Lstart, int Lend, int edge_destroy, int L)
 {
     // if start is after Lend then L Lends after the polygon start
     if (Lend < Lstart)
     {
-        Pol.erase(Pol.vertices_begin() + Lstart, Pol.vertices_Lend());
+        Pol.erase(Pol.vertices_begin() + Lstart, Pol.vertices_end());
         Pol.erase(Pol.vertices_begin(), Pol.vertices_begin() + Lend + 1);
 
         // after we remove L points then the edge destroy location moves Lend + 1 seats to the left
         edge_destroy -= Lend + 1;
 
-        Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + Lstart, Polygon.vertices_Lend());
+        Pol.insert(Pol.vertices_begin() + edge_destroy + 1, Polygon.vertices_begin() + Lstart, Polygon.vertices_end());
 
         // calculate the new potion to insert after the first insert
-        int new_pot = edge_destroy + 1 + ((Polygon.vertices_Lend() - Polygon.vertices_begin()) - Lstart);
+        int new_pot = edge_destroy + 1 + ((Polygon.vertices_end() - Polygon.vertices_begin()) - Lstart);
 
         Pol.insert(Pol.vertices_begin() + new_pot, Polygon.vertices_begin(), Polygon.vertices_begin() + Lend + 1);
     }
@@ -318,7 +318,7 @@ bool LocalSearch<Kernel>::visible_points(const Point_2 &p1, const Point_2 &p2, c
     for (Segment_2 PolygonEdge : Polygon.edges())
     {
 
-        if(excluded_edges.find(PolygonEdge) != excluded_edges.Lend())
+        if(excluded_edges.find(PolygonEdge) != excluded_edges.end())
             continue;
 
         auto intersect_p = intersection(PolygonEdge, seg);
