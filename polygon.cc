@@ -7,7 +7,7 @@
 #include "polygon.h"
 
 //receives a vector of points, and an algorithm with associated criteria, and then creates the polygon based on the algorithm chosen
-template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std::string Algorithm,std::string Step_Choice, std::string Criteria,int Iterations,double Threshold,int Attempts)
+template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std::string algorithm,std::string criteria,std::string step_choice ,int L,double threashold,int K,int Attempts)
 {
     if(Criteria!="max" && Criteria!="min")
     {
@@ -16,7 +16,15 @@ template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std
     }
     if(Algorithm == "local_search")
     {
-        //add local_search interface 
+        LocalSearch<Kernel> loc(Points, criteria);
+
+        initial_area = loc.getPolygonArea();
+
+        failed = !loc.MinimizePolygon(L, threshold, K);
+
+        pol = loc.getPolygon();
+
+        dt_Area = loc.getPolygonArea();
     }
     else if(Algorithm == "simulated_annealing")
     {

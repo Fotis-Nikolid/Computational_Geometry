@@ -20,12 +20,12 @@ int main(int argc, char *argv[])
   std::ifstream infile;
   std::ofstream outfile;
   std::string algorithm;
-  std::string criteria("min");
+  std::string criteria;
   int attempts=1;
   int L = 0;
   int K = 0;
   double threshold = 0.0;
-  std::string step_choice;
+  std::string step_choice("");
 
   for(int i = 1 ; i < argc ; i++)
   {
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
   }
 
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  Polygon<Kernel> poly(v_points,algorithm,step_choice,criteria,L,threshold,attempts);
+  Polygon<Kernel> poly(v_points,algorithm,criteria,step_choice,L,threshold,K,attempts);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   Polygon_2 real_poly(poly.get_Polygon());
