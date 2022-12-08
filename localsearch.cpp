@@ -44,13 +44,16 @@ bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, c
 {
     int l = L;
 
+    //if no solution for this L is found then search L - 1 until one is found or L = 0
     while(this->solve(l, threshold, K) == false && l > 0)
     {
         l--;
     }
 
+    //if no solution exists result false
     if(l == 0) return false;
 
+    //if at least one solution is found for l where l <= L then return true 
     return true;
 }
 
