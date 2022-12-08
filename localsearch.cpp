@@ -251,11 +251,6 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
         // swap L potition
         RelocateEdges(temp, Lstart, Lend, edge_destroy, L);
 
-        if(!temp.is_simple())
-        {
-            std::cout << "wtf" << std::endl;
-        }
-
         // check if new polygon is better
         if (this->compare(*BestPol, temp))
         {
@@ -270,30 +265,16 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
 template <class Kernel>
 void LocalSearch<Kernel>::RelocateEdges(Polygon_2 &Pol, int Lstart, int Lend, int edge_destroy, int L)
 {
-    std::vector<Point_2> points_to_relocate(L);
     // if start is after Lend then L Lends after the polygon start
     if (Lend < Lstart)
     {
-        int index = L - 1;
-        for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() + Lstart ; it < Polygon.vertices_end() ; it++)
-        {
-            points_to_relocate[index] = *it;
-            index--;
-        }
-
-        for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() ; it <= Polygon.vertices_begin() + Lend ; it++)
-        {
-            points_to_relocate[index] = *it;
-            index--;
-        }
-
         Pol.erase(Pol.vertices_begin() + Lstart, Pol.vertices_end());
         Pol.erase(Pol.vertices_begin(), Pol.vertices_begin() + Lend + 1);
 
         // after we remove L points then the edge destroy location moves Lend + 1 seats to the left
         edge_destroy -= Lend + 1;
 
-        /*for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() + Lstart ; it < Polygon.vertices_end() ; it++)
+        for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() + Lstart ; it < Polygon.vertices_end() ; it++)
         {
             Pol.insert(Pol.vertices_begin() + edge_destroy + 1, *it);
         }
@@ -301,18 +282,11 @@ void LocalSearch<Kernel>::RelocateEdges(Polygon_2 &Pol, int Lstart, int Lend, in
         for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() ; it <= Polygon.vertices_begin() + Lend ; it++)
         {
             Pol.insert(Pol.vertices_begin() + edge_destroy + 1, *it);
-        }*/
+        }
     }
     // else if L Lends behind polygon Lend
     else
     {
-        int index = L - 1;
-        for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() + Lstart ; it <= Polygon.vertices_begin() + Lend ; it++)
-        {
-            points_to_relocate[index] = *it;
-            index--;
-        }
-
         Pol.erase(Pol.vertices_begin() + Lstart, Pol.vertices_begin() + Lend + 1);
 
         // if edge destroy is after the L then we need to move it
@@ -322,13 +296,12 @@ void LocalSearch<Kernel>::RelocateEdges(Polygon_2 &Pol, int Lstart, int Lend, in
             edge_destroy -= L;
         }
 
-        /*for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() + Lstart ; it <= Polygon.vertices_begin() + Lend ; it++)
+        for(typename Polygon_2::Vertex_iterator it = Polygon.vertices_begin() + Lstart ; it <= Polygon.vertices_begin() + Lend ; it++)
         {
             Pol.insert(Pol.vertices_begin() + edge_destroy + 1, *it);
-        }*/
+        }
 
     }
-    Pol.insert(Pol.vertices_begin() + edge_destroy + 1, points_to_relocate.begin(), points_to_relocate.end());
 }
 
 template <class Kernel>
