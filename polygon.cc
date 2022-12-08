@@ -7,7 +7,7 @@
 #include "polygon.h"
 
 //receives a vector of points, and an algorithm with associated criteria, and then creates the polygon based on the algorithm chosen
-template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std::string algorithm,std::string criteria,std::string step_choice ,int L,double threashold,int K,int Attempts)
+template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std::string Algorithm,std::string Criteria,std::string Step_Choice ,int L,double threshold,int K,int Attempts)
 {
     if(Criteria!="max" && Criteria!="min")
     {
@@ -16,7 +16,7 @@ template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std
     }
     if(Algorithm == "local_search")
     {
-        LocalSearch<Kernel> loc(Points, criteria);
+        LocalSearch<Kernel> loc(Points, Criteria);
 
         initial_area = loc.getPolygonArea();
 
