@@ -462,7 +462,6 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
     
     Incremental<Kernel> inc(Points,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
     if (Polygon.size()==0) {
-        std::cout<<"no"<<std::endl;
         Polygon=inc.getPolygon();
     }
     int size=Polygon.vertices().size();
