@@ -72,7 +72,7 @@ std::vector<std::vector<CGAL::Point_2<Kernel>>> Simulated_Annealing<Kernel>::poi
         p2=Points.at(i+1);
         p3=Points.at(i+2);
         if (p1.y()<p2.y() && p3.y()<p2.y()) {//if next 3 consecutive points form the pattern needed for breaking into subsets
-            if (i>((subsets.size()+1)*m*0.9)) {//only break if around the point expected of a subset break or afterwards
+            if (i>((subsets.size()+1)*m*0.9) && (Points.size()-i)>(m*0.5)) {//only break if around the point expected of a subset break or afterwards
                 subset.push_back(p1);
                 subset.push_back(p2);//add the connecting point of the two subsets
                 subsets.push_back(subset);
@@ -99,8 +99,11 @@ std::vector<std::vector<CGAL::Point_2<Kernel>>> Simulated_Annealing<Kernel>::poi
 template<class Kernel>
 CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<Polygon_2> polygons) {
     Polygon_2 merge_polygon=polygons.at(0);
+    
     for (int i=1;i<polygons.size();i++) {
         Polygon_2 poly=polygons.at(i);
+        Polygon_2 m=merge_polygon;
+
         typename Polygon_2::Vertices::iterator join_iter; //iterator to point that both polygons connect
         typename Polygon_2::Vertices::iterator prev_iter; //iterator to previous topological point to join point(it is downwards to the left)
         typename Polygon_2::Vertices::iterator next_iter; //iterator to next topological point to join point(it is downwards to the right)
@@ -130,16 +133,16 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
             }
         }
         //get previous point of join point(belongs to the 1st polygon), so that we connect the previous and the next points together(erasing their connection to the join point)
-        prev_iter=std::next(join_iter);//get next point to join point(belongs to the 2nd polygon)
-        if (prev_iter==merge_polygon.vertices_end()) {//in case we loop around to the polygon's start
-            prev_iter=merge_polygon.vertices_begin();
+        if (join_iter==merge_polygon.vertices_begin()) {
+            prev_iter=std::prev(merge_polygon.vertices_end());
+        }   
+        else {
+            prev_iter=std::prev(join_iter);
         }
         if (prev_iter->y()>=join_iter->y()) {
-            if (join_iter==merge_polygon.vertices_begin()) {
-                prev_iter=std::prev(merge_polygon.vertices_end());
-            }   
-            else {
-                prev_iter=std::prev(join_iter);
+            prev_iter=std::next(join_iter);
+            if (prev_iter==merge_polygon.vertices_end()) {//in case we loop around to the polygon's start
+                prev_iter=merge_polygon.vertices_begin();
             }
         }
         
@@ -156,9 +159,6 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
             else {
                 v_points2.push_back(*it);
             }
-            //merge_polygon.insert(merge_polygon.begin()+insert_prev,*it);//update the merged polygon
-            //insert_prev++;//move the iterator along to continue inserting
-            
             it=std::next(it);
             if (it==poly.vertices_end()) {
                 next_vector=true;
@@ -168,8 +168,9 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
         merge_polygon.insert(join_iter,v_points1.begin(),v_points1.end());
         insert_prev+=v_points1.size();
         if (v_points2.size()!=0) {
-            merge_polygon.insert(merge_polygon.vertices_begin()+insert_prev,v_points1.begin(),v_points2.end());
+            merge_polygon.insert(merge_polygon.vertices_begin()+insert_prev,v_points2.begin(),v_points2.end());
         }
+
     }
     return merge_polygon;
 }
@@ -287,32 +288,63 @@ bool visible_points(const CGAL::Polygon_2<Kernel>& Polygon, const CGAL::Point_2<
 }
 
 template<class Kernel>
-bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
+bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon,Point_2* no_change1,Point_2* no_change2) {
     //local search with L=1
     int insert_prev,insert_next;
     int move_pos,move_prev,move_next;
-
+    Polygon_2 t_Poly;
     while (true) {
-        Polygon_2 t_Poly=Polygon_2(Polygon);
-        insert_prev = std::rand()%t_Poly.vertices().size();
-        move_pos = std::rand()%t_Poly.vertices().size();
-        while(abs(insert_prev-move_pos)<=2) {
+        bool loop=true;
+        while (loop) { 
+            loop=false;
+            t_Poly=Polygon_2(Polygon);
+            insert_prev = std::rand()%t_Poly.vertices().size();
             move_pos = std::rand()%t_Poly.vertices().size();
-        }
-        insert_next=insert_prev+1;
-        move_next=move_pos+1;
-        move_prev=(move_next!=0)?(move_pos-1):(t_Poly.vertices().size()-1);
-        if ((t_Poly.vertices_begin()+insert_next)==t_Poly.vertices_end()) {
-            insert_next=0;
-        }
-        if ((t_Poly.vertices_begin()+move_next)==t_Poly.vertices_end()) {
-            move_next=0;
+            int fail=0;
+            int fail_check=Polygon.vertices().size();
+            while(abs(insert_prev-move_pos)<=2) {
+                fail++;
+                if (fail>fail_check) return false;
+                move_pos = std::rand()%t_Poly.vertices().size();
+            }
+        
+        
+            insert_next=insert_prev+1;
+            move_next=move_pos+1;
+            move_prev=(move_pos!=0)?(move_pos-1):(t_Poly.vertices().size()-1);
+            if ((t_Poly.vertices_begin()+insert_next)==t_Poly.vertices_end()) {
+                insert_next=0;
+            }
+            if ((t_Poly.vertices_begin()+move_next)==t_Poly.vertices_end()) {
+                move_next=0;
+            }
+
+            if (no_change1!=NULL) {
+                Point_2 p=*no_change1;
+                if (p==*(t_Poly.vertices_begin()+move_pos)) loop=true;
+                if (p==*(t_Poly.vertices_begin()+move_next)) loop=true;
+                if (p==*(t_Poly.vertices_begin()+move_prev)) loop=true;
+                if (p==*(t_Poly.vertices_begin()+insert_prev)) loop=true;
+                if (p==*(t_Poly.vertices_begin()+insert_next)) loop=true;
+            }
+            if (no_change2!=NULL) {
+                Point_2 p=*no_change2;
+                if (p==*(t_Poly.vertices_begin()+move_pos)) loop=true;
+                if (p==*(t_Poly.vertices_begin()+move_next)) loop=true;
+                if (p==*(t_Poly.vertices_begin()+move_prev)) loop=true;
+                if (p==*(t_Poly.vertices_begin()+insert_prev)) loop=true;
+                if (p==*(t_Poly.vertices_begin()+insert_next)) loop=true;
+                
+            }
         }
         Point_2 moved_point=*(t_Poly.vertices_begin()+move_pos);
 
         t_Poly.erase((t_Poly.vertices_begin()+move_pos));
         if (move_pos<move_next) {
             move_next--;
+        }
+        if (move_pos<move_prev) {
+            move_prev--;
         }
         if (move_pos<insert_prev) {
             insert_prev--;
@@ -345,6 +377,7 @@ bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon) {
 
 template<class Kernel>
 bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations,double& initial_area) {
+    srand((unsigned)time(NULL));
     std::vector<std::vector<Point_2>> Subsets;
     Subsets=point_subsets(Points);//break points into multiple subsets
     
@@ -367,37 +400,43 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
         
         Hull<Kernel> hull;
         std::list<Point_2> points(subset.begin(),subset.end());
+        double init;
         Point_2 p1,p2;
         p1=subset[0];//first point in subset
         p2=subset[subset.size()-1];//last point in subset
         //use altered version of Hull algorithm which will make sure not to break any of the two lines needed for the criteria to work
+        bool good=false;
         if (subset_n==0) {
             hull.solve(poly,points,crit,NULL,&p2);//only keep the last edge(first does not matter in the 1st subset)
+            std::ofstream outfile;
+            outfile.open("step"+std::to_string(subset_n)+".txt");
+            solve(poly,Points,Criteria,"global",Iterations,init,NULL,&p2);
         }   
         else if (subset_n==(Subsets.size()-1)) {
             hull.solve(poly,points,crit,&p1,NULL);//only keep the first edge(last does not matter in the last subset)
+
+            solve(poly,Points,Criteria,"global",Iterations,init,&p1,NULL);
         }
         else {
             hull.solve(poly,points,crit,&p1,&p2);//keep both edges
+            solve(poly,Points,Criteria,"global",Iterations,init,&p1,&p2);
+            
         }
-        //solve(poly,Criteria,"global",Iterations);//solve subset based on global 
         subset_n++;
         polygons.push_back(poly);
-        
     } 
 
     //merge the polygons
     
     Polygon=merge_polygons(polygons);
     
-    double tmp;
-    return solve(Polygon,Points,Criteria,"local",Iterations,tmp);//apply local step to the merged Polygon
+    return abs(Polygon.area());//apply local step to the merged Polygon
     
 }
 
 //perform one attempt with local or global with either min max or random starting polygon
 template<class Kernel>
-double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,int Iterations,double& initial_area) {
+double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,int Iterations,double& initial_area,Point_2* no_change1,Point_2* no_change2) {
     srand((unsigned)time(NULL));
     if (!tree_exists) {
         for(auto point:Points) {
@@ -423,6 +462,7 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
     
     Incremental<Kernel> inc(Points,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
     if (Polygon.size()==0) {
+        std::cout<<"no"<<std::endl;
         Polygon=inc.getPolygon();
     }
     int size=Polygon.vertices().size();
@@ -438,9 +478,10 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
     bool success;
     bool no_change=true;
     int BadStepsCount=0;
-    int BadStepsThreshold=50;
+    int BadStepsThreshold=30;
     int RetryCount=0;
-    int RetryThreshold=4;
+    int RetryThreshold=2;
+    int count=0;
     while (Temperature>0) {
         while (true) {
             t_Polygon=Polygon;
@@ -449,7 +490,8 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
                 n_area=abs(t_Polygon.area());
             }
             else if (Step_Choice=="global") {
-                success=global_step(t_Polygon);
+                success=global_step(t_Polygon,no_change1,no_change2);
+                count++;
                 n_area=abs(t_Polygon.area());
             }
             if (!success) {//there exists no point combination capable of swapping
@@ -472,11 +514,12 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
                 break;//keep solution
             }
             else {//else if change is negative, only apply it by performing the Metropolis criteria
-                BadStepsCount++;
+                BadStepsCount+=3;
                 if (BadStepsCount>BadStepsThreshold) {//if we have taken too many bad actions without finding a better result, backtrack to best Polygon found and retry
                     t_Polygon=best_Polygon;
                     RetryCount++;
-                    std::cout<<"Number of Bad Steps exceeded, Resetting..."<<std::endl;
+                    BadStepsCount=0;
+                    //std::cout<<"Number of Bad Steps exceeded, Resetting..."<<std::endl;
                     break;
                 }
                 if (RetryCount>RetryThreshold) {
