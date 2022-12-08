@@ -251,11 +251,6 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
         // swap L potition
         RelocateEdges(temp, Lstart, Lend, edge_destroy, L);
 
-        if(!temp.is_simple())
-        {
-            std::cout << "NOT SIMPLE" << std::endl;
-        }
-
         // check if new polygon is better
         if (this->compare(*BestPol, temp))
         {
