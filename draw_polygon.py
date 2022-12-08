@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
   
 
-with open("steps.txt", "r") as file:
+with open("output.txt", "r") as file:
     points_x=[]
     points_y=[]
     fl=False
