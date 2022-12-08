@@ -262,6 +262,7 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
     return diff;
 }
 
+
 template <class Kernel>
 void LocalSearch<Kernel>::RelocateEdges(Polygon_2 &Pol, int Lstart, int Lend, int edge_destroy, int L)
 {
