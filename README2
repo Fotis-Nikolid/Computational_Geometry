@@ -1,17 +1,16 @@
 LocalSearch:
-(BELOW when i refer to the continuous L polygon verteces , i will refer them as L)
-
-	-We run the algorithm for l = L and if no solution is found (Not a better polygon area, or no L is visible with edges etc)
-     we run the algorithm again for l = L - 1 , until ether we find a valid solution or l = 0 in which case we return false
-     (the algorithm failed)
+	
+	-We run the algorithm for path length L and if no solution is found (Not a better polygon area, or no path V of length L exists that can be swapped with e edge) 
+	we repeat the above proccess again for length of L-1
+	-This procces goes on until we reach path length of 0(failed) or we found a suitable path V for swapping
     
-    -Aside from the arguments that the exercise require,  we have integrated a -K option:
+	-Aside from the arguments that the exercise require,  we have integrated a -K option:
 
-        -If not a K is given we run the algorithm , by checking every possible edge of the polygon with every L and then we choose the
-         best (This is repeated until the threshold is met)
+		-If no  K is given we run the algorithm , by checking every possible edge of the polygon with every L and then we choose the
+		 best (This is repeated until the threshold is met)
 
-        -If K is given , we choose a random edge and we check every L and pick the best , we repeat that K times without 
-         repicking the previously picked edges (This is repeated until the threshold is met)
+		-If K is given , we choose Κ random edges, checking every path V and pick the best
+		-The above are  repeated until the threshold is met
 
     General algorithm:
 
@@ -28,14 +27,21 @@ LocalSearch:
              the current one with the best one
 
         -ReplaceEdgeWithBest_L :
-            -Given an edge find every L that does not contain ether of 2 vertices of the edge
-            -After we remove the L from its current spot and put it(reversed) in the edge we chose, 3 new edges will be created and
+            -Given an edge find every path V of length L that does not contain either of 2 vertices of the edge
+            -After we remove V from its current spot and put it(reversed) in the edge we chose, 3 new edges will be created and
              3 will be removed
+	    -We put V reversed, as this is the preffered way mentioned in the paper(intuitively the majority of V paths are ones opposite of the edge e,
+	    and thus by swapping in reverse, we have more valid paths to choose from)
             -Check if the 3 new edges intersect with one another
-            -Check if the points of every new edge are visible (in this visabilty checks ignore the 3 edges that will be removed)
-            -After the above checks we are sure that the new polygon will be simple
-            -Construct the new polygon by rellocating the L from its current potition to the potition betwen the verteces of the
-             edge that we picked
-            -Check if the costucted polygon has better area than the current best, if it has replace current best one with the
+            -Check if the points of every new edge are visible (in this visibility check, we ignore the 3 edges that will be removed)
+            -After the above checks we are sure that the new polygon will be simple, this has been greatly tested to be certain
+            -Construct the new polygon by rellocating V from its current position to the position between the vertices of the
+             edge that we picked.
+            -Check if the costructed polygon has better area than the current best and if it has replace the current best one with the
              constructed and replace the difference with the current polygon area - new best polygon area
-            -After all L are checked return the difference
+            -After all V paths are checked return the difference
+	    -Special emphasis has been placed, to take into account cases where the path V, contains the polygon's start(i.e iterators: 8 9 0 1 2),
+	    and thus, in order to correctely use the erase() and insert() polygon functions, these cases have been handled.
+	    -Another note in the implementation, is that when inserting or erasing, any previous iterators we have for the polygon, are now obsolete,
+	    and for this reason it is preferable to use indexes and change them according to the length of the path V removed/inserted
+	 
