@@ -376,7 +376,7 @@ bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon,Point_2* no_cha
 }
 
 template<class Kernel>
-bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,int Iterations,double& initial_area) {
+bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Initialization,int Iterations,double& initial_area) {
     srand((unsigned)time(NULL));
     std::vector<std::vector<Point_2>> Subsets;
     Subsets=point_subsets(Points);//break points into multiple subsets
@@ -397,46 +397,95 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
     int subset_n=0;
     for (auto subset:Subsets) {
         Polygon_2 poly;
-        
-        Hull<Kernel> hull;
-        std::list<Point_2> points(subset.begin(),subset.end());
+    
         double init;
         Point_2 p1,p2;
         p1=subset[0];//first point in subset
         p2=subset[subset.size()-1];//last point in subset
-        //use altered version of Hull algorithm which will make sure not to break any of the two lines needed for the criteria to work
-        bool good=false;
+        Point_2* p_arg1=&p1;
+        Point_2* p_arg2=&p2;
         if (subset_n==0) {
-            hull.solve(poly,points,crit,NULL,&p2);//only keep the last edge(first does not matter in the 1st subset)
-            std::ofstream outfile;
-            outfile.open("step"+std::to_string(subset_n)+".txt");
-            solve(poly,Points,Criteria,"global",Iterations,init,NULL,&p2);
-        }   
-        else if (subset_n==(Subsets.size()-1)) {
-            hull.solve(poly,points,crit,&p1,NULL);//only keep the first edge(last does not matter in the last subset)
+            p_arg1=NULL;
+        }
+        if (subset_n==(Subsets.size()-1)) {
+            p_arg2=NULL;
+        }
+        
+        //use altered version of Hull algorithm which will make sure not to break any of the two lines needed for the criteria to work
+        bool failed_incremental=false;;
+        Polygon_2 t_poly;
+        if (Initialization=="incremental") {
+            Incremental<Kernel> inc(subset,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
+            t_poly=inc.getPolygon();
 
-            solve(poly,Points,Criteria,"global",Iterations,init,&p1,NULL);
-        }
-        else {
-            hull.solve(poly,points,crit,&p1,&p2);//keep both edges
-            solve(poly,Points,Criteria,"global",Iterations,init,&p1,&p2);
+            Polygon_2 convex_hull;
+            CGAL::convex_hull_2(subset.begin(),subset.end(),std::back_inserter(convex_hull));//initialize polygon from the convex hull, so that we can break it's edges and assimilate points into the polygon
+            bool first_edge_check=false;
+            bool last_edge_check=false;
+            for (auto edge:convex_hull.edges()) {//iterate over all edges of convex hull, to find the ones containing the join points of the spatial subdivision algorithm
+                if (p_arg1!=NULL) {//in case that we do care about first edge
+                    //since the join point belongs in two edges, find the one for which the criteria for merging for spatial subdivision is true
+                    if ((edge[0]==*p_arg1 && edge[0].y()>=edge[1].y()) || (edge[1]==*p_arg1 && edge[1].y()>=edge[0].y())) {
+                        first_edge_check=true;
+                    }
+                }
+                if (p_arg2!=NULL) {//in case that we do care about second edge
+                    if ((edge[0]==*p_arg2 && edge[0].y()>=edge[1].y()) || (edge[1]==*p_arg2 && edge[1].y()>=edge[0].y())) {
+                        last_edge_check=true;
+                    }
+                }
+                
+            }
+            failed_incremental=((p_arg1!=NULL && !first_edge_check)||(p_arg2!=NULL && !last_edge_check));       
             
+            if (!failed_incremental) {
+                poly=t_poly;
+            }
+            else {
+                std::cout<<"Incremental failed to create a polygon following the specifications required for merging....Stopping"<<std::endl;
+                return false;
+            }
+            
+
         }
+        if (Initialization=="convex_hull") {
+            Hull<Kernel> hull;
+            std::list<Point_2> points(subset.begin(),subset.end());
+            double failed=hull.solve(poly,points,crit,p_arg1,p_arg2);//only keep the last edge(first does not matter in the 1st subset)
+            if (failed==0.0) {
+                std::cout<<"Convex_Hull failed to create a polygon....Stopping"<<std::endl;
+                return false;
+            }
+        }
+        solve(poly,Points,Criteria,"global",Initialization,Iterations,init,p_arg1,p_arg2);
         subset_n++;
         polygons.push_back(poly);
     } 
-
+    if (Initialization=="incremental") {
+        Incremental<Kernel> inc(Points,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
+        initial_area=inc.getPolygonArea();
+    }
+    if (Initialization=="convex_hull") {
+        Hull<Kernel> hull;
+        Polygon_2 t_poly;
+        std::list<Point_2> points(Points.begin(),Points.end());
+        initial_area=hull.solve(t_poly,points,crit,NULL,NULL);//only keep the last edge(first does not matter in the 1st subset)
+        if (initial_area==0.0) {
+            std::cout<<"Convex_Hull failed to create a polygon....Stopping"<<std::endl;
+            return false;
+        }
+    }
     //merge the polygons
     
     Polygon=merge_polygons(polygons);
     
-    return abs(Polygon.area());//apply local step to the merged Polygon
+    return true;//apply local step to the merged Polygon
     
 }
 
 //perform one attempt with local or global with either min max or random starting polygon
 template<class Kernel>
-double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,int Iterations,double& initial_area,Point_2* no_change1,Point_2* no_change2) {
+bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,std::string Initialization,int Iterations,double& initial_area,Point_2* no_change1,Point_2* no_change2) {
     srand((unsigned)time(NULL));
     if (!tree_exists) {
         for(auto point:Points) {
@@ -459,13 +508,29 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
     else {
         crit='1';
     }
-    
-    Incremental<Kernel> inc(Points,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
-    if (Polygon.size()==0) {
-        Polygon=inc.getPolygon();
+    int size;
+    double area;
+    if (Initialization=="incremental") {
+        Incremental<Kernel> inc(Points,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
+        if (Polygon.size()==0) {
+            Polygon=inc.getPolygon();
+        }
+        size=Polygon.vertices().size();
+        area=inc.getPolygonArea();
     }
-    int size=Polygon.vertices().size();
-    double area=inc.getPolygonArea();
+    else if (Initialization=="convex_hull") {
+        Hull<Kernel> hull;
+        if (Polygon.size()==0) {
+            std::list<Point_2> points(Points.begin(),Points.end());
+            bool failed=hull.solve(Polygon,points,crit,NULL,NULL);//only keep the last edge(first does not matter in the 1st subset)
+            if (failed==0.0) {
+                std::cout<<"Convex_Hull failed to create a polygon....Stopping"<<std::endl;
+                return false;
+            }
+        }
+        area=Polygon.area();
+        size=Polygon.vertices().size();
+    }
     initial_area=area;
     
     double energy=calculate_energy(area,hull_area,Criteria,size);//calculate initial energy state of starting polygon
@@ -480,8 +545,7 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
     int BadStepsThreshold=30;
     int RetryCount=0;
     int RetryThreshold=2;
-    int count=0;
-    while (Temperature>0) {
+    while (Temperature>=0) {
         while (true) {
             t_Polygon=Polygon;
             if (Step_Choice=="local") {
@@ -490,7 +554,6 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
             }
             else if (Step_Choice=="global") {
                 success=global_step(t_Polygon,no_change1,no_change2);
-                count++;
                 n_area=abs(t_Polygon.area());
             }
             if (!success) {//there exists no point combination capable of swapping
@@ -518,7 +581,6 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
                     t_Polygon=best_Polygon;
                     RetryCount++;
                     BadStepsCount=0;
-                    //std::cout<<"Number of Bad Steps exceeded, Resetting..."<<std::endl;
                     break;
                 }
                 if (RetryCount>RetryThreshold) {
@@ -544,36 +606,41 @@ double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::P
     }
     Polygon=best_Polygon;
     area=p_area;
-    return area;
+    return true;
 }
 
 //perform mulitple attempts with randomized starting polygons and pick the best polygon out of all
 template<class Kernel>
-double Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,int Iterations,int Attempts,double& initial_area) {
+bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,std::string Initialization,int Iterations,int Attempts,double& initial_area) {
     Polygon_2 best_poly;
+    bool solution_exists=false;
     double p_area=(Criteria=="max"?0:std::numeric_limits<double>::max());//initialize area depending on maximization or minimization
     for (int i=0;i<Attempts;i++) {
         double t_area;
         double area;
         Polygon_2 poly;
         //the starting polygon should be initialized as optimal area, while the rest should be initialized randomly
-        area=solve(poly,Points,Criteria,Step_Choice,Iterations,t_area);
-        if (Criteria=="max") {
-            if (area>p_area) {
-                p_area=area;
-                initial_area=t_area;
-                best_poly=poly;
+        bool success=solve(poly,Points,Criteria,Step_Choice,Initialization,Iterations,t_area);
+        if (success) {
+            solution_exists=true;
+            area=poly.area();
+            if (Criteria=="max") {
+                if (area>p_area) {
+                    p_area=area;
+                    initial_area=t_area;
+                    best_poly=poly;
+                }
             }
-        }
-        else {
-            if (area<p_area) {
-                p_area=area;
-                initial_area=t_area;
-                best_poly=poly;
+            else {
+                if (area<p_area) {
+                    p_area=area;
+                    initial_area=t_area;
+                    best_poly=poly;
+                }
             }
         }
     }
     Polygon=best_poly;
-    return p_area;
+    return solution_exists;
 }
 #endif

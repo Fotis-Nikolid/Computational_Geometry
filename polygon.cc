@@ -7,7 +7,7 @@
 #include "polygon.h"
 
 //receives a vector of points, and an algorithm with associated criteria, and then creates the polygon based on the algorithm chosen
-template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std::string Algorithm,std::string Criteria,std::string Step_Choice ,int L,double threshold,int K,int Attempts)
+template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std::string Algorithm,std::string Criteria,std::string Step_Choice,std::string Initialization,int L,double threshold,int K,int Attempts)
 {
     if(Criteria!="max" && Criteria!="min")
     {
@@ -30,7 +30,7 @@ template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std
     {
         Simulated_Annealing<Kernel> algorithm;
         if (Step_Choice=="local" || Step_Choice=="global") {
-            if (algorithm.solve(pol,Points,Criteria,Step_Choice,L,Attempts,initial_area)) {
+            if (algorithm.solve(pol,Points,Criteria,Step_Choice,Initialization,L,Attempts,initial_area)) {
                 dt_Area=pol.area();
             }
             else {
@@ -39,7 +39,7 @@ template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std
 
         }
         else if (Step_Choice=="subdivision") {
-            if (algorithm.sub_division(pol,Points,Criteria,L,initial_area)) {
+            if (algorithm.sub_division(pol,Points,Criteria,Initialization,L,initial_area)) {
                 dt_Area=pol.area();
             }
             else {
