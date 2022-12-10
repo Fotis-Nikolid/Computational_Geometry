@@ -23,56 +23,82 @@ bool comp_max(const CGAL::Polygon_2<Kernel> &p1, const CGAL::Polygon_2<Kernel> &
 }
 
 template <class Kernel>
-LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2> &Points, const std::string &min_or_max)
+LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2> &Points, const std::string &min_or_max, const std::string &InitAlgorithm) : InitFailed(false)
 {
     if (min_or_max == "min")
     {
         this->compare = comp_min;
-        Polygon = Incremental<Kernel>(Points, "1a", '2').getPolygon();
+        if(InitAlgorithm == "incremental")
+        {
+            Polygon = Incremental<Kernel>(Points, "1a", '2').getPolygon();
+        }
+        else
+        {
+            InitFailed = hull.solve(Polygon, Points, '2');
+        }
     }
     else if (min_or_max == "max")
     {
         this->compare = comp_max;
-        Polygon = Incremental<Kernel>(Points, "1a", '3').getPolygon();
+        if(InitAlgorithm == "incremental")
+        {
+            Polygon = Incremental<Kernel>(Points, "1a", '3').getPolygon();
+        }
+        else
+        {
+            InitFailed = hull.solve(Polygon, Points, '3');
+        }
     }
 
     std::srand(std::time(nullptr));
 }
 
 template <class Kernel>
-bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, const int K)
+bool LocalSearch<Kernel>::InitializationFailed()
 {
-    int l = L;
-
-    //if no solution for this L is found then search L - 1 until one is found or L = 0
-    while(this->solve(l, threshold, K) == false && l > 0)
-    {
-        l--;
-    }
-
-    //if no solution exists result false
-    if(l == 0) return false;
-
-    //if at least one solution is found for l where l <= L then return true 
-    return true;
+    return InitFailed;
 }
 
 template <class Kernel>
-bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K)
+bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, const int K)
+{
+    if(InitFailed) return false;
+
+    Polygon_2 BestPolygon;
+    double diff = 0.0;
+
+    bool solved = false;
+
+    for(int l = L ; l > 0 ; l--)
+    {
+        if(this->solve(&BestPolygon, diff, l, threshold, K))
+        {
+            solved = true;
+        }
+    }
+
+    if (solved == true)
+        Polygon = BestPolygon;
+
+    return solved;
+}
+
+template <class Kernel>
+bool LocalSearch<Kernel>::solve(Polygon_2* Best, const double& diff, const int L, const double threshold, const int K)
 {
     if(L == 0)
         return false;
     
     bool solved = false;
-    double diff = 0.0;
-    Polygon_2 BestPolygon;
+    double local_diff;
+    Polygon_2 LocalBest;
 
     if (K == 0 || K >= Polygon.edges().size() - 1)
     {
         Polygon_2 temp;
         do
         {
-            diff = 0.0;
+            local_diff = 0.0;
             for (int edge_index = 0 ; edge_index < Polygon.edges().size() ; edge_index++)
             {
                 temp = Polygon;
@@ -80,25 +106,28 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                 double new_diff = ReplaceEdgeWithBest_L(&temp, edge_index, L);
 
                 //if we found an L that has better area than the current Polygon
-                if (new_diff > diff)
+                if (new_diff > local_diff)
                 {
-                    BestPolygon = temp;
-                    diff = new_diff;
+                    LocalBest = temp;
+                    local_diff = new_diff;
                     solved = true;
                 }
             }
 
-            if (diff > 0.0)
-                Polygon = BestPolygon;
+            if(local_diff > diff)
+            {
+                diff = local_diff;
+                *Best = LocalBest;
+            }
 
-        } while (diff > threshold);
+        } while (local_diff > threshold);
     }
     else
     {
         Polygon_2 temp;
         do
         {
-            diff = 0.0;
+            local_diff = 0.0;
             std::unordered_map<int, bool>random_edge_indexes; //map that holds the random edge picks so we dont repick them
             //find K random edges and swap them with L
             for(int i = 0 ; i < K ; i++)
@@ -116,19 +145,22 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                 double new_diff = ReplaceEdgeWithBest_L(&temp, pick, L);
 
                 //if we found an L that has better area than the current Polygon
-                if(new_diff > diff)
+                if(new_diff > local_diff)
                 {
                     solved = true;
-                    BestPolygon = temp;
-                    diff = new_diff;
+                    LocalBest = temp;
+                    local_diff = new_diff;
                 }
                 random_edge_indexes[pick] = true;
             }
 
-            if (diff > 0.0)
-                Polygon = BestPolygon;
+            if(local_diff > diff)
+            {
+                diff = local_diff;
+                *Best = LocalBest;
+            }
 
-        }while(diff > threshold);
+        }while(local_diff > threshold);
     }
 
     return solved;
