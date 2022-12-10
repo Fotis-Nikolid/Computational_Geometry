@@ -1,3 +1,4 @@
+#if 0
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -123,15 +124,21 @@ int main(int argc, char *argv[])
   Polygon<Kernel> poly(v_points,algorithm,criteria,step_choice,initialization,L,threshold,K,attempts);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
+  if (!poly.Success()) {
+    std::cout<<"Polygon Creation Failed..."<<std::endl;
+    return -1;
+  }
   Polygon_2 real_poly(poly.get_Polygon());
   if (poly.Simple() && poly.Size() == v_points.size()) {
     std::cout<<"Correct"<<std::endl;
   }
   else if (poly.Size() != v_points.size()) {
     std::cout<<"Error: Wrong Number of points "<<poly.Size()<<std::endl;
+    return -1;
   }
   else {
     std::cout<<"Error: Not simple"<<std::endl;
+    return -1;
   }
 
   outfile<<"Polygonization"<<std::endl;
@@ -152,3 +159,5 @@ int main(int argc, char *argv[])
 
   return 0;
 }
+
+#endif

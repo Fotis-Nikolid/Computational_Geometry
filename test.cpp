@@ -1,4 +1,4 @@
-#if 0
+#if 1
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -21,6 +21,10 @@ int main(int argc,char* argv[]) {//receives starting file number, ending file nu
 
     int start=atoi(argv[1]);
     int end=atoi(argv[2]);
+    std::string algorithm(argv[4]);
+    std::string initialization(argv[5]);
+    std::string step_choice;
+    if (argc==7) step_choice=argv[6];
     std::string path=argv[3];
 
     std::string full_path="data/"+path;
@@ -75,7 +79,6 @@ int main(int argc,char* argv[]) {//receives starting file number, ending file nu
                 area=atof(match_obj[1].str().c_str());
             }
         
-            std::list<Point_2> l1_points,l2_points,l3_points;
             std::vector<Point_2> v_points;
             while (getline(file,line)) {
                 double x,y;
@@ -88,83 +91,40 @@ int main(int argc,char* argv[]) {//receives starting file number, ending file nu
 
                 
                 v_points.push_back(Point_2(x,y));
-                l1_points.push_back(Point_2(x,y));
-                l2_points.push_back(Point_2(x,y));
-                l3_points.push_back(Point_2(x,y));
             }
 
-            /*Polygon<K> p1(v_points,"convex_hull","1","");
-            Polygon<K> p2(v_points,"convex_hull","2","");
-            Polygon<K> p3(v_points,"convex_hull","3","");*/
 
-            /*Polygon<K> p1(v_points,"incremental","1","1a");
-            Polygon<K> p2(v_points,"incremental","2","1a");
-            Polygon<K> p3(v_points,"incremental","3","1a");*/
-
-            Polygon<K> p1(v_points,"incremental","1","2a");
-            Polygon<K> p2(v_points,"incremental","2","2a");
-            Polygon<K> p3(v_points,"incremental","3","2a");
-            
-            double random = p1.Area();
-            double min = p2.Area();
-            double max = p3.Area();
             bool success=true;
+            
+            Polygon<K> poly(v_points,algorithm,"max",step_choice,initialization,6000,0,10,1);
 
-            std::cout<<file_name<<std::endl;
-
-            if (random!=0) {
-                if (!p1.Simple()) {
-                    success=false;
-                    std::cout<<"Error: "<<file_name<<" Polygon not simple, 1"<<std::endl;
-                    //exit(EXIT_FAILURE);
-                }
-                if (p1.Size()!=points) {
-                    success=false;
-                    std::cout<<"Error: "<<file_name<<" Polygon has less points "<<p1.Size()<<"<"<<points<<", 1"<<std::endl;
-                    //exit(EXIT_FAILURE);
-                }
+            if (!poly.Success()) {
+                success=false;
+                std::cout<<"Polygon Creation Failed..."<<std::endl;
             }
             else {
-                success=false;
-                std::cout<<"Error: "<<file_name<<" Deadlock, 1"<<std::endl;
-            }
-            if (min!=0) {
-                if (!p2.Simple()) {
+                Polygon_2 real_poly(poly.get_Polygon());
+                if (poly.Size() != v_points.size()) {
                     success=false;
-                    std::cout<<"Error: "<<file_name<<" Polygon not simple, 2"<<std::endl;
-                    //exit(EXIT_FAILURE);
+                    std::cout<<"Error: Wrong Number of points "<<poly.Size()<<std::endl;
                 }
-                if (p2.Size()!=points) {
+                if (!poly.Simple()) {
                     success=false;
-                    std::cout<<"Error: "<<file_name<<" Polygon has less points "<<p2.Size()<<"<"<<points<<", 2"<<std::endl;
-                    //exit(EXIT_FAILURE);
+                    std::cout<<"Error: Not simple"<<std::endl;
                 }
-            }
-            else {
-                success=false;
-                std::cout<<"Error: "<<file_name<<" Deadlock, 2"<<std::endl;
-            }
-            //std::cout<<"H2"<<std::endl;
-            if (max!=0) {
-                if (!p3.Simple()) {
+                if (poly.Area()<poly.Init_Area()) {
                     success=false;
-                    std::cout<<"Error: "<<file_name<<" Polygon not simple, 3"<<std::endl;
-                    //exit(EXIT_FAILURE);
+                    std::cout<<"Error: Bad Optimization "<<poly.Area()<<" vs "<<poly.Init_Area()<<std::endl;
                 }
-                if (p3.Size()!=points) {
-                    success=false;
-                    std::cout<<"Error: "<<file_name<<" Polygon has less points "<<p3.Size()<<"<"<<points<<", 3"<<std::endl;
-                    //exit(EXIT_FAILURE);
-                }
-            }
-            else {
-                success=false;
-                std::cout<<"Error: "<<file_name<<" Deadlock, 3"<<std::endl;
             }
             if (success) {
-                std::cout<<file_name<<" (Hull) ----- OK"<<std::endl;
+                std::cout<<"------OK------"<<file_name<<std::endl;
             }
-
+            else {
+                std::cout<<"----ERROR------"<<file_name<<std::endl;
+            }
+            std::cout<<std::endl;
+            
             
 
         }

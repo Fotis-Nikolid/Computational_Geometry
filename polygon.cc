@@ -14,6 +14,10 @@ template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std
         std::cerr << "An criteria argument must be given (max or min)" << std::endl;
         exit(1);
     }
+    if (Initialization!="incremental" && Initialization!="convex_hull") {
+        std::cerr << "An Initialization algorithm must be ginen (incremental or convex_hull)" << std::endl;
+        exit(1);
+    }
     if(Algorithm == "local_search")
     {
         LocalSearch<Kernel> loc(Points, Criteria);
@@ -31,7 +35,7 @@ template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std
         Simulated_Annealing<Kernel> algorithm;
         if (Step_Choice=="local" || Step_Choice=="global") {
             if (algorithm.solve(pol,Points,Criteria,Step_Choice,Initialization,L,Attempts,initial_area)) {
-                dt_Area=pol.area();
+                dt_Area=abs(pol.area());
             }
             else {
                 failed=true;
@@ -40,7 +44,7 @@ template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std
         }
         else if (Step_Choice=="subdivision") {
             if (algorithm.sub_division(pol,Points,Criteria,Initialization,L,initial_area)) {
-                dt_Area=pol.area();
+                dt_Area=abs(pol.area());
             }
             else {
                 failed=true;

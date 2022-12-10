@@ -179,7 +179,7 @@ CGAL::Polygon_2<Kernel> Simulated_Annealing<Kernel>::merge_polygons(std::vector<
 template<class Kernel>
 bool Simulated_Annealing<Kernel>::local_step(Polygon_2& Polygon) {
     std::vector<int> choices;
-    for (int i=0;i<Polygon.size();i++) {
+    for (int i=0;i<Polygon.vertices().size();i++) {
         choices.push_back(i);
     } 
     while (choices.size()!=0) {
@@ -395,6 +395,7 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
     }
     
     int subset_n=0;
+    double init_area=0;
     for (auto subset:Subsets) {
         Polygon_2 poly;
     
@@ -412,7 +413,7 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
         }
         
         //use altered version of Hull algorithm which will make sure not to break any of the two lines needed for the criteria to work
-        bool failed_incremental=false;;
+        bool failed_incremental=false;
         Polygon_2 t_poly;
         if (Initialization=="incremental") {
             Incremental<Kernel> inc(subset,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
@@ -458,27 +459,22 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
             }
         }
         solve(poly,Points,Criteria,"global",Initialization,Iterations,init,p_arg1,p_arg2);
+        init_area+=init;
         subset_n++;
         polygons.push_back(poly);
     } 
-    if (Initialization=="incremental") {
-        Incremental<Kernel> inc(Points,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
-        initial_area=inc.getPolygonArea();
-    }
-    if (Initialization=="convex_hull") {
-        Hull<Kernel> hull;
-        Polygon_2 t_poly;
-        std::list<Point_2> points(Points.begin(),Points.end());
-        initial_area=hull.solve(t_poly,points,crit,NULL,NULL);//only keep the last edge(first does not matter in the 1st subset)
-        if (initial_area==0.0) {
-            std::cout<<"Convex_Hull failed to create a polygon....Stopping"<<std::endl;
-            return false;
-        }
-    }
     //merge the polygons
-    
+    double t_area=0;
+    for (auto poly:polygons) {
+        t_area+=abs(poly.area());
+    }
     Polygon=merge_polygons(polygons);
     
+    
+    double triangles_area=abs(abs(Polygon.area())-t_area);
+    initial_area=init_area+triangles_area;
+    double init;
+    solve(Polygon,Points,Criteria,"local",Initialization,Iterations/10,init,NULL,NULL);
     return true;//apply local step to the merged Polygon
     
 }
@@ -511,16 +507,14 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
     int size;
     double area;
     if (Initialization=="incremental") {
-        Incremental<Kernel> inc(Points,"1a",crit);//create a polygon which maximimes/minimizes/randomizes total area
-        if (Polygon.size()==0) {
+        if (Polygon.vertices().size()==0) {
+            Incremental<Kernel> inc(Points,"1a",crit);
             Polygon=inc.getPolygon();
         }
-        size=Polygon.vertices().size();
-        area=inc.getPolygonArea();
     }
     else if (Initialization=="convex_hull") {
         Hull<Kernel> hull;
-        if (Polygon.size()==0) {
+        if (Polygon.vertices().size()==0) {
             std::list<Point_2> points(Points.begin(),Points.end());
             bool failed=hull.solve(Polygon,points,crit,NULL,NULL);//only keep the last edge(first does not matter in the 1st subset)
             if (failed==0.0) {
@@ -528,9 +522,14 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
                 return false;
             }
         }
-        area=Polygon.area();
-        size=Polygon.vertices().size();
+        
     }
+    else {
+        std::cout<<"Wrong Algorithm"<<std::endl;
+        return false;
+    }
+    area=abs(Polygon.area());
+    size=Polygon.vertices().size();
     initial_area=area;
     
     double energy=calculate_energy(area,hull_area,Criteria,size);//calculate initial energy state of starting polygon
@@ -542,9 +541,9 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
     bool success;
     bool no_change=true;
     int BadStepsCount=0;
-    int BadStepsThreshold=30;
+    int BadStepsThreshold=std::ceil(Points.size()/2.0);
     int RetryCount=0;
-    int RetryThreshold=2;
+    int RetryThreshold=4;
     while (Temperature>=0) {
         while (true) {
             t_Polygon=Polygon;
@@ -566,7 +565,6 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
             double EnergyDifference=n_energy-energy;//energy difference
             if (EnergyDifference<0) {//if change is positive
                 no_change=false;
-                BadStepsCount++;
                 if ((Criteria=="max" && n_area>p_area) || (Criteria=="min" && n_area<p_area)) {
                     BadStepsCount=0;
                     RetryCount=0;
@@ -576,7 +574,8 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
                 break;//keep solution
             }
             else {//else if change is negative, only apply it by performing the Metropolis criteria
-                BadStepsCount+=3;
+                BadStepsCount++;
+                #if 1
                 if (BadStepsCount>BadStepsThreshold) {//if we have taken too many bad actions without finding a better result, backtrack to best Polygon found and retry
                     t_Polygon=best_Polygon;
                     RetryCount++;
@@ -584,10 +583,11 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
                     break;
                 }
                 if (RetryCount>RetryThreshold) {
-                    std::cout<<"Maximum Number of Resets reached, Stopping..."<<std::endl;
+                    //std::cout<<"Maximum Number of Resets reached, Stopping..."<<std::endl;
                     Temperature=-1;//if number of backtracks to the same best solution is exceeds threshold, stop loop and return best solution
                     break;
                 }
+                #endif
                 double R=((double) rand())/RAND_MAX;
                 double threshold=std::exp(-EnergyDifference/Temperature);//Metropolis formula
                 if (R<=threshold) {
@@ -623,7 +623,7 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<Point_2> 
         bool success=solve(poly,Points,Criteria,Step_Choice,Initialization,Iterations,t_area);
         if (success) {
             solution_exists=true;
-            area=poly.area();
+            area=abs(poly.area());
             if (Criteria=="max") {
                 if (area>p_area) {
                     p_area=area;
