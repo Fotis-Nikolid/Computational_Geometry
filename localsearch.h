@@ -12,6 +12,8 @@ template<class Kernel> class LocalSearch
 
     private:
         Polygon_2 Polygon;
+        bool InitFailed;
+
         bool (*compare)(const Polygon_2&, const Polygon_2&);
 
         bool visible_points(const Point_2&, const Point_2&, const std::unordered_map<Segment_2, bool>&);
@@ -25,11 +27,13 @@ template<class Kernel> class LocalSearch
         //finds the best L to put in the edge potion
         double ReplaceEdgeWithBest_L(Polygon_2*, const int, const int);
 
-        bool solve(const int, const double, const int);
+        bool solve(Polygon_2*, const double&, const int, const double, const int);
     
     public:
         //(points, min or max)
         LocalSearch(const std::vector<Point_2>&, const std::string&);
+
+        bool InitializationFailed();
 
         //(L, threshold, K)
         bool MinimizePolygon(const int, const double, const int K = 0);
