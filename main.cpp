@@ -20,8 +20,9 @@ int main(int argc, char *argv[])
   std::ofstream outfile;
   std::string algorithm;
   std::string criteria;
+  std::string initialization;
   int attempts=1;
-  int L = 0;
+  int L = 1;
   int K = 0;
   double threshold = 0.0;
   std::string step_choice("");
@@ -44,6 +45,10 @@ int main(int argc, char *argv[])
       else if(arg == "-algorithm")
       {
         algorithm=opt;
+      }
+      else if(arg == "-initialization")
+      {
+        initialization=opt;
       }
       else if(arg == "-annealing")
       {
@@ -115,7 +120,7 @@ int main(int argc, char *argv[])
   }
 
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  Polygon<Kernel> poly(v_points,algorithm,criteria,step_choice,L,threshold,K,attempts);
+  Polygon<Kernel> poly(v_points,algorithm,criteria,step_choice,initialization,L,threshold,K,attempts);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   Polygon_2 real_poly(poly.get_Polygon());
