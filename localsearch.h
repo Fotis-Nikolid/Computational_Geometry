@@ -27,11 +27,11 @@ template<class Kernel> class LocalSearch
         //finds the best L to put in the edge potion
         double ReplaceEdgeWithBest_L(Polygon_2*, const int, const int);
 
-        bool solve(Polygon_2*, const double&, const int, const double, const int);
+        bool solve(Polygon_2*, double&, const int, const double, const int);
     
     public:
         //(points, min or max)
-        LocalSearch(const std::vector<Point_2>&, const std::string&);
+        LocalSearch(const std::vector<Point_2>&, const std::string&,const std::string&);
 
         bool InitializationFailed();
 

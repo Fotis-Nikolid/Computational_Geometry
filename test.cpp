@@ -1,4 +1,4 @@
-#if 1
+#if 0
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -96,7 +96,7 @@ int main(int argc,char* argv[]) {//receives starting file number, ending file nu
 
             bool success=true;
             
-            Polygon<K> poly(v_points,algorithm,"max",step_choice,initialization,6000,0,10,1);
+            Polygon<K> poly(v_points,algorithm,"max",step_choice,initialization,3,0,10,1);
 
             if (!poly.Success()) {
                 success=false;

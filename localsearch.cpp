@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include "localsearch.h"
 #include "incremental.h"
+#include "hull.h"
 
 template <class Kernel>
 bool comp_min(const CGAL::Polygon_2<Kernel> &p1, const CGAL::Polygon_2<Kernel> &p2)
@@ -25,6 +26,7 @@ bool comp_max(const CGAL::Polygon_2<Kernel> &p1, const CGAL::Polygon_2<Kernel> &
 template <class Kernel>
 LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2> &Points, const std::string &min_or_max, const std::string &InitAlgorithm) : InitFailed(false)
 {
+    Hull<Kernel> hull; 
     if (min_or_max == "min")
     {
         this->compare = comp_min;
@@ -34,7 +36,9 @@ LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2> &Points, const std::
         }
         else
         {
-            InitFailed = hull.solve(Polygon, Points, '2');
+            if (hull.solve(Polygon, std::list<Point_2>(Points.begin(),Points.end()), '2')==0.0) {
+                InitFailed=true;
+            }
         }
     }
     else if (min_or_max == "max")
@@ -46,7 +50,9 @@ LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2> &Points, const std::
         }
         else
         {
-            InitFailed = hull.solve(Polygon, Points, '3');
+            if (hull.solve(Polygon,std::list<Point_2>(Points.begin(),Points.end()), '3')==0.0) {
+                InitFailed=true;
+            }
         }
     }
 
@@ -84,7 +90,7 @@ bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, c
 }
 
 template <class Kernel>
-bool LocalSearch<Kernel>::solve(Polygon_2* Best, const double& diff, const int L, const double threshold, const int K)
+bool LocalSearch<Kernel>::solve(Polygon_2* Best, double& diff, const int L, const double threshold, const int K)
 {
     if(L == 0)
         return false;

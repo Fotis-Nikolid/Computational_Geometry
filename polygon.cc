@@ -20,7 +20,7 @@ template<class Kernel> Polygon<Kernel>::Polygon(std::vector<Point_2> Points, std
     }
     if(Algorithm == "local_search")
     {
-        LocalSearch<Kernel> loc(Points, Criteria);
+        LocalSearch<Kernel> loc(Points, Criteria,Initialization);
 
         initial_area = loc.getPolygonArea();
 
