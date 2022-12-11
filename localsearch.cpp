@@ -180,98 +180,102 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
     // edge_destoy points to the location of the Segment_2[0] , where the segment is the edge we will destroy and put L
     const int dist = Polygon.vertices_end() - Polygon.vertices_begin();
 
-    if (L >= dist - 1)
-    {
-        return 0.0;
-    }
-
     Polygon_2 temp;
 
     double diff = 0.0;
 
-    for (int Lstart = 0; Lstart < dist; Lstart++)
+    for(int l = L ; l > 0 ; l--)
     {
-        int before_Lstart = Lstart - 1;
-        // if Lstart was the first polygon vertex the set before_Lstart to the last polygon vertex
-        if (before_Lstart == -1)
+        if (l >= dist - 1)
         {
-            before_Lstart = dist - 1;
+            l = dist - 1;
+            continue;
         }
 
-        int edge_end = edge_destroy + 1;
-        // if we will destoy the last edge of the polygon then the Segment[1] = first polygon vertex
-        if (edge_end == dist)
+        for (int Lstart = 0; Lstart < dist; Lstart++)
         {
-            edge_end = 0;
-        }
-
-        int Lend = Lstart + (L - 1);
-        // if L Lends after the last Polygon vertex
-        if (Lend >= dist)
-        {
-            // set new Lend
-            // if we asume remaining elements = total elements - (the elements from Lstart to the last vertex)
-            // then the Lend will be in the first vertex + remaining elements
-            Lend = Lend - dist;
-            // if edge to destory is included in L then stop searching you have found all avaible L
-            if (edge_destroy <= Lend)
+            int before_Lstart = Lstart - 1;
+            // if Lstart was the first polygon vertex the set before_Lstart to the last polygon vertex
+            if (before_Lstart == -1)
             {
-                break;
+                before_Lstart = dist - 1;
             }
-        }
-        else
-        {
-            // if edge to destory is included in L then skip all the L that includes it
-            if ((edge_destroy <= Lend && edge_destroy >= Lstart) || edge_end == Lstart)
+
+            int edge_end = edge_destroy + 1;
+            // if we will destoy the last edge of the polygon then the Segment[1] = first polygon vertex
+            if (edge_end == dist)
             {
-                Lstart = edge_destroy + 1;
+                edge_end = 0;
+            }
+
+            int Lend = Lstart + (l - 1);
+            // if L Lends after the last Polygon vertex
+            if (Lend >= dist)
+            {
+                // set new Lend
+                // if we asume remaining elements = total elements - (the elements from Lstart to the last vertex)
+                // then the Lend will be in the first vertex + remaining elements
+                Lend = Lend - dist;
+                // if edge to destory is included in L then stop searching you have found all avaible L
+                if (edge_destroy <= Lend)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                // if edge to destory is included in L then skip all the L that includes it
+                if ((edge_destroy <= Lend && edge_destroy >= Lstart) || edge_end == Lstart)
+                {
+                    Lstart = edge_destroy + 1;
+                    continue;
+                }
+            }
+
+            int after_Lend = Lend + 1;
+            // if Lend was the last polygon vertex then after_Lend to the first polygon vertex
+            if (after_Lend == dist)
+            {
+                after_Lend = 0;
+            }
+
+            //3 new edges will be created , as we put L in the place of the edge we choose to destroy
+            Segment_2 NewEdge1(*(Polygon.vertices_begin() + edge_destroy), *(Polygon.vertices_begin() + Lend));
+            Segment_2 NewEdge2(*(Polygon.vertices_begin() + edge_end), *(Polygon.vertices_begin() + Lstart));
+            Segment_2 NewEdge3(*(Polygon.vertices_begin() + before_Lstart), *(Polygon.vertices_begin() + after_Lend));
+            //if those 3 edges intersect with one another then find onother L
+            if(LinesIntersect(NewEdge1, NewEdge2)
+            || LinesIntersect(NewEdge1, NewEdge3)
+            || LinesIntersect(NewEdge2, NewEdge3)
+            )
+            {
                 continue;
             }
-        }
 
-        int after_Lend = Lend + 1;
-        // if Lend was the last polygon vertex then after_Lend to the first polygon vertex
-        if (after_Lend == dist)
-        {
-            after_Lend = 0;
-        }
+            std::unordered_map<Segment_2, bool> map;
+            map[(Segment_2)*(Polygon.edges_begin() + before_Lstart)] = true;
+            map[(Segment_2)*(Polygon.edges_begin() + Lend)] = true;
+            map[(Segment_2)*(Polygon.edges_begin() + edge_destroy)] = true;
 
-        //3 new edges will be created , as we put L in the place of the edge we choose to destroy
-        Segment_2 NewEdge1(*(Polygon.vertices_begin() + edge_destroy), *(Polygon.vertices_begin() + Lend));
-        Segment_2 NewEdge2(*(Polygon.vertices_begin() + edge_end), *(Polygon.vertices_begin() + Lstart));
-        Segment_2 NewEdge3(*(Polygon.vertices_begin() + before_Lstart), *(Polygon.vertices_begin() + after_Lend));
-        //if those 3 edges intersect with one another then find onother L
-        if(LinesIntersect(NewEdge1, NewEdge2)
-           || LinesIntersect(NewEdge1, NewEdge3)
-           || LinesIntersect(NewEdge2, NewEdge3)
-          )
-        {
-            continue;
-        }
+            // check if the 3 new edges are visible
+            if (!this->visible_points(NewEdge3[0], NewEdge3[1], map) 
+                || !this->visible_points(NewEdge1[0], NewEdge1[1], map) 
+                || !this->visible_points(NewEdge2[0], NewEdge2[1], map)
+            )
+            {
+                continue;
+            }
 
-        std::unordered_map<Segment_2, bool> map;
-        map[(Segment_2)*(Polygon.edges_begin() + before_Lstart)] = true;
-        map[(Segment_2)*(Polygon.edges_begin() + Lend)] = true;
-        map[(Segment_2)*(Polygon.edges_begin() + edge_destroy)] = true;
+            temp = Polygon;
+            // swap L potition
+            RelocateEdges(temp, Lstart, Lend, edge_destroy, l);
 
-        // check if the 3 new edges are visible
-        if (!this->visible_points(NewEdge3[0], NewEdge3[1], map) 
-            || !this->visible_points(NewEdge1[0], NewEdge1[1], map) 
-            || !this->visible_points(NewEdge2[0], NewEdge2[1], map)
-           )
-        {
-            continue;
-        }
-
-        temp = Polygon;
-        // swap L potition
-        RelocateEdges(temp, Lstart, Lend, edge_destroy, L);
-
-        // check if new polygon is better
-        if (this->compare(*BestPol, temp))
-        {
-            *BestPol = temp;
-            diff = abs(abs(Polygon.area()) - abs(BestPol->area()));
+            // check if new polygon is better
+            if (this->compare(*BestPol, temp))
+            {
+                *BestPol = temp;
+                diff = abs(abs(Polygon.area()) - abs(BestPol->area()));
+            }
         }
     }
 
