@@ -27,7 +27,7 @@ template<class Kernel> class LocalSearch
         //finds the best L to put in the edge potion
         double ReplaceEdgeWithBest_L(Polygon_2*, const int, const int);
 
-        bool solve(Polygon_2*, double&, const int, const double, const int);
+        bool solve(const int, const double, const int);
     
     public:
         //(points, min or max)
