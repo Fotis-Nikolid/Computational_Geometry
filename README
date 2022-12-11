@@ -1,47 +1,147 @@
+Members: 
+  ΟΜΑΔΑ 3
+    ΦΩΤΙΟΣ ΝΙΚΟΛΙΝΤΑΙΣ  1115201900132
+    ΙΟΑΝΝΗΣ ΚΑΛΕΣΗΣ     1115201900069
+
+Github Link: 
+    https://github.com/JohnKalesis1/Computational_Geometry
+
+
 LocalSearch:
 	
-	-We run the algorithm for path length L and if no solution is found (Not a better polygon area, or no path V of length L exists that can be swapped with e edge) 
-	we repeat the above proccess again for length of L-1
-	-This procces goes on until we reach path length of 0(failed) or we found a suitable path V for swapping
+	-We run the algorithm for path of length 1 to L, and if no solution is found (Not a better polygon area, or no path V of length L or less exists that can be swapped with e edge), then we quit the aglorithm
+	-This proccess goes on until we exhaust all path options, picking the best one if it exists or exiting
     
-	-Aside from the arguments that the exercise require,  we have integrated a -K option:
+	-Aside from the arguments that the exercise requires,  we have integrated a -K option:
 
 		-If no  K is given we run the algorithm , by checking every possible edge of the polygon with every L and then we choose the
-		 best (This is repeated until the threshold is met)
+		 best (This is the approach mentioned in the pseudocode)
 
-		-If K is given , we choose Κ random edges, checking every path V and pick the best
+		-If K is given , we choose K random edges, checking every path V and pick the best, this is what has been advised in the lectures
+    (This is the approach discussed in the lectures and considered an optimization)
+    
 		-The above are  repeated until the threshold is met
 
-    General algorithm:
+  General algorithm:
 
-        -Run solve function with l = L , if solve succedes stop the algorithm , if solve fails try for l = L -1
+    -Solve : Repeat until threshold is met:
+        -Set the best polygon to the current polygon and set the difference in area betwen the current polygon and the 
+        best polygon to 0
+        -Take every polygon edge or K random edges (depending on the K)
+        -Call ReplaceEdgeWithBest_L for the current polygon and the edge that was picked
+        -If ReplaceEdgeWithBest_L returns a bigger difference than the the current difference, replace the current best polygon
+        with the one produced by ReplaceEdgeWithBest_L and replace the current difference with the returned one
+        -After all edges are picked check if the best polygon is different than the current polygon , if it is, replace
+        the current one with the best one
 
-        -Solve : Repeat until threshold is met:
-            -Set the best polygon to the current polygon and set the difference in area betwen the current polygon and the 
-             best polygon to 0
-            -Take every polygon edge or K random edges (depending on the K)
-            -Call ReplaceEdgeWithBest_L for the current polygon and the edge that was picked
-            -if ReplaceEdgeWithBest_L returns a bigger difference than the the current difference, replace the current best polygon
-             with the one produced by ReplaceEdgeWithBest_L and replace the current difference with the returned one
-            -After all edges are picked check if the best polygon is different than the current polygon , if it is replace
-             the current one with the best one
+    -ReplaceEdgeWithBest_L :
+      -Given an edge find every path V of length L or less, that does not contain either of 2 vertices of the edge
+      -After we remove V from its current spot and put it(reversed) in the edge we chose, 3 new edges will be created and
+      3 will be removed
+    -We put V reversed, as this is the preffered way mentioned in the paper(intuitively the majority of V paths are ones opposite of the edge e,
+    and thus by inserting in reverse, we have more valid paths to choose from)
+      -Check if the 3 new edges intersect with one another
+      -Check if the points of every new edge are visible (in this visibility check, we ignore the 3 edges that will be removed)
+      -After the above checks we are sure that the new polygon will be simple, this has been greatly tested to be certain
+      -Construct the new polygon by rellocating V from its current position to the position between the vertices of the
+      edge that we picked.
+      -Check if the costructed polygon has better area than the current best and if it has replace the current best one with the
+      constructed and replace the difference with the current polygon area - new best polygon area
+      -After all V paths are checked return the difference
+    -Special emphasis has been placed, to take into account cases where the path V, contains the polygon's start(i.e iterators: 8 9 0 1 2),
+    and thus, in order to correctely use the erase() and insert() polygon functions, these cases have been handled.
+    -Another note in the implementation, is that when inserting or erasing, any previous iterators we have for the polygon, are now obsolete,
+    and for this reason it is preferable to use indexes and change them according to the length of the path V removed/inserted
 
-        -ReplaceEdgeWithBest_L :
-            -Given an edge find every path V of length L that does not contain either of 2 vertices of the edge
-            -After we remove V from its current spot and put it(reversed) in the edge we chose, 3 new edges will be created and
-             3 will be removed
-	    -We put V reversed, as this is the preffered way mentioned in the paper(intuitively the majority of V paths are ones opposite of the edge e,
-	    and thus by swapping in reverse, we have more valid paths to choose from)
-            -Check if the 3 new edges intersect with one another
-            -Check if the points of every new edge are visible (in this visibility check, we ignore the 3 edges that will be removed)
-            -After the above checks we are sure that the new polygon will be simple, this has been greatly tested to be certain
-            -Construct the new polygon by rellocating V from its current position to the position between the vertices of the
-             edge that we picked.
-            -Check if the costructed polygon has better area than the current best and if it has replace the current best one with the
-             constructed and replace the difference with the current polygon area - new best polygon area
-            -After all V paths are checked return the difference
-	    -Special emphasis has been placed, to take into account cases where the path V, contains the polygon's start(i.e iterators: 8 9 0 1 2),
-	    and thus, in order to correctely use the erase() and insert() polygon functions, these cases have been handled.
-	    -Another note in the implementation, is that when inserting or erasing, any previous iterators we have for the polygon, are now obsolete,
-	    and for this reason it is preferable to use indexes and change them according to the length of the path V removed/inserted
+
+Simulated Annealing:
+  
+  - To begin with, 3 optimizations have been implemented to the standart algorithm, which have been discussed in lectures and eclass questions
+  - Starting, instead of the solve function returning the polygon created in the final iteration of the while(T) loop,
+  we return the best polygon found throughout the loop. 
+  - Meaning, that at every iteration where Energy Differency is negative(better polygon), we check to see if the better polygon is the best of them all,
+  and if it is we store it. This way, when the loop ends, we return the best solution found and not a possibly mediocre one.
+  - Secondly, as stated in lecture, if the algorith has taken(or has tried to take) a lot of steps towards a direction without any significant improvement(no new best polygon),
+  then we reset the polygon to the best one we have found and allow it to try a different path
+  - An important note to make, is that we need to take into account the size of the polygon and that larger point sizes need more steps to find their way, the threshold for resetting is a factor of the number of points in the polygon 
+  - The above is very helpfull as it prevents the algorithm from losing it's way in a not so optimal curve
+  - Finally, as there is a risk that the algorithms goes on pseudo infinetely, which can occur when a very good solution has been found when near the end of the loop.
+  - By having a too good of a solution, the EnergyDifference criteria will never occur, and because we are at the end of the loop, the Metropolis criteria is almost impossible to occur
+  - Thus the algorithm will needlessly try to find a non existant step to escape the loop or have to become super lucky to escape by the help of Metropolis
+  - This is prevented by setting a limit to the number of retries that can occur after a number of failed steps, which when exceeded will stop the loop and return the very good polygon
+  
+  - Local Step: 
+    - After picking the two consecutive points we want to swap, we create a rectangle structure which encloses the 4 points involved in the swap(by fining max and min x's and y's), 
+    and using the rectangle and CGAL's Kd-Tree structure, we extract all the points of the polygon that lie inside of the rectangle
+    - With the narrowed down points set, we can check if any of the points not part of the swap lie inside of the two triangles created by the swap
+    - This approach to visibility checking has been discussed in class and is considered correct.
+    - With the above visibility checking and a check for intersection between the two new lines, we can be certain that the new polygon is simple. 
+  
+  - Global Step:
+    - The approach followed here, is to pick a random point, erase it and add it to a line that it does not belong to.
+    - Given that we perform erase() and insert() to the polygon, any iterator we previously kept is now not usefull, and thus, instead of the iterator approach,
+    we use indexes which by adding to or substracting from depending on where the erase and insert took place, always give us the correct iterator.
+    - To see if the new polygon is simple, we only need to check the 3 new lines that are formed when the "swap" occurs and see if the intersect with each other or any other edge of the new polygon
+
+  - Subdivision:
+    - First, we sort the points into topological x oreder and then break them into subsets, which depending on the orientation of the points can range from 1 to k
+    - To break into subsets we check that the common point of the subset and the next one has higher y() than the point previous and next to it.
+    - For each subset we initialize the polygon by using either incremental or convex_hull algorithm
+    - Here it is important to note that only convex_hull has been altered in a way that guarantees that the resulting polygon will be eligible for merging
+    - For incremental, no surefire way has been provided or mentioned in the papers, and thus, we check whether the resulting polygon can be used for mergin, and if not, we quit the algorithm
+    - The criteria for which a merging is always possible is if the join point between two polygons has one of it's edges to be in the Lower Hull of the polygon.
+    - After initializing the polygon, we apply global step(with a change that prevents it from swapping the edges needed for merging)
+    - After successfully creating each optimal sub-polygon, we iterate over each one, and insert the next polygon before their point of connection
+    - This achieves the exact merging functionality we are looking for and guarantees that if all sub-polygons are simple and the proper edges at the lower hull exist,
+    then the resulting merged polygon will also be simple.
+    - Finally, an optimization which is added, is that instead of stopping after merging the polygon, we also solve the merged polygon using the local step approach
+    - This is done to allow it to work with the full point set, and since local step is very fast, this addition is matching the essence of the subdivision algorithm(do slow global_step on small subsets, do fast local_step on large set)
+
+  - As far as implementation is concerned, a great deal of edge cases have been accounted for
+  - For local step, when choosing the 4 consecutive points, for which the 2nd and 3rd will be swapped, it is vital to always check when getting the previous and next iterators if we go out of polygon bounds.
+  - Also, when checking if points are inside or outside triangle, we must skip any point that is a vertex of the triangle
+  - For global step, aside from making sure that the point and "edge" picked, have a distance of at least 1 point, we must also make sure that none of the 5 points taking part in the swap are the join point of the subdivision algorithm
+  - Similarly to the local step, when acquiring next and previous to point, checks for end() and begin() must be made
+  - Finally, depending on the location in the polygon that the swapped point exists, we must change only the indexes of the points that are after the index of the swapped point
+  - For subdivision, when merging, which is inserting the next polygon, we must take care to split the vertices into two vectors, separated by the point which is at the polygon's start()
+  - After acquiring the two vectors we do the following pseudocode to find the new position of the join point iterator:
+          -  insert(begin()+index,vector1...)
+          -  index+=vector1.size()
+          -  insert(begin()+index,vector2...)
 	 
+
+
+Results and Comparison:
+  - Local Search is extemely slow, especially if the optimization of doing K-random edges is not used.
+  - This is natural, since checking EVERY path of length<=L for EVERY edge, is by it's nature a very resource extensive proccess
+  - However, this approach allows a very fast and reliable hill climbing tool, since it picks the best out of all choices in every Step
+  - Compared to Local Search, Simulated Annealing is a very versatile choice, as even though it's speed of convergenece to local optimum is not as fast and nor guaranteed,
+  it has very high chance of finding a better optimal solution all thanks to it's ability to search the solution space in a more experimental and non biased way
+  - With the addition of the subdivision method, Simulated Annealing is the clear winner in regards to large point sets, both in speed and in results,
+  with the latter been attributed to the fact that managing to step into the optimal curve is almost impossible for Local Search on a very large search space
+  - A final observation to note, is that in some cases with fewer points which are uniformly distributed, it occured that a standart Initialization algorithm which has the freedom to work on the full point set,
+  outperforms the subdivision apporach, due to it's inability to work on the whole point set. However, this has been fixed with the optimization mentioned of using local_step after merging and a larger number of Iterations
+
+
+Compilation: 
+    - For compiling the main.cpp program or the test.cpp(which wouldn't do anything as it was only used in testing all files in datasets given), one bash script exists named build.sh
+    - The build.sh will compile all the neccessary files and create the optimal_polygon executable which can be executed as the assignement states 
+
+Folder Structure:
+    - data(not uploaded in git)
+        - images
+        - uniform
+    - draw_polygon.py  //used to show the polygon and debug
+    - local_search.cpp  
+    - local_search.h
+    - simulated_annealing.cpp
+    - simulated_annealing.h
+    - incremental.cpp
+    - incremental.h
+    - hull.cc  //altered to accound for keeping subdivision edges required for merging
+    - hull.h
+    - polygon.cc
+    - polygon.h
+    - main.cpp
+    - test.cpp
+    - build.sh
