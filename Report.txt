@@ -1,0 +1,139 @@
+Members: 
+  ΟΜΑΔΑ 3
+    ΦΩΤΙΟΣ ΝΙΚΟΛΙΝΤΑΙΣ  1115201900132
+    ΙΟΑΝΝΗΣ ΚΑΛΕΣΗΣ     1115201900069
+
+Github Link: 
+    https://github.com/JohnKalesis1/Computational_Geometry
+
+Incremental :
+
+    - Firstly we sort the points by using c++ std::sort function
+        - 4 compare functions have been created for use, depending on whether we want to sort for x or y in descending or ascending order
+        - In the case that two points have the same coordinate used for sorting, we also sort based on the other coordinate as to maintain a proper order when 
+          inserting points(otherwise a case occurs that would put a point exactly on top of the existing convex hull, and thus produce 0 visible red edges)
+    - Afterwards, we create the Triangle with the Initialize function
+        - We pop 3 elements from the back of the vector and add them to polygon(popping from the back is to ensure faster complexity for removing elements from 
+          vector, thus the sorting is done backwards)
+        - If the 3 consecutive points have the same x or y then we add more points at the end of the polygon until the last point 
+          has a different x or y from the rest (if we did not do that then we would not have a triangle, we would have a line)
+        - Lastly we set the Convex Hull Polygon to be the same as the Polygon we have created
+    - Then we apply the algorithm bellow until the vector with the points becomes empty
+    - First we find the startig and end positions of red edge
+        - The red edges are always one after the other, so if we find some and then we find one edge that is not red 
+          that means no other red edges exist in the Convex Hull and there is no point to look further
+        - We find where the red edges start and end and we save it in vertices.first_vertex and vertices.second_vertex
+        - To find the red edges we use the red_visible function that utilizes the orientation function from cgal, 
+          which figures out the orientation of a point compared to a line by using determinants, as is shown in the class lectures(there exists a for loop 
+          in the function, but it will at most be run 3 times, as to find a point in the polygon that is not on the edge that we check for visibility)
+        - The red_visible function works in O(1) complexity, and as such, encapsulates the meaning of the incremental algorithm, which allows for fast                 
+          narrowing down of the candidate edges by utilizing the fast lookup for red edges. 
+        - We then remove the red edges from the convex hull polygon, and insert the new point between the removed edges, building the new convex hull
+        - The reason we create the new convex hull manually(other than that it is simple enough to do), 
+          is so that we maintain the same orientation between the convex hull 
+          polygon and the real polygon inside of it(this is required to find the edges of the inner polygon)
+        - Closing, we return the object vertices (vertices.first_vertex , vertices.second_vertex)
+    - Using the object we return obove(the two violet points as mentioned in the algorithm presentation), we find the candidate edges to be removed from the polygon 
+        - Thanks to the way the convex hull polygon and the polygon are constructed , we ensure that if we have 2 vertices
+          A and B , and find A before B in the convex hul polygon, then if the vertices exist in the polygon, we will find A before B there too.
+        - So we find the vertices.first_vertex and vertices.second_vertex in the polygon and the edges between them are the candidate edges to be broken and inserting 
+          the new point in their place
+        - We check if they are visible and based on the criteria (random , min area , max area) we choose 
+          one of the edges , and we insert the new vertex between the vertices of the edge we chose
+        - The check for an edge visibilty's to a point is O(2k) where k is the number of edges in the real polygon, and is done by drawing two segments from the 
+          new point and the two vertices of the edge, and then checking where the intersect with the rest of the polygon's edges
+        
+
+Convex_Hull:
+
+    - To begin with, we apply the convex_hull function of CGAL on the given set of points, and then we remove any point that exists on the Polygon from the list
+    - Then, until the set of points is empty(or an error occurs), we call the Edge_Selection function, which chooses a pair of edge-point to break and add to the 
+      polygon, returning the area of the triangle that was "cut off" from the polygon.
+    - Normally, the algorithm that was needed to be implemented went as follows:
+        - For every edge find the closest point
+        - From all the pairs of edge-closest point, find the ones where the edge is visible from it's closest point.
+        - From all the visible pairs, pick one to break it's edge and insert the point at the edge's location.(Selection is done through the criteria)
+    - However, as the algorithm is rather slow compared to the Incremental, some optimizations were required to achieve a sufficient speed to justify it's existence
+    - Instead of re-calculating the pairs of edge-closest point for each iteration, we need only calculate the closest point for the two new edges and the edges whose       closest point was the point last inserted.
+    - This relies on the fact, that the closest point to an edge will not change no matter what the rest of the edges do, thus it need only be re calculated when that 
+      point is no longer part of the remaining points
+    - Thus between each iteration, we keep an association of a pair and it's closest point(using an unordered_map struct), and by holding the last point entered to the
+      map we can chose for which edges we need to find their new closest point.
+    - Furthermore, since the polygon changes between each iteration, each time we need to keep the position of an edge in the map.
+    - With this, when we choose which edge to break, it is a very simple-and inexpensive-lookup to find at which position on the polygon the new point should be 
+      inserted
+    - On the effectiveness of this optimization(and the change of looking only for the closest point and not the closest visible point), the 1k points in the uniform 
+      dataset which previously would take around 2+ hours if left to run in the University's Linux, now take around 7 minutes or less
+    - Lastly, as there is chance that the algorithm arrives at a deadend(despite being correct), where there are no visible pairs of edge-closest point, a check is  
+      made which will print the appropriate error message if occured. An example that occured in one of the data given is provided in the NoVisible.png uploaded in the 
+      repository. 
+      
+Design Practices:
+
+    - As stated in the assignment description, git was used extensively in cooperation between the two members.
+    - In order to test the correctness of the algorithms, a test programm was created named test.cpp, which allowed for automated batch testing across all point sets         provided, by testing all the criteria in the given point set, and then making sure that the polygon created is simple and has the correct number of points
+      (Further test have been deleted, as we realized that, the Area relations of Min<Random<Max are not always true, as given the Greedy nature of the algorithms, we
+      cannot guarantee that any local minimum or maximum is greater or smaller than ther other)
+    - To check and debugg the algorithms, we created a python script, which given the total set of points and each step taken by the algorithm, will display the steps 
+      and the points beeing added to the polygon one by one(through this the NoVisible example was found, proving it not to be an error in the algorithm's 
+      implementation, but a potential occurence)
+    - Altough the testing program has been uploaded to github, as it was a vital part of project and many changes were performed to it, it has been "commented out" 
+      by adding #if 0 so that it's compilation does not affect the main.cpp
+    - Finally, for organizing the project, we have the two files hull.cc and incremental.cpp where each algorithm is implemented as a class, the polygon.cc which calls 
+      each algorithm and hides any information about the algorithms from the user, and the main.cpp which uses the interface(class) provided by polygon.cc
+
+Results and Comparison:
+    - Some results out of numerous testing on the same uniform files are as follows:
+
+  Ratio      MIN              |         MAX                      Time Comparison
+    15   0.39(Hull)/0.44(Inc) | 0.82(Hull)/0.83(Inc)      |    Hull took 2-3 times more than Incremental    
+   100   0.31(Hull)/0.32(Inc) | 0.80(Hull)/0.71(Inc)      |    Hull took 4-8 times more than Incremental
+   200   0.32(Hull)/0.27(Inc) | 0.82(Hull)/0.71(Inc)      |    Hull took 10  times more than Incremental
+   500   0.26(Hull)/0.30(Inc) | 0.81(Hull)/0.69(Inc)      |    Hull took 30  times more than Incremental
+  1000   0.29(Hull)/0.28(Inc) | 0.81(Hull)/0.67(Inc)      |    Hull took 40  times more than Incremental
+
+    - From the results, we can see that generally the convex_hull gives a better solution(smaller min, bigger max) than the incremental
+    - That is somewhat to be expected as compared to the incremental, it allows for an unbiased and flexible approach to creating the final polygon(from any direction),
+      while incremental focuses on doing the best for the approach it has devoted itself to.
+    - However, their difference in approximation is small and even inverse to the rule, which can be attributed to the fact that in a uniform dataset
+      the incremental is given an easy way out of it's biased approach, with the data being the same no matter what direction is followed
+    - As we can see from the time tables, the more we increase the number of points, the bigger the time difference of the two algorithms, 
+      to the point that incremental proves to be a favorable algorithm when the number of points is allowed to reach even the hundreds of thousands
+    
+    - By comparing the incremental's results on the images the following is seen:
+  Ratio      MIN              |        MAX               |      Time Comparison
+  1000    0.24(x)/0.25(y)     |     0.75(x)/0.70(y)      |    Both initialization took around the same amount of time
+    
+    - For correctly comparing the above, we need to first observe the difference of value ranges that exist in the image of london
+    - The points in london are more spread out on the x-axis than the y-axis, which means that when going from left to right the polygon makes less drastic changes to accept the new points,
+      in contrast to when  going from up to down, where the distant x-values force the polygon to accept points that are very far from the polygon.
+    - The above observation is used to attribute the difference in quality that the algorithm showed, with the sorting by x-axis showing superior results.
+      
+
+
+Compilation: 
+    - For compiling the main.cpp program or the test.cpp(which wouldn't do anything now as stated), two bash scripts were created.
+    - The run.sh takes 5 arguments and passes them to the /to_polygon executable as was requested, with an example execution being:
+                 bash run.sh data/uniform/uniform-0000015-1.instance result convex_hull 1
+      where the 1st arg is the file containing the point set, the 2nd the output file, the 3rd the algorithm of choice, and the 4rth the edge selection(with a 5fth 
+      being the initialization which is only present in the incrmental) 
+    - Similarly for the test.sh it an example is:
+                 bash run.sh 0 100 uniform
+      where the 1st is the starting file number, the 2nd is the ending file number and the 3rd is the folder in the data/ to open and look for files in the range of 
+      the two numbers provided. 
+
+Folder Structure:
+    - data(not uploaded in git)
+        - images
+        - uniform
+    - draw_polygon.py
+    - incremental.cpp
+    - incremental.h
+    - hull.cc
+    - hull.h
+    - polygon.cc
+    - polygon.h
+    - main.cpp
+    - test.cpp
+    - run.sh
+    - test.sh

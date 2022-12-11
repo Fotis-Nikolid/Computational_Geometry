@@ -423,19 +423,23 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
             CGAL::convex_hull_2(subset.begin(),subset.end(),std::back_inserter(convex_hull));//initialize polygon from the convex hull, so that we can break it's edges and assimilate points into the polygon
             bool first_edge_check=false;
             bool last_edge_check=false;
-            for (auto edge:convex_hull.edges()) {//iterate over all edges of convex hull, to find the ones containing the join points of the spatial subdivision algorithm
-                if (p_arg1!=NULL) {//in case that we do care about first edge
-                    //since the join point belongs in two edges, find the one for which the criteria for merging for spatial subdivision is true
-                    if ((edge[0]==*p_arg1 && edge[0].y()>=edge[1].y()) || (edge[1]==*p_arg1 && edge[1].y()>=edge[0].y())) {
-                        first_edge_check=true;
+            for (auto p_edge:t_poly.edges()) {
+                for (auto edge:convex_hull.edges()) {//iterate over all edges of convex hull, to find the ones containing the join points of the spatial subdivision algorithm
+                    if (edge==p_edge) {
+                        if (p_arg1!=NULL && !first_edge_check) {//in case that we do care about first edge
+                            //since the join point belongs in two edges, find the one for which the criteria for merging for spatial subdivision is true
+                            if ((edge[0]==*p_arg1 && edge[0].y()>edge[1].y()) || (edge[1]==*p_arg1 && edge[1].y()>edge[0].y())) {
+                                first_edge_check=true;
+                            }
+                        }
+                        if (p_arg2!=NULL && !last_edge_check) {//in case that we do care about second edge
+                            if ((edge[0]==*p_arg2 && edge[0].y()>edge[1].y()) || (edge[1]==*p_arg2 && edge[1].y()>edge[0].y())) {
+                                last_edge_check=true;
+                            }
+                        }
                     }
+                    
                 }
-                if (p_arg2!=NULL) {//in case that we do care about second edge
-                    if ((edge[0]==*p_arg2 && edge[0].y()>=edge[1].y()) || (edge[1]==*p_arg2 && edge[1].y()>=edge[0].y())) {
-                        last_edge_check=true;
-                    }
-                }
-                
             }
             failed_incremental=((p_arg1!=NULL && !first_edge_check)||(p_arg2!=NULL && !last_edge_check));       
             
@@ -458,7 +462,9 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
                 return false;
             }
         }
+
         solve(poly,Points,Criteria,"global",Initialization,Iterations,init,p_arg1,p_arg2);
+
         init_area+=init;
         subset_n++;
         polygons.push_back(poly);
