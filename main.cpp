@@ -19,14 +19,14 @@ int main(int argc, char *argv[])
 {
   std::ifstream infile;
   std::ofstream outfile;
-  std::string algorithm;
-  std::string criteria;
-  std::string initialization;
+  std::string algorithm("simulated_annealing");
+  std::string criteria("max");
+  std::string initialization("convex_hull");
   int attempts=1;
   int L = 1;
   int K = 0;
   double threshold = 0.0;
-  std::string step_choice("");
+  std::string step_choice("subdivision");
 
   for(int i = 1 ; i < argc ; i++)
   {
@@ -151,10 +151,28 @@ int main(int argc, char *argv[])
   outfile<<"Algorithm: "<<algorithm<<"_"<<criteria<<std::endl;
 
   outfile<<std::endl;
+
+  double initial_area=poly.Init_Area();
+  #if 1 //here we find the initial are for the case of subdivision, where it is not possible to extract initial area from the sum of initial areas of the sum polygons
+    std::cout<<"Optimal Polygon Creation Finished, calculating Initial Area....(This may take a while)"<<std::endl;
+    if (step_choice=="subdivision") {
+      char crit=(criteria=="max")?('3'):('2');
+      if (initialization=="incremental") {
+        Incremental<Kernel> inc(v_points,"1a",crit);
+        initial_area=inc.getPolygonArea();
+      }
+      else if (initialization=="convex_hull") {
+        Hull<Kernel> hull;
+        std::list<Point_2> points(v_points.begin(),v_points.end());
+        Polygon_2 t_poly;
+        initial_area=hull.solve(t_poly,points,crit,NULL,NULL);
+      }
+    }
+  #endif
   outfile<<"area: "<<poly.Area()<<std::endl;
-  outfile<<"area_initial: "<<poly.Init_Area()<<std::endl;
+  outfile<<"area_initial: "<<initial_area<<std::endl;
   outfile<<"ratio: "<<poly.Area()/convex_hull_area<<std::endl;
-  outfile<<"ratio_initial: "<<poly.Init_Area()/convex_hull_area<<std::endl;
+  outfile<<"ratio_initial: "<<initial_area/convex_hull_area<<std::endl;
   outfile<<"construction time: "<<std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()<<std::endl;
 
   return 0;
