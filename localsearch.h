@@ -40,7 +40,7 @@ template<class Kernel> class LocalSearch
 
         //(L, threshold, K)
         bool MinimizePolygon(const int, const double, const int K = 0);
-        //(L, threshold, time in sec, K)
+        //(L, threshold, time in ms, K)
         bool MinimizePolygon(const int, const double, const double,const int K = 0);
 
         float getPolygonArea();

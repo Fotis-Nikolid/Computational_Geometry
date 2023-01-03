@@ -209,7 +209,7 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                 }
             }
             auto stop = std::chrono::high_resolution_clock::now();
-            running_time += std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
+            running_time += std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
 
             if (diff > 0.0)
                 Polygon = BestPolygon;
@@ -249,7 +249,7 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                 random_edge_indexes[pick] = true;
             }
             auto stop = std::chrono::high_resolution_clock::now();
-            running_time += std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
+            running_time += std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
 
             if (diff > 0.0)
                 Polygon = BestPolygon;
