@@ -367,6 +367,16 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
             map[(Segment_2)*(Polygon.edges_begin() + Lend)] = true;
             map[(Segment_2)*(Polygon.edges_begin() + edge_destroy)] = true;
 
+            temp = Polygon;
+            // swap L potition
+            RelocateEdges(temp, Lstart, Lend, edge_destroy, l);
+
+            // check if new polygon is better
+            if (!this->compare(*BestPol, temp))
+            {
+                continue;
+            }
+
             // check if the 3 new edges are visible
             if (!this->visible_points(NewEdge3[0], NewEdge3[1], map) 
                 || !this->visible_points(NewEdge1[0], NewEdge1[1], map) 
@@ -376,16 +386,8 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
                 continue;
             }
 
-            temp = Polygon;
-            // swap L potition
-            RelocateEdges(temp, Lstart, Lend, edge_destroy, l);
-
-            // check if new polygon is better
-            if (this->compare(*BestPol, temp))
-            {
-                *BestPol = temp;
-                diff = abs(abs(Polygon.area()) - abs(BestPol->area()));
-            }
+            *BestPol = temp;
+            diff = abs(abs(Polygon.area()) - abs(BestPol->area()));
         }
     }
 
