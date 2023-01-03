@@ -4,6 +4,7 @@
 #include <limits>
 #include <cmath>
 #include <cstdlib>
+#include <chrono>
 #include <ctime>
 #include <unordered_map>
 #include "localsearch.h"
@@ -91,6 +92,14 @@ bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, c
 }
 
 template <class Kernel>
+bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, const double max_running_time, const int K)
+{
+    if(InitFailed) return false;
+
+    return this->solve(L, threshold, K, max_running_time);
+}
+
+template <class Kernel>
 bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K)
 {
     if(L == 0)
@@ -162,6 +171,90 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                 Polygon = BestPolygon;
 
         }while(diff > threshold);
+    }
+
+    return solved;
+}
+
+template <class Kernel>
+bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K, const double max_running_time)
+{
+    if(L == 0)
+        return false;
+    
+    bool solved = false;
+    double diff = 0.0;
+    double running_time = 0;
+    Polygon_2 BestPolygon;
+
+    if (K == 0 || K >= Polygon.edges().size() - 1)
+    {
+        Polygon_2 temp;
+        do
+        {
+            auto start = std::chrono::high_resolution_clock::now();
+            diff = 0.0;
+            for (int edge_index = 0 ; edge_index < Polygon.edges().size() ; edge_index++)
+            {
+                temp = Polygon;
+                // swap the random edge with the best L
+                double new_diff = ReplaceEdgeWithBest_L(&temp, edge_index, L);
+
+                //if we found an L that has better area than the current Polygon
+                if (new_diff > diff)
+                {
+                    BestPolygon = temp;
+                    diff = new_diff;
+                    solved = true;
+                }
+            }
+            auto stop = std::chrono::high_resolution_clock::now();
+            running_time += std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
+
+            if (diff > 0.0)
+                Polygon = BestPolygon;
+
+        } while (diff > threshold && running_time < max_running_time);
+    }
+    else
+    {
+        Polygon_2 temp;
+        do
+        {
+            auto start = std::chrono::high_resolution_clock::now();
+            diff = 0.0;
+            std::unordered_map<int, bool>random_edge_indexes; //map that holds the random edge picks so we dont repick them
+            //find K random edges and swap them with L
+            for(int i = 0 ; i < K ; i++)
+            {
+                int pick = std::rand()%Polygon.edges().size();
+
+                //if the segment has been picked again try another segment
+                while(random_edge_indexes.find(pick) != random_edge_indexes.end())
+                {
+                    pick = std::rand()%Polygon.edges().size();
+                }
+
+                temp = Polygon;
+                //swap the random edge with the best L
+                double new_diff = ReplaceEdgeWithBest_L(&temp, pick, L);
+
+                //if we found an L that has better area than the current Polygon
+                if(new_diff > diff)
+                {
+                    solved = true;
+                    BestPolygon = temp;
+                    diff = new_diff;
+                }
+                random_edge_indexes[pick] = true;
+            }
+            auto stop = std::chrono::high_resolution_clock::now();
+            running_time += std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
+
+            if (diff > 0.0)
+                Polygon = BestPolygon;
+
+        }while(diff > threshold && running_time < max_running_time);
     }
 
     return solved;

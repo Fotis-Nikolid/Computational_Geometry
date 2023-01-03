@@ -28,6 +28,8 @@ template<class Kernel> class LocalSearch
         double ReplaceEdgeWithBest_L(Polygon_2*, const int, const int);
 
         bool solve(const int, const double, const int);
+        //with time limit
+        bool solve(const int, const double, const int, const double);
     
     public:
         //(points, min or max)
@@ -38,6 +40,8 @@ template<class Kernel> class LocalSearch
 
         //(L, threshold, K)
         bool MinimizePolygon(const int, const double, const int K = 0);
+        //(L, threshold, time in sec, K)
+        bool MinimizePolygon(const int, const double, const double,const int K = 0);
 
         float getPolygonArea();
         Polygon_2 getPolygon();
