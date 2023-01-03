@@ -32,6 +32,7 @@ template<class Kernel> class LocalSearch
     public:
         //(points, min or max)
         LocalSearch(const std::vector<Point_2>&, const std::string&,const std::string&);
+        LocalSearch(Polygon_2&, const std::string&);
 
         bool InitializationFailed();
 

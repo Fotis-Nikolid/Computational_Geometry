@@ -60,6 +60,23 @@ LocalSearch<Kernel>::LocalSearch(const std::vector<Point_2> &Points, const std::
 }
 
 template <class Kernel>
+LocalSearch<Kernel>::LocalSearch(Polygon_2& Pol, const std::string &min_or_max) : InitFailed(false)
+{ 
+    if (min_or_max == "min")
+    {
+        this->compare = comp_min;
+    }
+    else if (min_or_max == "max")
+    {
+        this->compare = comp_max;
+    }
+
+    Polygon = Pol;
+
+    std::srand(std::time(nullptr));
+}
+
+template <class Kernel>
 bool LocalSearch<Kernel>::InitializationFailed()
 {
     return InitFailed;
