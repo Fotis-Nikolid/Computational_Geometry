@@ -1,3 +1,4 @@
+#if 0
 #ifndef POLYGON_CC
 #define POLYGON_CC
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -88,4 +89,5 @@ bool Polygon<Kernel>::Simple()
     return pol.is_simple();    
 }
 
+#endif
 #endif

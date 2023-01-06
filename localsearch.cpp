@@ -92,7 +92,7 @@ bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, c
 }
 
 template <class Kernel>
-bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, const double max_running_time, const int K)
+bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, const  std::chrono::milliseconds max_running_time, const int K)
 {
     if(InitFailed) return false;
 
@@ -177,14 +177,14 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
 }
 
 template <class Kernel>
-bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K, const double max_running_time)
+bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K, const  std::chrono::milliseconds max_running_time)
 {
     if(L == 0)
         return false;
     
     bool solved = false;
     double diff = 0.0;
-    double running_time = 0;
+    std::chrono::milliseconds running_time =  std::chrono::milliseconds(0);
     Polygon_2 BestPolygon;
 
     if (K == 0 || K >= Polygon.edges().size() - 1)
@@ -209,7 +209,7 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                 }
             }
             auto stop = std::chrono::high_resolution_clock::now();
-            running_time += std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+            running_time += std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 
             if (diff > 0.0)
                 Polygon = BestPolygon;
@@ -249,7 +249,7 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                 random_edge_indexes[pick] = true;
             }
             auto stop = std::chrono::high_resolution_clock::now();
-            running_time += std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+            running_time += std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 
             if (diff > 0.0)
                 Polygon = BestPolygon;

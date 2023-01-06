@@ -3,6 +3,7 @@
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
 #include <vector>
+#include <chrono>
 
 template<class Kernel> class LocalSearch
 {
@@ -29,7 +30,7 @@ template<class Kernel> class LocalSearch
 
         bool solve(const int, const double, const int);
         //with time limit
-        bool solve(const int, const double, const int, const double);
+        bool solve(const int, const double, const int, const  std::chrono::milliseconds);
     
     public:
         //(points, min or max)
@@ -41,7 +42,7 @@ template<class Kernel> class LocalSearch
         //(L, threshold, K)
         bool MinimizePolygon(const int, const double, const int K = 0);
         //(L, threshold, time in ms, K)
-        bool MinimizePolygon(const int, const double, const double,const int K = 0);
+        bool MinimizePolygon(const int, const double,const std::chrono::milliseconds,const int K = 0);
 
         float getPolygonArea();
         Polygon_2 getPolygon();

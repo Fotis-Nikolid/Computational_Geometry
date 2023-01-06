@@ -376,13 +376,14 @@ bool Simulated_Annealing<Kernel>::global_step(Polygon_2& Polygon,Point_2* no_cha
 }
 
 template<class Kernel>
-bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Initialization,int Iterations,double& initial_area) {
+bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Initialization,int Iterations,double& initial_area,std::chrono::milliseconds cut_off) {
     srand((unsigned)time(NULL));
     std::vector<std::vector<Point_2>> Subsets;
     Subsets=point_subsets(Points);//break points into multiple subsets
     
     std::vector<Polygon_2> polygons;
-    
+    std::chrono::time_point<std::chrono::system_clock> start=std::chrono::system_clock::now();
+
     char crit;
     if (Criteria=="max") {
         crit='3';
@@ -396,6 +397,7 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
     
     int subset_n=0;
     double init_area=0;
+    std::vector<Point_2*> left,right;
     for (auto subset:Subsets) {
         Polygon_2 poly;
     
@@ -407,6 +409,7 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
         Point_2* p_arg2=&p2;
         if (subset_n==0) {
             p_arg1=NULL;
+            
         }
         if (subset_n==(Subsets.size()-1)) {
             p_arg2=NULL;
@@ -462,34 +465,53 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
                 return false;
             }
         }
-
-        solve(poly,Points,Criteria,"global",Initialization,Iterations,init,p_arg1,p_arg2);
-
-        init_area+=init;
+        
         subset_n++;
         polygons.push_back(poly);
+        if (p_arg1==NULL) {
+            left.push_back(NULL);
+        }
+        else {
+            left.push_back(new Point_2(*p_arg1));
+        }
+        if (p_arg2==NULL) {
+            right.push_back(NULL);
+        }
+        else {
+            right.push_back(new Point_2(*p_arg2));
+        }
+        
     } 
     //merge the polygons
     double t_area=0;
-    for (auto poly:polygons) {
-        t_area+=abs(poly.area());
-    }
-    Polygon=merge_polygons(polygons);
-    
-    
-    double triangles_area=abs(abs(Polygon.area())-t_area);
-    initial_area=init_area+triangles_area;
     double init;
-    solve(Polygon,Points,Criteria,"local",Initialization,Iterations/10,init,NULL,NULL);
+    int i=0;
+    for (auto poly:polygons) {
+        solve(poly,Points,Criteria,"global",Initialization,Iterations,init,cut_off,left.at(i),right.at(i));
+        auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(start-std::chrono::system_clock::now());
+        if (milliseconds<cut_off) {
+            cut_off-=milliseconds;
+        }
+        else {
+            break;
+        }
+        i++;
+    }
+    
+    Polygon=merge_polygons(polygons);    
+    //double triangles_area=abs(abs(Polygon.area())-t_area);
+    //initial_area=init_area+triangles_area;
+    left.clear();
+    right.clear();
     return true;//apply local step to the merged Polygon
     
 }
 
 //perform one attempt with local or global with either min max or random starting polygon
 template<class Kernel>
-bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,std::string Initialization,int Iterations,double& initial_area,Point_2* no_change1,Point_2* no_change2) {
+bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Point_2<Kernel>> Points,std::string Criteria,std::string Step_Choice,std::string Initialization,int Iterations,double& initial_area,std::chrono::milliseconds cut_off,Point_2* no_change1,Point_2* no_change2) {
     srand((unsigned)time(NULL));
-    if (!tree_exists) {
+    if (!tree_exists && Step_Choice=="local") {
         for(auto point:Points) {
             tree.insert(point);//initialize a kd_tree from the set of points if it has not already been initialized
         }        
@@ -512,6 +534,9 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
     }
     int size;
     double area;
+    std::chrono::time_point<std::chrono::system_clock> start=std::chrono::system_clock::now();
+
+    
     if (Initialization=="incremental") {
         if (Polygon.vertices().size()==0) {
             Incremental<Kernel> inc(Points,"1a",crit);
@@ -552,6 +577,11 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
     int RetryThreshold=4;
     while (Temperature>=0) {
         while (true) {
+            auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(start -std::chrono::system_clock::now());
+            if (milliseconds>cut_off) {
+                Temperature=-1;
+                break;
+            };
             t_Polygon=Polygon;
             if (Step_Choice=="local") {
                 success=local_step(t_Polygon);
@@ -588,6 +618,8 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
                     BadStepsCount=0;
                     break;
                 }
+                #endif
+                #if 0 
                 if (RetryCount>RetryThreshold) {
                     //std::cout<<"Maximum Number of Resets reached, Stopping..."<<std::endl;
                     Temperature=-1;//if number of backtracks to the same best solution is exceeds threshold, stop loop and return best solution
@@ -617,7 +649,7 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
 
 //perform mulitple attempts with randomized starting polygons and pick the best polygon out of all
 template<class Kernel>
-bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,std::string Initialization,int Iterations,int Attempts,double& initial_area) {
+bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,std::string Initialization,int Iterations,int Attempts,double& initial_area,std::chrono::milliseconds cut_off) {
     Polygon_2 best_poly;
     bool solution_exists=false;
     double p_area=(Criteria=="max"?0:std::numeric_limits<double>::max());//initialize area depending on maximization or minimization
@@ -626,7 +658,7 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<Point_2> 
         double area;
         Polygon_2 poly;
         //the starting polygon should be initialized as optimal area, while the rest should be initialized randomly
-        bool success=solve(poly,Points,Criteria,Step_Choice,Initialization,Iterations,t_area);
+        bool success=solve(poly,Points,Criteria,Step_Choice,Initialization,Iterations,t_area,cut_off);
         if (success) {
             solution_exists=true;
             area=abs(poly.area());

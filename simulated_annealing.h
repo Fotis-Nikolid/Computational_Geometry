@@ -37,9 +37,9 @@ class Simulated_Annealing {
         bool global_step(Polygon_2& Polygon,Point_2*,Point_2*);
         
     public:
-        bool solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,std::string Initialization,int Iterations,double& Init_Area,Point_2* no_change1=NULL,Point_2* no_change2=NULL);
-        bool solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,std::string Initialization,int Iterations,int Attempts,double& Init_Area);
-        bool sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Initialization,int Iterations,double& initial_area);
+        bool solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,std::string Initialization,int Iterations,double& Init_Area,std::chrono::milliseconds cut_off,Point_2* no_change1=NULL,Point_2* no_change2=NULL);
+        bool solve(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Step_Choice,std::string Initialization,int Iterations,int Attempts,double& Init_Area,std::chrono::milliseconds cut_off);
+        bool sub_division(Polygon_2& Polygon,std::vector<Point_2> Points,std::string Criteria,std::string Initialization,int Iterations,double& initial_area,std::chrono::milliseconds cut_off);
 };
 
 #include "simulated_annealing.cpp"
