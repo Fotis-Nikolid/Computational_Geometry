@@ -24,36 +24,40 @@ template<class Kernel> class Report {
   
   private:
     std::vector<std::string> Min_Max={"min","max"};
-    std::vector<std::string> algorithms={"Hull+Subdv+Anneal(loc)","Hull+Subd+LocSearch","Hull+Anneal(loc)+LocSearch","Inc+Anneal(glob)+LocSearch"};
-    std::map<int,std::vector<int>> min_score;
-    std::map<int,std::vector<int>> max_score;
-    std::map<int,std::vector<int>> min_bound;
-    std::map<int,std::vector<int>> max_bound;
+    std::vector<std::string> algorithms={"Hull+Subd+Anneal(loc)","Hull+Subd+LocSearch","Hull+Anneal(loc)","Inc+Anneal(glob)"};
+    std::map<int,std::vector<double>> min_score;
+    std::map<int,std::vector<double>> max_score;
+    std::map<int,std::vector<double>> min_bound;
+    std::map<int,std::vector<double>> max_bound;
 
     void proccess_result(std::string criteria,int n_points,int alg_n,double ratio) {
       if (criteria=="min") {
         if (min_score.find(n_points)==min_score.end()) {
-          min_score.find(n_points)->second.push_back(ratio);
+          min_score[n_points]={0,0,0,0};
+          min_score.find(n_points)->second.at(alg_n)=ratio;
         }
         else {
           min_score.find(n_points)->second.at(alg_n)+=ratio;
         }
         if (min_bound.find(n_points)==min_bound.end()) {
-          min_bound.find(n_points)->second.push_back(ratio);
+          min_bound[n_points]={0,0,0,0};
+          min_bound.find(n_points)->second.at(alg_n)=ratio;
         }
-        else if (ratio<min_bound.find(n_points)->second.at(alg_n)) {
+        else if (ratio>min_bound.find(n_points)->second.at(alg_n)) {
           min_bound.find(n_points)->second.at(alg_n)=ratio;
         }
       }
       else {
         if (max_score.find(n_points)==max_score.end()) {
-          max_score.find(n_points)->second.push_back(ratio);
+          max_score[n_points]={0,0,0,0};
+          max_score.find(n_points)->second.at(alg_n)=ratio;
         }
         else {
           max_score.find(n_points)->second.at(alg_n)+=ratio;
         }
         if (max_bound.find(n_points)==max_bound.end()) {
-          max_bound.find(n_points)->second.push_back(ratio);
+          max_bound[n_points]={1,1,1,1};
+          max_bound.find(n_points)->second.at(alg_n)=ratio;
         }
         else if (ratio<max_bound.find(n_points)->second.at(alg_n)) {
           max_bound.find(n_points)->second.at(alg_n)=ratio;
@@ -74,11 +78,11 @@ template<class Kernel> class Report {
       for (auto algorithm:algorithms) {
         int size=algorithm.length();
         int max=50;
-        for (int i=1;i<(max-size)/2.0;i++) {
+        for (int i=1;i<std::floor((max-size)/2.0);i++) {
           report<<" ";
         }
         report<<algorithm;
-        for (int i=1;i<(max-size)/2.0;i++) {
+        for (int i=1;i<std::round((max-size)/2.0);i++) {
           report<<" ";
         }
         report<<"||";
@@ -86,13 +90,13 @@ template<class Kernel> class Report {
       report<<std::endl;
       report<<"Size  ||";
       for (auto algorithm:algorithms) {
-        report<<" min score | max score | min bound | max bound ||";
+        report<<" min score | max score | min bound | max bound  ||";
       }
       report<<std::endl;
       for (auto set_scores:min_score) {
         int n_points=set_scores.first;
         report<<n_points;
-        for (int i=0;i<std::to_string(n_points).length();i++) {
+        for (int i=0;i<(6-std::to_string(n_points).length());i++) {
           report<<" ";
         }
         report<<"||";
@@ -124,7 +128,7 @@ template<class Kernel> class Report {
           for (int k=0;k<(10-std::to_string(max_bd).length());k++) {
             report<<" ";
           }
-          report<<"||";
+          report<<" ||";
         }
         report<<std::endl;
       }
@@ -139,17 +143,18 @@ template<class Kernel> class Report {
       int annealing_L=1000;
       int search_L=3;
       int K=10;
-      double threshold=10.0;
+      double threshold=0.0;
       double initial_area;
 
       std::string file_name;
       if ((dir = opendir(dir_path.c_str())) != NULL) {//work on all files inside the directory(in random order) 
         while ((ent = readdir (dir)) != NULL) {
           file_name=ent->d_name;
+          
           if (file_name=="." || file_name=="..") {
             continue;
           }
-          
+          std::cout<<"File:"<<file_name<<std::endl;
           std::string file_path=dir_path+"/"+file_name;
           std::ifstream file;
           file.open(file_path);
@@ -191,40 +196,41 @@ template<class Kernel> class Report {
             Simulated_Annealing<Kernel> anneal;
             auto begin1=std::chrono::system_clock::now();
             anneal.solve(pol1,v_points,"min","local","convex_hull",1,1,initial_area,cut_off);      
-            auto dt1=std::chrono::duration_cast<std::chrono::milliseconds>(begin1-std::chrono::system_clock::now()).count();
+            auto dt1=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-begin1).count();
 
             //Polygon_2 pol2;
             auto begin2=std::chrono::system_clock::now();
             anneal.solve(pol1,v_points,"min","local","convex_hull",2,1,initial_area,cut_off);
-            auto dt2=std::chrono::duration_cast<std::chrono::milliseconds>(begin2-std::chrono::system_clock::now()).count();
+            auto dt2=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-begin2).count();
           
             anneal_tf=abs(dt1-dt2)/cut_off.count();//what percentage one iteration takes out of the cut_off
             
             annealing_L=anneal_percentage/anneal_tf;//how many iterations should be made so that the total runtime of annealing matches the percentage we want
             
           }     
-
+          
                 
 
 
           //Hull+Subdivision+SimulatedAnnealing(local) 
           int alg_n=0;
           double area;
-          Polygon_2 polygon_alt1,polygon_alt2,polygon_alt3,polygon_alt4;
           for (auto criteria:Min_Max) {
+            Polygon_2 polygon_alt;
             Simulated_Annealing<Kernel> anneal;
             cut_off=std::chrono::milliseconds(500*n_points);
             auto start=std::chrono::system_clock::now();
-            if ((success=anneal.sub_division(polygon_alt1,v_points,criteria,"convex_hull",annealing_L,initial_area,cut_off))) { 
-              area=abs(polygon_alt1.area());
+            if ((success=anneal.sub_division(polygon_alt,v_points,criteria,"convex_hull",annealing_L,initial_area,cut_off))) { 
+              area=abs(polygon_alt.area());
             
-              auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(start -std::chrono::system_clock::now());
+              auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
               if (milliseconds<cut_off) {
                 cut_off-=milliseconds;
-                if ((success=anneal.solve(polygon_alt1,v_points,criteria,"local","",annealing_L,1,initial_area,cut_off))) 
-                  area=abs(polygon_alt1.area());
+                if ((success=anneal.solve(polygon_alt,v_points,criteria,"local","convex_hull",annealing_L,1,initial_area,cut_off))) 
+                  area=abs(polygon_alt.area());
               }
             }
+            
             double ratio;
             if (!success) {
               ratio=((criteria=="min")?1:0);
@@ -232,6 +238,7 @@ template<class Kernel> class Report {
             else {
               ratio=area/convex_area;
             }
+            
             proccess_result(criteria,n_points,alg_n,ratio);
           }
           
@@ -240,22 +247,23 @@ template<class Kernel> class Report {
           //Hull+Subdivision+LocalSearch
           alg_n++;
           for (auto criteria:Min_Max) {
+            Polygon_2 polygon_alt;
             Simulated_Annealing<Kernel> anneal;
             cut_off=std::chrono::milliseconds(500*n_points);
             auto start=std::chrono::system_clock::now();
-            if ((success=anneal.sub_division(polygon_alt2,v_points,criteria,"convex_hull",annealing_L,initial_area,cut_off))) { 
-              area=abs(polygon_alt2.area());
-              auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(start -std::chrono::system_clock::now());
+            if ((success=anneal.sub_division(polygon_alt,v_points,criteria,"convex_hull",annealing_L,initial_area,cut_off))) { 
+              area=abs(polygon_alt.area());
+              auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
               if (milliseconds<cut_off) {
                 cut_off-=milliseconds;
-                if ((success=anneal.solve(polygon_alt2,v_points,criteria,"local","convex_hull",annealing_L,1,initial_area,cut_off))) {
-                  area=abs(polygon_alt2.area());
+                if ((success=anneal.solve(polygon_alt,v_points,criteria,"local","convex_hull",annealing_L,1,initial_area,cut_off))) {
+                  area=abs(polygon_alt.area());
 
             
-                  milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(start -std::chrono::system_clock::now());
+                  milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
                   if (milliseconds<cut_off) {
                     cut_off-=milliseconds;
-                    LocalSearch<Kernel> loc(polygon_alt1,criteria);
+                    LocalSearch<Kernel> loc(polygon_alt,criteria);
                     if (!loc.MinimizePolygon(search_L, threshold,cut_off,K)) 
                       area = loc.getPolygonArea();
                   }
@@ -273,21 +281,22 @@ template<class Kernel> class Report {
           } 
           
           
-          //Incremental+SimulatedAnnealing(global)+LocalSearch
+          //Incremental+SimulatedAnnealing(global)
           alg_n++;
           for (auto criteria:Min_Max) {
+            Polygon_2 polygon_alt;
             Simulated_Annealing<Kernel> anneal;
             cut_off=std::chrono::milliseconds(500*n_points);
             auto start=std::chrono::system_clock::now();
-            if (anneal.solve(polygon_alt3,v_points,criteria,"global","incremental",annealing_L,1,initial_area,cut_off)) 
-              area=abs(polygon_alt3.area());
+            if (anneal.solve(polygon_alt,v_points,criteria,"global","incremental",annealing_L,1,initial_area,cut_off)) 
+              area=abs(polygon_alt.area());
             
-            auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(start -std::chrono::system_clock::now());
+            auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
             if (milliseconds<cut_off) {
               cut_off-=milliseconds;
-              LocalSearch<Kernel> loc(polygon_alt3,criteria);
-              if (!loc.MinimizePolygon(search_L, threshold,cut_off,K)) 
-                area = loc.getPolygonArea();
+              //LocalSearch<Kernel> loc(polygon_alt,criteria);
+              //if (!loc.MinimizePolygon(search_L, threshold,cut_off,K)) 
+              //  area = loc.getPolygonArea();
             }
             double ratio;
             if (!success) {
@@ -301,20 +310,21 @@ template<class Kernel> class Report {
 
           
           
-          //Hull+SimulatedAnnealing(local)+LocalSearch
+          //Hull+SimulatedAnnealing(local)
           alg_n++;
           for (auto criteria:Min_Max) {
+            Polygon_2 polygon_alt;
             Simulated_Annealing<Kernel> anneal;
             cut_off=std::chrono::milliseconds(500*n_points);
             auto start=std::chrono::system_clock::now();
-            if (anneal.solve(polygon_alt4,v_points,criteria,"local","convex_hull",annealing_L,1,initial_area,cut_off)) 
-              area=abs(polygon_alt4.area());
-            auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(start-std::chrono::system_clock::now());
+            if (anneal.solve(polygon_alt,v_points,criteria,"local","convex_hull",annealing_L,1,initial_area,cut_off)) 
+              area=abs(polygon_alt.area());
+            auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
             if (milliseconds<cut_off) {
               cut_off-=milliseconds;
-              LocalSearch<Kernel> loc(polygon_alt4,criteria);
-              if (!loc.MinimizePolygon(search_L,threshold,cut_off,K)) 
-                area = loc.getPolygonArea();
+              //LocalSearch<Kernel> loc(polygon_alt,criteria);
+              //if (!loc.MinimizePolygon(search_L,threshold,cut_off,K)) 
+              // area = loc.getPolygonArea();
             }
             double ratio;
             if (!success) {

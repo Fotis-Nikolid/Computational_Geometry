@@ -487,14 +487,15 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
     double init;
     int i=0;
     for (auto poly:polygons) {
-        solve(poly,Points,Criteria,"global",Initialization,Iterations,init,cut_off,left.at(i),right.at(i));
-        auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(start-std::chrono::system_clock::now());
-        if (milliseconds<cut_off) {
+        auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
+        if (std::chrono::system_clock::now()<(cut_off+start)) {
             cut_off-=milliseconds;
         }
         else {
             break;
         }
+        solve(poly,Points,Criteria,"global",Initialization,Iterations,init,cut_off,left.at(i),right.at(i));
+        
         i++;
     }
     
@@ -577,11 +578,11 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
     int RetryThreshold=4;
     while (Temperature>=0) {
         while (true) {
-            auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(start -std::chrono::system_clock::now());
-            if (milliseconds>cut_off) {
+            if (std::chrono::system_clock::now()>(start+cut_off)) {
+                std::cout<<"Cutoff Occured"<<std::endl;
                 Temperature=-1;
                 break;
-            };
+            }
             t_Polygon=Polygon;
             if (Step_Choice=="local") {
                 success=local_step(t_Polygon);
