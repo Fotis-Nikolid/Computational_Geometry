@@ -579,7 +579,7 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
     while (Temperature>=0) {
         while (true) {
             if (std::chrono::system_clock::now()>(start+cut_off)) {
-                std::cout<<"Cutoff Occured"<<std::endl;
+                std::cout<<"SimulatedAnnealing: Cutoff Occured"<<std::endl;
                 Temperature=-1;
                 break;
             }

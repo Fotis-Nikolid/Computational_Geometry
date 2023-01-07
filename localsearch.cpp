@@ -179,6 +179,7 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
 template <class Kernel>
 bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K, const  std::chrono::milliseconds max_running_time)
 {
+    auto start = std::chrono::system_clock::now();
     if(L == 0)
         return false;
     
@@ -192,7 +193,6 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
         Polygon_2 temp;
         do
         {
-            auto start = std::chrono::high_resolution_clock::now();
             diff = 0.0;
             for (int edge_index = 0 ; edge_index < Polygon.edges().size() ; edge_index++)
             {
@@ -208,20 +208,22 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                     solved = true;
                 }
             }
-            auto stop = std::chrono::high_resolution_clock::now();
-            running_time += std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-
+            auto stop = std::chrono::system_clock::now();
             if (diff > 0.0)
                 Polygon = BestPolygon;
+            if (stop>(start+max_running_time)) {
+                std::cout<<"LocalSearch: Cutoff Occured"<<std::endl;
+                break;
+            }
 
-        } while (diff > threshold && running_time < max_running_time);
+        } while (diff > threshold );
     }
     else
     {
         Polygon_2 temp;
         do
         {
-            auto start = std::chrono::high_resolution_clock::now();
+            
             diff = 0.0;
             std::unordered_map<int, bool>random_edge_indexes; //map that holds the random edge picks so we dont repick them
             //find K random edges and swap them with L
@@ -248,13 +250,16 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                 }
                 random_edge_indexes[pick] = true;
             }
-            auto stop = std::chrono::high_resolution_clock::now();
-            running_time += std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+            auto stop = std::chrono::system_clock::now();
 
             if (diff > 0.0)
                 Polygon = BestPolygon;
+            if (stop>(start+max_running_time)) {
+                std::cout<<"LocalSearch: Cutoff Occured"<<std::endl;
+                break;
+            }
 
-        }while(diff > threshold && running_time < max_running_time);
+        }while(diff > threshold);
     }
 
     return solved;
