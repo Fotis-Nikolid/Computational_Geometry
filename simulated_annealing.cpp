@@ -500,9 +500,6 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
     }
     
     Polygon=merge_polygons(polygons);  
-    if (!Polygon.is_simple()) {
-        std::cout<<"FUCKKK!!!"<<std::endl;
-    }  
     //double triangles_area=abs(abs(Polygon.area())-t_area);
     //initial_area=init_area+triangles_area;
     left.clear();
