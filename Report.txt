@@ -226,11 +226,65 @@ Results and Comparison:
   - A final observation to note, is that in some cases with fewer points which are uniformly distributed, it occured that a standart Initialization algorithm which has the freedom to work on the full point set,
   outperforms the subdivision apporach, due to it's inability to work on the whole point set. However, this has been fixed with the optimization mentioned of using local_step after merging and a larger number of Iterations
 
+Optimizations:
+  Below is a list of extra optimizations that have been performed across all algorithms used both in the algorithmic sense, and the programming side of things:
+    -For incremental, we optimized the lookup for red edges visibility from O(n) to O(1) using the determinants approach discussed in lectures
+    -Also, for incremental, instead of recalculating the new convex hull after every change, we manually construct it(thus from a O(n) complexity to O(1))
+    -For hull, instead of having to recalculate the closest point to every edge, we utilize a map struct and limit the amount of lookups(effectevily cutting the amount of computations to 3-5\% of the amount normally required as observed in experiments) 
+    -Both for hull and incremenental, when calculating the new area of the polygon after a change, we find it by substracting/adding the area of the "triangle" removed/added, saving the need for any time costing Delauny triangulations
+    -For local search, we perform the "checks" in a non intuitive way, and instead of a "intersect-visibility-swap-area" approach, we do a "intersect-swap-area-visibility", because the swap is O(L) complexity, while the visibility is O(3n).
+    -Thus, in the many cases where the new area from the swap is not greater than the area we already have found, there is no need to bother checking visibility. This saves a lot of time
+    -For annealing, some changes(accepted by proffesor) have been made in the algorithm
+    -Instead of going endlessly on one(possibly bad) path, we have implemented a correction mechanism that after a number of unsuccessfull changes, will reset the current polygon to the best we have found, allowing it this way to maybe find a different path. The number of attempts after which a correction occurs is determined based on the number of points in the set
+    -Also, instead of doing a visibility check through the intersect() function for the case of local_step, we check for the existence of the points in the two new triangles, an approach discussed and accepted both in lectures and eclass
+    -Closing, for all cases where such is allowed, we have eliminated all copy constructions operations on polygon objects, given that such on a large amount of points can produce a sizeable time delay
+    -One final thing to note, is that apart from testing purposes, nowhere is the function is_simple() used to verify validity of polygon, and instead, the intersect() function is used which allows for faster validity checks 
 
-Compilation: 
-    - For compiling the main.cpp program or the test.cpp(which wouldn't do anything as it was only used in testing all files in datasets given), one bash script exists named build.sh
-    - The build.sh will compile all the neccessary files and create the optimal_polygon executable which can be executed as the assignement states 
+Preprocessing:
+  Given that a cutoff has been provided it is of our interest to make full use of it so that the best results are achieved
+  Thus, "finding" a large enough number of iterations for every file is usefull
+  Also, given that we use a combination of optimization algoritms, i.e Hull+Annealing+LocalSearch, we would like to be able to split their computations in a percentage of our choice
+  For this reason we perform a preprocessing to find the correct number of iterations by sampling the algorithms in a very small simulation for which we time it
+  This way, we can accurately implement a combination of Hull+Subd_70\%+LocalSearch_30\%
 
+Observations:
+  Even though a cutoff has been provided, for the larger datasets the cutoff is a very long amount of time.
+  For example, for the 100k points file, the cuttof for one execution is 14hours, and if we add that each execution happens twice for min/max and at least 2 or more combinations are tested, it would take 50+hours for one file for the cutoff to occur
+  Even for a 1k file, if we use 4 or more combinations, the time of a single file can skyrocket to more than 1 hour  
+  And given that our preprocessing works in a way to maximize time used, it is unfeasable to test such a proccess in great detail
+  Thus, we have a -speedup option that can be given(preferably without the -preprocess tag), so that not only we work on a smaller cutoff, but we tone down every hyperparameter to get our results faster 
+  Ending, because some of the combinations did not do well and took too long, we picked the 2 best to work on and added the possibility to use up to 4 altogether in the testing by including the -all_combinations tag
+  Be advised that if 4 combinations are used, the time to complete the experiments will take too long and the results yeilded are very dissapointing, making the time it took not worth it
+
+Results:
+  { -preprocess (2 files per point set) }
+        ||             Hull+Subd+Anneal(loc)              ||          Incr+Anneal(glob)+LocSearch           ||
+  Size  || min score | max score | min bound | max bound  || min score | max score | min bound | max bound  ||
+  100   || 0.504978  | 1.722611  | 0.257786  | 0.838063   || 0.317915  | 1.738866  | 0.159602  | 0.862508   ||
+  300   || 0.470297  | 1.688528  | 0.241165  | 0.836621   || 0.364636  | 1.680223  | 0.192911  | 0.839984   ||
+  400   || 0.513905  | 1.687073  | 0.271378  | 0.843399   || 0.326153  | 1.685536  | 0.165620  | 0.842607   ||
+  600   || 0.499037  | 1.682250  | 0.254391  | 0.839875   || 0.325337  | 1.665565  | 0.164312  | 0.826851   ||
+  800   || 0.503636  | 1.647574  | 0.252355  | 0.818697   || 0.334489  | 1.663000  | 0.168208  | 0.823347   ||
+  1000  || 0.502689  | 1.659368  | 0.253198  | 0.829214   || 0.356126  | 1.616694  | 0.178238  | 0.801581   ||
+
+  {  -preprocess -all_combinations (2 files per point set) }
+        ||             Hull+Subd+Anneal(loc)              ||              Hull+Subd+LocSearch               ||          Incr+Anneal(glob)+LocSearch           ||         Hull+Anneal(global)+LocSearch          ||
+  Size  || min score | max score | min bound | max bound  || min score | max score | min bound | max bound  || min score | max score | min bound | max bound  || min score | max score | min bound | max bound  ||
+  100   || 0.537990  | 1.708685  | 0.276253  | 0.829324   || 0.627883  | 1.662157  | 0.317778  | 0.803954   || 0.350093  | 1.742461  | 0.175656  | 0.862702   || 0.322504  | 1.759205  | 0.164256  | 0.871674   ||
+  300   || 0.506806  | 1.680052  | 0.257760  | 0.834420   || 0.577224  | 1.563719  | 0.294995  | 0.780923   || 0.360589  | 1.651261  | 0.180727  | 0.807079   || 0.299952  | 1.744836  | 0.155281  | 0.865168   ||
+  400   || 0.540401  | 1.672308  | 0.290317  | 0.832778   || 0.592331  | 1.540145  | 0.300312  | 0.758092   || 0.320963  | 1.671292  | 0.167494  | 0.835150   || 0.321156  | 1.733974  | 0.165227  | 0.862128   ||
+
+  {   -speed_up (1 file per point set)  }
+        ||             Hull+Subd+Anneal(loc)              ||          Incr+Anneal(glob)+LocSearch           ||
+  Size  || min score | max score | min bound | max bound  || min score | max score | min bound | max bound  ||
+  2000  || 0.283363  | 0.821818  | 0.283363  | 0.821818   || 0.276617  | 0.678701  | 0.276617  | 0.678701   ||
+  4000  || 0.281010  | 0.821291  | 0.281010  | 0.821291   || 0.282934  | 0.684714  | 0.282934  | 0.684714   ||
+  5000  || 0.282039  | 0.819516  | 0.282039  | 0.819516   || 0.279952  | 0.688319  | 0.279952  | 0.688319   ||
+  
+  Generally we can see that the best combination for a small number of files is Hull+Anneal(global)+LocSearch, whereas for sizes greater than 1k, the ability of subdivision to split the work into many parts starts to show even with a small number of iterations(otherwise resutls take too long)
+  What is weird is that although Incrmenental is by many degrees faster the Hull, thanks to Hull creating a better starting point for the optimization algorithms to follow, it shows considerably better results than Incrmenental even though in previous part of the project the difference in polygons was not great enough to justify the time that Hull took
+  Closing, the reason that we end everything on LocalSearch is because our implentation that relies on the accepting of only positive changes, makes it a better fit when we already have a very good polygon and are seeking to extensively find only positive changes
+  
 Folder Structure:
     - data(not uploaded in git)
         - images
