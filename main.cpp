@@ -24,7 +24,7 @@ template<class Kernel> class Report {
   
   private:
     std::vector<std::string> Min_Max={"min","max"};
-    std::vector<std::string> algorithms={"Hull+Subd+Anneal(loc)","Hull+Subd+LocSearch","Hull+Anneal(loc)+LocSearch","Inc+Anneal(glob)+LocSearch"};
+    std::vector<std::string> algorithms={"Hull+Subd+Anneal(loc)","Incr+Anneal(glob)+LocSearch"};
     std::map<int,std::vector<double>> min_score;
     std::map<int,std::vector<double>> max_score;
     std::map<int,std::vector<double>> min_bound;
@@ -135,9 +135,12 @@ template<class Kernel> class Report {
       report.close();
     }
   public:
-    void evaluate(std::string dir_path,std::string outfile_path,bool preprocess) {
+    void evaluate(std::string dir_path,std::string outfile_path,bool preprocess,bool speed_up,bool all_combinations) {
       DIR *dir;
       struct dirent *ent;
+      if (all_combinations){
+        algorithms={"Hull+Subd+Anneal(loc)","Hull+Subd+LocSearch","Incr+Anneal(glob)+LocSearch","Hull+Anneal(global)+LocSearch"};
+      }
       //default parameters in case preprocessing is not performed
       int attempts=1;
       long int loc_L  =1000000;
@@ -156,7 +159,7 @@ template<class Kernel> class Report {
           if (file_name=="." || file_name=="..") {
             continue;
           }
-          std::cout<<"File:"<<file_name<<std::endl;
+          
           std::string file_path=dir_path+"/"+file_name;
           std::ifstream file;
           file.open(file_path);
@@ -236,7 +239,15 @@ template<class Kernel> class Report {
             }
             anneal_tf=(double)dt/(double)cut_off.count();//what percentage one iteration takes out of the cut_off
             subd_L=base_L*std::ceil(anneal_percentage/anneal_tf);//how many iterations should be made so that the total runtime of annealing matches the percentage we want
-          }     
+          }  
+          if (speed_up) {
+            loc_L=8000;
+            glob_L=5000;
+            subd_L=5000;
+            K=50;
+            threshold=50;
+          }  
+          std::cout<<"File:"<<file_name<<" Parameters {loc_:"<<loc_L<<" glob_:"<<glob_L<<" subd_:"<<subd_L<<"}"<<std::endl; 
           
                 
 
@@ -244,6 +255,7 @@ template<class Kernel> class Report {
           //Hull+Subdivision+SimulatedAnnealing(local)
           int alg_n=0;
           double area;
+          auto al_begin=std::chrono::system_clock::now();
           for (auto criteria:Min_Max) {
             Polygon_2 polygon_alt;
             Simulated_Annealing<Kernel> anneal;
@@ -255,12 +267,10 @@ template<class Kernel> class Report {
               auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
               if (std::chrono::system_clock::now()<(start+cut_off)) {
                 cut_off-=milliseconds;
-                if ((success=anneal.solve(polygon_alt,v_points,criteria,"local","convex_hull",loc_L,1,initial_area,cut_off))) {
-                  area=abs(polygon_alt.area());
-                }
+                anneal.solve(polygon_alt,v_points,criteria,"local","convex_hull",loc_L,1,initial_area,cut_off);
+                area=abs(polygon_alt.area());
               }
             }
-            
             double ratio;
             if (!success) {
               ratio=((criteria=="min")?1:0);
@@ -271,42 +281,48 @@ template<class Kernel> class Report {
             
             proccess_result(criteria,n_points,alg_n,ratio);
           }
+          auto time_dt=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-al_begin).count()/2;
+          std::cout<<algorithms.at(alg_n)<<" finished: "<<time_dt<<"ms(cutoff:"<<500*n_points<<"ms)"<<std::endl;
           
-          
-          
-          //Hull+Subdivision+LocalSearch
-          alg_n++;
-          for (auto criteria:Min_Max) {
-            Polygon_2 polygon_alt;
-            Simulated_Annealing<Kernel> anneal;
-            cut_off=std::chrono::milliseconds(500*n_points);
-            auto start=std::chrono::system_clock::now();
-            if ((success=anneal.sub_division(polygon_alt,v_points,criteria,"convex_hull",subd_L,initial_area,cut_off))) { 
-              area=abs(polygon_alt.area());
-              auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
-              if (std::chrono::system_clock::now()<(start+cut_off)) {
-                cut_off-=milliseconds;
-                LocalSearch<Kernel> loc(polygon_alt,criteria);
-                
-                if (!loc.MinimizePolygon(search_L, threshold,cut_off,K)) {
-                  area = loc.getPolygonArea();
+          if (all_combinations) {
+            //Hull+Subdivision+LocalSearch (not good)
+            al_begin=std::chrono::system_clock::now();
+            alg_n++;
+            for (auto criteria:Min_Max) {
+              Polygon_2 polygon_alt;
+              Simulated_Annealing<Kernel> anneal;
+              cut_off=std::chrono::milliseconds(500*n_points);
+              auto start=std::chrono::system_clock::now();
+              if ((success=anneal.sub_division(polygon_alt,v_points,criteria,"convex_hull",subd_L,initial_area,cut_off))) { 
+                area=abs(polygon_alt.area());
+                auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
+                if (std::chrono::system_clock::now()<(start+cut_off)) {
+                  cut_off-=milliseconds;
+                  LocalSearch<Kernel> loc(polygon_alt,criteria);
                   
+                  if (!loc.MinimizePolygon(search_L, threshold,cut_off,K)) {
+                    area = loc.getPolygonArea();
+                    
+                  }
                 }
               }
-            }
-            double ratio;
-            if (!success) {
-              ratio=(criteria=="min")?1:0;
-            }
-            else {
-              ratio=area/convex_area;
-            }
-            proccess_result(criteria,n_points,alg_n,ratio);
-          } 
+              double ratio;
+              if (!success) {
+                ratio=(criteria=="min")?1:0;
+              }
+              else {
+                ratio=area/convex_area;
+              }
+              proccess_result(criteria,n_points,alg_n,ratio);
+            } 
+            time_dt=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-al_begin).count()/2;
+            std::cout<<algorithms.at(alg_n)<<" finished: "<<time_dt<<"ms(cutoff:"<<500*n_points<<"ms)"<<std::endl;
+          }
           
           
           //Incremental+SimulatedAnnealing(global)+LocalSearch
           alg_n++;
+          al_begin=std::chrono::system_clock::now();
           for (auto criteria:Min_Max) {
             Polygon_2 polygon_alt;
             Simulated_Annealing<Kernel> anneal;
@@ -333,35 +349,41 @@ template<class Kernel> class Report {
             }
             proccess_result(criteria,n_points,alg_n,ratio);
           }
+          time_dt=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-al_begin).count()/2;
+          std::cout<<algorithms.at(alg_n)<<" finished: "<<time_dt<<"ms(cutoff:"<<500*n_points<<"ms)"<<std::endl;
 
           
-          
-          //Hull+SimulatedAnnealing(local)+LocalSearch
-          alg_n++;
-          for (auto criteria:Min_Max) {
-            Polygon_2 polygon_alt;
-            Simulated_Annealing<Kernel> anneal;
-            cut_off=std::chrono::milliseconds(500*n_points);
-            auto start=std::chrono::system_clock::now();
-            if ((success=anneal.solve(polygon_alt,v_points,criteria,"local","convex_hull",loc_L,1,initial_area,cut_off))) {
-              area=abs(polygon_alt.area());
-              auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
-              if (std::chrono::system_clock::now()<(start+cut_off)) {
-                cut_off-=milliseconds;
-                LocalSearch<Kernel> loc(polygon_alt,criteria);
-                if (!loc.MinimizePolygon(search_L,threshold,cut_off,K)) {
-                  area = loc.getPolygonArea();
+          if (all_combinations) {
+            //Hull+SimulatedAnnealing(global)+LocalSearch
+            alg_n++;
+            al_begin=std::chrono::system_clock::now();
+            for (auto criteria:Min_Max) {
+              Polygon_2 polygon_alt;
+              Simulated_Annealing<Kernel> anneal;
+              cut_off=std::chrono::milliseconds(500*n_points);
+              auto start=std::chrono::system_clock::now();
+              if ((success=anneal.solve(polygon_alt,v_points,criteria,"global","convex_hull",loc_L,1,initial_area,cut_off))) {
+                area=abs(polygon_alt.area());
+                auto milliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-start);
+                if (std::chrono::system_clock::now()<(start+cut_off)) {
+                  cut_off-=milliseconds;
+                  LocalSearch<Kernel> loc(polygon_alt,criteria);
+                  if (!loc.MinimizePolygon(search_L,threshold,cut_off,K)) {
+                    area = loc.getPolygonArea();
+                  }
                 }
               }
+              double ratio;
+              if (!success) {
+                ratio=(criteria=="min")?1:0;
+              }
+              else {
+                ratio=area/convex_area;
+              }
+              proccess_result(criteria,n_points,alg_n,ratio);
             }
-            double ratio;
-            if (!success) {
-              ratio=(criteria=="min")?1:0;
-            }
-            else {
-              ratio=area/convex_area;
-            }
-            proccess_result(criteria,n_points,alg_n,ratio);
+            time_dt=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-al_begin).count()/2;
+            std::cout<<algorithms.at(alg_n)<<" finished: "<<time_dt<<"ms(cutoff:"<<500*n_points<<"ms)"<<std::endl;
           }
           std::cout<<"Done with file:"<<file_name<<std::endl;
         }
@@ -380,6 +402,8 @@ int main(int argc,char* argv[]) {//receives starting file number, ending file nu
   std::string dir_path;
   std::string outfile_path;
   bool preprocess=false;
+  bool speed_up=false;
+  bool all_combinations=false;
   
   for(int i = 1 ; i < argc ; i++) {
     if(argv[i][0] == '-' && i < argc) {
@@ -397,6 +421,12 @@ int main(int argc,char* argv[]) {//receives starting file number, ending file nu
       else if (arg=="-preprocess") {
         preprocess=true;
       }
+      else if (arg=="-speedup") {
+        speed_up=true;
+      }
+      else if (arg=="-all_combinations") {
+        all_combinations=true;
+      }
       else {
         std::cout << "Option " + arg + " is not avaible" << std::endl;
         return -1;
@@ -404,7 +434,7 @@ int main(int argc,char* argv[]) {//receives starting file number, ending file nu
     }
   }
   Report<CGAL::Exact_predicates_inexact_constructions_kernel> rp;
-  rp.evaluate(dir_path,outfile_path,preprocess);
+  rp.evaluate(dir_path,outfile_path,preprocess,speed_up,all_combinations);
   return 0;
 }
 #endif

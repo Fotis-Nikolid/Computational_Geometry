@@ -212,7 +212,7 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
             if (diff > 0.0)
                 Polygon = BestPolygon;
             if (stop>(start+max_running_time)) {
-                std::cout<<"LocalSearch: Cutoff Occured"<<std::endl;
+                //std::cout<<"LocalSearch: Cutoff Occured"<<std::endl;
                 break;
             }
 
@@ -255,7 +255,7 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
             if (diff > 0.0)
                 Polygon = BestPolygon;
             if (stop>(start+max_running_time)) {
-                std::cout<<"LocalSearch: Cutoff Occured"<<std::endl;
+                //std::cout<<"LocalSearch: Cutoff Occured"<<std::endl;
                 break;
             }
 

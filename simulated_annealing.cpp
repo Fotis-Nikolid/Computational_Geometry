@@ -494,12 +494,15 @@ bool Simulated_Annealing<Kernel>::sub_division(Polygon_2& Polygon,std::vector<Po
         else {
             break;
         }
-        solve(poly,Points,Criteria,"global",Initialization,Iterations,init,cut_off,left.at(i),right.at(i));
+        solve(poly,Points,Criteria,"global",Initialization,Iterations/polygons.size(),init,cut_off/(polygons.size()-i),left.at(i),right.at(i));
         
         i++;
     }
     
-    Polygon=merge_polygons(polygons);    
+    Polygon=merge_polygons(polygons);  
+    if (!Polygon.is_simple()) {
+        std::cout<<"FUCKKK!!!"<<std::endl;
+    }  
     //double triangles_area=abs(abs(Polygon.area())-t_area);
     //initial_area=init_area+triangles_area;
     left.clear();
@@ -579,7 +582,7 @@ bool Simulated_Annealing<Kernel>::solve(Polygon_2& Polygon,std::vector<CGAL::Poi
     while (Temperature>=0) {
         while (true) {
             if (std::chrono::system_clock::now()>(start+cut_off)) {
-                std::cout<<"SimulatedAnnealing: Cutoff Occured"<<std::endl;
+                //std::cout<<"SimulatedAnnealing: Cutoff Occured"<<std::endl;
                 Temperature=-1;
                 break;
             }
