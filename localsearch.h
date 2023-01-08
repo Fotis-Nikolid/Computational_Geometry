@@ -26,9 +26,9 @@ template<class Kernel> class LocalSearch
         //(Polygon to save the minimized polygon, index of edge[0] to replace, L)
         //returns the difference between the old and new area
         //finds the best L to put in the edge potion
-        double ReplaceEdgeWithBest_L(Polygon_2*, const int, const int);
+        double ReplaceEdgeWithBest_L(Polygon_2*, const int, const int,bool& to_stop,const std::chrono::milliseconds cuttof,const std::chrono::time_point<std::chrono::system_clock> start);
 
-        bool solve(const int, const double, const int);
+        //bool solve(const int, const double, const int);
         //with time limit
         bool solve(const int, const double, const int, const  std::chrono::milliseconds);
     
@@ -40,7 +40,7 @@ template<class Kernel> class LocalSearch
         bool InitializationFailed();
 
         //(L, threshold, K)
-        bool MinimizePolygon(const int, const double, const int K = 0);
+        //bool MinimizePolygon(const int, const double, const int K = 0);
         //(L, threshold, time in ms, K)
         bool MinimizePolygon(const int, const double,const std::chrono::milliseconds,const int K = 0);
 

@@ -82,7 +82,7 @@ bool LocalSearch<Kernel>::InitializationFailed()
 {
     return InitFailed;
 }
-
+/*
 template <class Kernel>
 bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, const int K)
 {
@@ -90,6 +90,7 @@ bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, c
 
     return this->solve(L, threshold, K);
 }
+*/
 
 template <class Kernel>
 bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, const  std::chrono::milliseconds max_running_time, const int K)
@@ -98,7 +99,7 @@ bool LocalSearch<Kernel>::MinimizePolygon(const int L, const double threshold, c
 
     return this->solve(L, threshold, K, max_running_time);
 }
-
+/*
 template <class Kernel>
 bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K)
 {
@@ -175,11 +176,12 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
 
     return solved;
 }
-
+*/
 template <class Kernel>
 bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K, const  std::chrono::milliseconds max_running_time)
 {
     auto start = std::chrono::system_clock::now();
+    bool to_stop=false;
     if(L == 0)
         return false;
     
@@ -196,10 +198,16 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
             diff = 0.0;
             for (int edge_index = 0 ; edge_index < Polygon.edges().size() ; edge_index++)
             {
+                if (std::chrono::system_clock::now()>(start+max_running_time)) {
+                    to_stop=true;
+                    break;
+                }
                 temp = Polygon;
                 // swap the random edge with the best L
-                double new_diff = ReplaceEdgeWithBest_L(&temp, edge_index, L);
-
+                double new_diff = ReplaceEdgeWithBest_L(&temp, edge_index, L,to_stop,max_running_time,start);
+                if (to_stop) {
+                    break;
+                }
                 //if we found an L that has better area than the current Polygon
                 if (new_diff > diff)
                 {
@@ -208,11 +216,9 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                     solved = true;
                 }
             }
-            auto stop = std::chrono::system_clock::now();
             if (diff > 0.0)
                 Polygon = BestPolygon;
-            if (stop>(start+max_running_time)) {
-                //std::cout<<"LocalSearch: Cutoff Occured"<<std::endl;
+            if (to_stop) {
                 break;
             }
 
@@ -229,6 +235,10 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
             //find K random edges and swap them with L
             for(int i = 0 ; i < K ; i++)
             {
+                if (std::chrono::system_clock::now()>(start+max_running_time)) {
+                    to_stop=true;
+                    break;
+                }
                 int pick = std::rand()%Polygon.edges().size();
 
                 //if the segment has been picked again try another segment
@@ -239,8 +249,10 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
 
                 temp = Polygon;
                 //swap the random edge with the best L
-                double new_diff = ReplaceEdgeWithBest_L(&temp, pick, L);
-
+                double new_diff = ReplaceEdgeWithBest_L(&temp, pick, L,to_stop,max_running_time,start);
+                if (to_stop) {
+                    break;
+                }
                 //if we found an L that has better area than the current Polygon
                 if(new_diff > diff)
                 {
@@ -250,14 +262,13 @@ bool LocalSearch<Kernel>::solve(const int L, const double threshold, const int K
                 }
                 random_edge_indexes[pick] = true;
             }
-            auto stop = std::chrono::system_clock::now();
 
             if (diff > 0.0)
                 Polygon = BestPolygon;
-            if (stop>(start+max_running_time)) {
-                //std::cout<<"LocalSearch: Cutoff Occured"<<std::endl;
+            if (to_stop) {
                 break;
             }
+
 
         }while(diff > threshold);
     }
@@ -290,7 +301,7 @@ bool LinesIntersect(const CGAL::Segment_2<Kernel>& seg1, const CGAL::Segment_2<K
 }
 
 template <class Kernel>
-double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int edge_destroy, const int L)
+double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int edge_destroy, const int L,bool& to_stop,const std::chrono::milliseconds cutoff,const std::chrono::time_point<std::chrono::system_clock> start)
 {
     // edge_destoy points to the location of the Segment_2[0] , where the segment is the edge we will destroy and put L
     const int dist = Polygon.vertices_end() - Polygon.vertices_begin();
@@ -306,7 +317,6 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
             l = dist - 1;
             continue;
         }
-
         for (int Lstart = 0; Lstart < dist; Lstart++)
         {
             int before_Lstart = Lstart - 1;
@@ -393,6 +403,10 @@ double LocalSearch<Kernel>::ReplaceEdgeWithBest_L(Polygon_2 *BestPol, const int 
 
             *BestPol = temp;
             diff = abs(abs(Polygon.area()) - abs(BestPol->area()));
+            if (std::chrono::system_clock::now()>(start+cutoff)) {
+                to_stop=true;
+                return diff;
+            }
         }
     }
 
