@@ -143,6 +143,7 @@ template<class Kernel> class Report {
       }
       //default parameters in case preprocessing is not performed
       int attempts=1;
+      int N_factor=500;
       long int loc_L  =1000000;
       long int glob_L =100000;
       long int subd_L =100000;
@@ -189,11 +190,19 @@ template<class Kernel> class Report {
             v_points.push_back(Point_2(x,y));
           }
           long int n_points=v_points.size();//get number of points
-          std::chrono::milliseconds cut_off=std::chrono::milliseconds(500*n_points);
+          std::chrono::milliseconds cut_off=std::chrono::milliseconds(N_factor*n_points);
           bool success;  
           
           double anneal_tf;//how much time one annealing iteration takes
-          if (preprocess) {
+          if (speed_up) {
+            N_factor=20;
+            loc_L=3000;
+            glob_L=2000;
+            subd_L=2000;
+            K=100;
+            threshold=50;
+          }  
+          if (preprocess ) {
             double anneal_percentage=0.6;
             
             long int base_L=1000;
@@ -204,7 +213,7 @@ template<class Kernel> class Report {
               Polygon_2 pol;
               Simulated_Annealing<Kernel> anneal;
               auto begin=std::chrono::steady_clock::now();
-              anneal.solve(pol,v_points,"min","global","convex_hull",base_L,1,initial_area,cut_off);      
+              anneal.solve(pol,v_points,"min","global","incremental",base_L,1,initial_area,cut_off);      
               dt=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-begin).count();
 
             }
@@ -219,7 +228,7 @@ template<class Kernel> class Report {
               Polygon_2 pol;
               Simulated_Annealing<Kernel> anneal;
               auto begin=std::chrono::steady_clock::now();
-              anneal.solve(pol,v_points,"min","local","convex_hull",base_L,1,initial_area,cut_off);      
+              anneal.solve(pol,v_points,"min","local","incremental",base_L,1,initial_area,cut_off);      
               dt=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-begin).count();
             }
             anneal_tf=(double)dt/(double)cut_off.count();//what percentage one iteration takes out of the cut_off
@@ -240,13 +249,7 @@ template<class Kernel> class Report {
             anneal_tf=(double)dt/(double)cut_off.count();//what percentage one iteration takes out of the cut_off
             subd_L=base_L*std::ceil(anneal_percentage/anneal_tf);//how many iterations should be made so that the total runtime of annealing matches the percentage we want
           }  
-          if (speed_up) {
-            loc_L=8000;
-            glob_L=5000;
-            subd_L=5000;
-            K=50;
-            threshold=50;
-          }  
+          
           std::cout<<"File:"<<file_name<<" Parameters {loc_:"<<loc_L<<" glob_:"<<glob_L<<" subd_:"<<subd_L<<"}"<<std::endl; 
           
                 
@@ -259,7 +262,7 @@ template<class Kernel> class Report {
           for (auto criteria:Min_Max) {
             Polygon_2 polygon_alt;
             Simulated_Annealing<Kernel> anneal;
-            cut_off=std::chrono::milliseconds(500*n_points);
+            cut_off=std::chrono::milliseconds(N_factor*n_points);
             auto start=std::chrono::system_clock::now();
             if ((success=anneal.sub_division(polygon_alt,v_points,criteria,"convex_hull",subd_L,initial_area,cut_off))) { 
               area=abs(polygon_alt.area());
@@ -291,7 +294,7 @@ template<class Kernel> class Report {
             for (auto criteria:Min_Max) {
               Polygon_2 polygon_alt;
               Simulated_Annealing<Kernel> anneal;
-              cut_off=std::chrono::milliseconds(500*n_points);
+              cut_off=std::chrono::milliseconds(N_factor*n_points);
               auto start=std::chrono::system_clock::now();
               if ((success=anneal.sub_division(polygon_alt,v_points,criteria,"convex_hull",subd_L,initial_area,cut_off))) { 
                 area=abs(polygon_alt.area());
@@ -326,7 +329,7 @@ template<class Kernel> class Report {
           for (auto criteria:Min_Max) {
             Polygon_2 polygon_alt;
             Simulated_Annealing<Kernel> anneal;
-            cut_off=std::chrono::milliseconds(500*n_points);
+            cut_off=std::chrono::milliseconds(N_factor*n_points);
             auto start=std::chrono::system_clock::now();
             if (anneal.solve(polygon_alt,v_points,criteria,"global","incremental",glob_L,1,initial_area,cut_off)) {
               area=abs(polygon_alt.area());
@@ -360,7 +363,7 @@ template<class Kernel> class Report {
             for (auto criteria:Min_Max) {
               Polygon_2 polygon_alt;
               Simulated_Annealing<Kernel> anneal;
-              cut_off=std::chrono::milliseconds(500*n_points);
+              cut_off=std::chrono::milliseconds(N_factor*n_points);
               auto start=std::chrono::system_clock::now();
               if ((success=anneal.solve(polygon_alt,v_points,criteria,"global","convex_hull",loc_L,1,initial_area,cut_off))) {
                 area=abs(polygon_alt.area());
